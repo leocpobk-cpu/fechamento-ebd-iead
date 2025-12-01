@@ -1,0 +1,17 @@
+# Azure
+.azure/
+*.zip
+*.log
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Temporários
+*.tmp
+*.bak
+~$*
+
+# VS Code
+.vscode/
+*.code-workspace
