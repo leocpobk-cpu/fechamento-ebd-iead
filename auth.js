@@ -1554,4 +1554,8 @@ window.gerarLinkConvite = gerarLinkConvite;
 window.finalizarCadastroConvite = finalizarCadastroConvite;
 window.cancelarCadastroConvite = cancelarCadastroConvite;
 
-
+console.log('✅ auth.js carregado - Funções exportadas:', {
+    abrirModalUsuario: typeof window.abrirModalUsuario,
+    abrirModalIgreja: typeof window.abrirModalIgreja,
+    abrirModalConvite: typeof window.abrirModalConvite
+});

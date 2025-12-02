@@ -1122,9 +1122,9 @@
         <div class="card">
             <h2 style="margin-bottom: 15px;">👥 Gerenciamento de Usuários</h2>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button class="btn btn-primary" onclick="abrirModalUsuario()">➕ Novo Usuário</button>
-                <button class="btn btn-warning" onclick="abrirModalConvite()">📱 Gerar Link de Convite</button>
-                <button class="btn" style="background: #10b981; color: white;" onclick="mudarSubTela('igrejas')">🏛️ Gerenciar Igrejas</button>
+                <button class="btn btn-primary" onclick="console.log('Botão clicado'); abrirModalUsuario()">➕ Novo Usuário</button>
+                <button class="btn btn-warning" onclick="console.log('Botão convite clicado'); abrirModalConvite()">📱 Gerar Link de Convite</button>
+                <button class="btn" style="background: #10b981; color: white;" onclick="console.log('Botão igrejas clicado'); mudarSubTela('igrejas')">🏛️ Gerenciar Igrejas</button>
             </div>
         </div>
         
@@ -1139,8 +1139,8 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h3>🏛️ Igrejas Cadastradas</h3>
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-primary" onclick="abrirModalIgreja()">➕ Nova Igreja</button>
-                        <button class="btn btn-secondary" onclick="mudarSubTela('usuarios')">👥 Voltar para Usuários</button>
+                        <button class="btn btn-primary" onclick="console.log('Nova Igreja clicado'); abrirModalIgreja()">➕ Nova Igreja</button>
+                        <button class="btn btn-secondary" onclick="console.log('Voltar usuários'); mudarSubTela('usuarios')">👥 Voltar para Usuários</button>
                     </div>
                 </div>
             </div>
