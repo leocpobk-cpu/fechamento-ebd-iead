@@ -86,7 +86,8 @@ Em caso de problemas:
 1. Limpe o cache do navegador
 2. Verifique se tem dados salvos no histórico
 3. Atualize a página
+4. whatsapp 65 98134-6852 Leonardo 
 
 ---
 
-**Desenvolvido para IEAD** 🙏
+**Desenvolvido para IEAD Cuiabá** Aleluia 🙏
