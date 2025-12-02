@@ -651,12 +651,6 @@ function listarUsuarios() {
         </div>
         `;
     }).join('');
-                <button class="btn-icon ${u.ativo ? 'danger' : ''}" onclick="toggleAtivoUsuario(${u.id})" title="${u.ativo ? 'Desativar' : 'Ativar'}">
-                    ${u.ativo ? '🚫' : '✅'}
-                </button>
-            </div>
-        </div>
-    `).join('');
 }
 
 // Abrir modal para novo usuário
@@ -794,7 +788,6 @@ function salvarUsuario() {
                 celular,
                 nivel,
                 igrejaId
-            };
             };
             
             console.log('💾 Salvando usuário editado:', usuarios[index]);
