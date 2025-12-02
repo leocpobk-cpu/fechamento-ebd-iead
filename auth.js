@@ -104,13 +104,30 @@ function inicializarUsuarios() {
 }
 
 // Obter todas as igrejas
-function getIgrejas() {
-    return JSON.parse(localStorage.getItem('igrejasEBD') || '[]');
+// Buscar igrejas do Supabase
+async function getIgrejas() {
+    const sb = getSupabase();
+    if (!sb) {
+        console.error('❌ Supabase não inicializado');
+        return [];
+    }
+    
+    const { data, error } = await sb
+        .from('igrejas')
+        .select('*')
+        .order('nome');
+    
+    if (error) {
+        console.error('❌ Erro ao buscar igrejas:', error);
+        return [];
+    }
+    
+    return data || [];
 }
 
-// Salvar igrejas
+// Função legada - não mais necessária (Supabase salva automaticamente)
 function salvarIgrejas(igrejas) {
-    localStorage.setItem('igrejasEBD', JSON.stringify(igrejas));
+    console.warn('⚠️ salvarIgrejas() não é mais necessário com Supabase');
 }
 
 // Obter igreja do usuário logado
@@ -739,14 +756,16 @@ window.trocarIgrejaAdmin = trocarIgrejaAdmin;
 // ========================================
 
 // Carregar igrejas no select
-function carregarSelectIgrejas() {
+// Carregar igrejas no select (async agora)
+async function carregarSelectIgrejas() {
     const select = document.getElementById('modal-select-igreja');
     if (!select) return;
     
-    const igrejas = getIgrejas().filter(i => i.ativo);
+    const igrejas = await getIgrejas();
+    const igrejasAtivas = igrejas.filter(i => i.ativo);
     
     select.innerHTML = '<option value="">Selecione uma igreja</option>' + 
-        igrejas.map(i => `<option value="${i.id}">${i.nome} - ${i.cidade}/${i.uf}</option>`).join('');
+        igrejasAtivas.map(i => `<option value="${i.id}">${i.nome} - ${i.cidade}/${i.uf}</option>`).join('');
 }
 
 // Listar usuários
@@ -1042,8 +1061,9 @@ function toggleAtivoUsuario(id) {
 // ========================================
 
 // Listar igrejas
-function listarIgrejas() {
-    const igrejas = getIgrejas();
+// Listar igrejas (async agora)
+async function listarIgrejas() {
+    const igrejas = await getIgrejas();
     const container = document.getElementById('lista-igrejas');
     
     if (!container) return;
@@ -1075,16 +1095,36 @@ function listarIgrejas() {
                 </div>
             </div>
             <div style="font-size: 0.75rem; color: #999; border-top: 1px solid #e5e7eb; padding-top: 8px; margin-top: 8px;">
-                👥 ${contarUsuariosPorIgreja(igreja.id)} usuário(s) vinculado(s)
+                👥 <span id="count-igreja-${igreja.id}">...</span> usuário(s) vinculado(s)
             </div>
         </div>
     `).join('');
+    
+    // Carregar contagem de usuários async
+    igrejas.forEach(igreja => {
+        contarUsuariosPorIgreja(igreja.id).then(count => {
+            const el = document.getElementById(`count-igreja-${igreja.id}`);
+            if (el) el.textContent = count;
+        });
+    });
 }
 
-// Contar usuários por igreja
-function contarUsuariosPorIgreja(igrejaId) {
-    const usuarios = getUsuarios();
-    return usuarios.filter(u => u.igrejaId === igrejaId).length;
+// Contar usuários por igreja (async agora)
+async function contarUsuariosPorIgreja(igrejaId) {
+    const sb = getSupabase();
+    if (!sb) return 0;
+    
+    const { count, error } = await sb
+        .from('usuarios')
+        .select('*', { count: 'exact', head: true })
+        .eq('igreja_id', igrejaId);
+    
+    if (error) {
+        console.error('❌ Erro ao contar usuários:', error);
+        return 0;
+    }
+    
+    return count || 0;
 }
 
 // Abrir modal para nova igreja
@@ -1108,9 +1148,10 @@ function abrirModalIgreja() {
 }
 
 // Editar igreja
-function editarIgreja(id) {
+// Editar igreja (async agora)
+async function editarIgreja(id) {
     console.log('✏️ Editando igreja ID:', id);
-    const igrejas = getIgrejas();
+    const igrejas = await getIgrejas();
     const igreja = igrejas.find(i => i.id === id);
     
     if (!igreja) {
@@ -1138,7 +1179,8 @@ function editarIgreja(id) {
 }
 
 // Salvar igreja (criar ou editar)
-function salvarIgreja() {
+// Salvar igreja (async agora - insere ou atualiza no Supabase)
+async function salvarIgreja() {
     console.log('🔧 Iniciando salvarIgreja...', {editando: igrejaEditando});
     
     const nome = document.getElementById('modal-igreja-nome').value.trim();
@@ -1156,52 +1198,63 @@ function salvarIgreja() {
         return;
     }
     
-    const igrejas = getIgrejas();
-    console.log('🏛️ Igrejas atuais:', igrejas.length);
+    const sb = getSupabase();
+    if (!sb) {
+        alert('❌ Erro: Supabase não inicializado');
+        return;
+    }
     
     if (igrejaEditando) {
         // Editar igreja existente
-        const index = igrejas.findIndex(i => i.id === igrejaEditando);
-        console.log('✏️ Editando igreja ID:', igrejaEditando, 'Index:', index);
+        console.log('✏️ Editando igreja ID:', igrejaEditando);
         
-        if (index !== -1) {
-            igrejas[index] = {
-                ...igrejas[index],
+        const { error } = await sb
+            .from('igrejas')
+            .update({
                 nome,
                 endereco,
                 cidade,
                 uf,
                 pastor
-            };
-            
-            console.log('💾 Salvando igreja editada:', igrejas[index]);
-            salvarIgrejas(igrejas);
-            alert('✅ Igreja atualizada com sucesso!');
-            console.log('✅ Igreja atualizada');
+            })
+            .eq('id', igrejaEditando);
+        
+        if (error) {
+            console.error('❌ Erro ao atualizar igreja:', error);
+            alert('❌ Erro ao atualizar igreja: ' + error.message);
+            return;
         }
+        
+        alert('✅ Igreja atualizada com sucesso!');
+        console.log('✅ Igreja atualizada');
     } else {
         // Criar nova igreja
-        const novoId = igrejas.length > 0 ? Math.max(...igrejas.map(i => i.id)) + 1 : 1;
+        console.log('➕ Criando nova igreja');
         
-        const novaIgreja = {
-            id: novoId,
-            nome,
-            endereco,
-            cidade,
-            uf,
-            pastor,
-            ativo: true
-        };
+        const { data, error } = await sb
+            .from('igrejas')
+            .insert([{
+                nome,
+                endereco,
+                cidade,
+                uf,
+                pastor,
+                ativo: true
+            }])
+            .select();
         
-        console.log('➕ Criando nova igreja:', novaIgreja);
-        igrejas.push(novaIgreja);
-        salvarIgrejas(igrejas);
+        if (error) {
+            console.error('❌ Erro ao criar igreja:', error);
+            alert('❌ Erro ao criar igreja: ' + error.message);
+            return;
+        }
+        
         alert('✅ Igreja criada com sucesso!');
-        console.log('✅ Nova igreja criada com ID:', novoId);
+        console.log('✅ Nova igreja criada:', data);
     }
     
     fecharModalIgreja();
-    listarIgrejas();
+    await listarIgrejas();
     console.log('🔄 Lista de igrejas atualizada');
 }
 
@@ -1211,26 +1264,45 @@ function fecharModalIgreja() {
     igrejaEditando = null;
 }
 
-// Ativar/Desativar igreja
-function toggleAtivoIgreja(id) {
-    const igrejas = getIgrejas();
-    const index = igrejas.findIndex(i => i.id === id);
+// Ativar/Desativar igreja (async agora)
+async function toggleAtivoIgreja(id) {
+    const igrejas = await getIgrejas();
+    const igreja = igrejas.find(i => i.id === id);
     
-    if (index !== -1) {
-        const usuariosDaIgreja = contarUsuariosPorIgreja(id);
-        
-        if (igrejas[index].ativo && usuariosDaIgreja > 0) {
-            const confirma = confirm(`Esta igreja possui ${usuariosDaIgreja} usuário(s) vinculado(s).\n\nDeseja realmente desativar?`);
-            if (!confirma) return;
-        }
-        
-        igrejas[index].ativo = !igrejas[index].ativo;
-        salvarIgrejas(igrejas);
-        
-        const acao = igrejas[index].ativo ? 'ativada' : 'desativada';
-        alert(`✅ Igreja ${acao} com sucesso!`);
-        listarIgrejas();
+    if (!igreja) {
+        alert('❌ Igreja não encontrada');
+        return;
     }
+    
+    const usuariosDaIgreja = await contarUsuariosPorIgreja(id);
+    
+    if (igreja.ativo && usuariosDaIgreja > 0) {
+        const confirma = confirm(`Esta igreja possui ${usuariosDaIgreja} usuário(s) vinculado(s).\n\nDeseja realmente desativar?`);
+        if (!confirma) return;
+    }
+    
+    const sb = getSupabase();
+    if (!sb) {
+        alert('❌ Erro: Supabase não inicializado');
+        return;
+    }
+    
+    const novoStatus = !igreja.ativo;
+    
+    const { error } = await sb
+        .from('igrejas')
+        .update({ ativo: novoStatus })
+        .eq('id', id);
+    
+    if (error) {
+        console.error('❌ Erro ao alterar status da igreja:', error);
+        alert('❌ Erro ao alterar status: ' + error.message);
+        return;
+    }
+    
+    const acao = novoStatus ? 'ativada' : 'desativada';
+    alert(`✅ Igreja ${acao} com sucesso!`);
+    await listarIgrejas();
 }
 
 // ========================================
