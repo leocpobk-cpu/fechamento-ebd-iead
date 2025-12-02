@@ -1,18 +1,17 @@
 // Configuração do Supabase
 const SUPABASE_URL = 'https://fwmlimudntlrkeukvyjg.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_gx8_WdV2x6n9FoZooniJCQ_s0hWGsiW';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3bWxpbXVkbnRscmtldWt2eWpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2OTkyNTMsImV4cCI6MjA4MDI3NTI1M30.Okcp4xYzu5FHlcn1baGFiy5dCvX2-mg1PVr9IiBh7Ko';
 
-// Aguardar o carregamento do SDK do Supabase
+// Cliente Supabase global
 let supabaseClient = null;
 
-// Inicializar quando o DOM carregar
-document.addEventListener('DOMContentLoaded', function() {
-    if (typeof supabase !== 'undefined') {
+// Função para obter o cliente Supabase
+function getSupabase() {
+    if (!supabaseClient && typeof supabase !== 'undefined') {
         supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log('✅ Supabase conectado com sucesso!');
-    } else {
-        console.error('❌ SDK do Supabase não carregado');
+        console.log('✅ Cliente Supabase inicializado');
     }
-});
+    return supabaseClient;
+}
 
-console.log('📡 Supabase configuração carregada...');
+console.log('📡 Supabase config carregado - aguardando inicialização...');
