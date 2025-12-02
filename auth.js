@@ -5,6 +5,19 @@
 let tentativasLogin = 0;
 const MAX_TENTATIVAS = 3;
 
+// Igrejas padrão
+const igrejaspadrao = [
+    {
+        id: 1,
+        nome: 'IEAD - Sede',
+        endereco: 'Rua Principal, 100',
+        cidade: 'São Paulo',
+        uf: 'SP',
+        pastor: 'Pastor Titular',
+        ativo: true
+    }
+];
+
 // Usuários padrão (em produção, usar backend real)
 const usuariosPadrao = [
     {
@@ -15,6 +28,7 @@ const usuariosPadrao = [
         email: 'admin@iead.com',
         celular: '(11) 99999-9999',
         nivel: 1, // Admin - acesso total
+        igrejaId: null, // Admin vê todas as igrejas
         ativo: true
     },
     {
@@ -25,6 +39,7 @@ const usuariosPadrao = [
         email: 'diretoria@iead.com',
         celular: '(11) 98888-8888',
         nivel: 2, // Diretoria - lançamento e visualização
+        igrejaId: 1, // Pertence à igreja 1
         ativo: true
     },
     {
@@ -35,15 +50,45 @@ const usuariosPadrao = [
         email: 'auxiliar@iead.com',
         celular: '(11) 97777-7777',
         nivel: 3, // Auxiliar - apenas visualização
+        igrejaId: 1, // Pertence à igreja 1
         ativo: true
     }
 ];
+
+// Inicializar igrejas no localStorage
+function inicializarIgrejas() {
+    if (!localStorage.getItem('igrejasEBD')) {
+        localStorage.setItem('igrejasEBD', JSON.stringify(igrejaspadrao));
+    }
+}
 
 // Inicializar usuários no localStorage
 function inicializarUsuarios() {
     if (!localStorage.getItem('usuariosEBD')) {
         localStorage.setItem('usuariosEBD', JSON.stringify(usuariosPadrao));
     }
+}
+
+// Obter todas as igrejas
+function getIgrejas() {
+    return JSON.parse(localStorage.getItem('igrejasEBD') || '[]');
+}
+
+// Salvar igrejas
+function salvarIgrejas(igrejas) {
+    localStorage.setItem('igrejasEBD', JSON.stringify(igrejas));
+}
+
+// Obter igreja do usuário logado
+function getIgrejaUsuarioLogado() {
+    const usuario = getUsuarioLogado();
+    if (!usuario) return null;
+    
+    // Admin vê todas
+    if (usuario.nivel === 1) return null;
+    
+    // Outros usuários veem apenas sua igreja
+    return usuario.igrejaId;
 }
 
 // Obter todos os usuários
@@ -393,6 +438,7 @@ function verificarAutenticacao() {
 
 // Adicionar event listeners para Enter nos inputs
 document.addEventListener('DOMContentLoaded', () => {
+    inicializarIgrejas();
     inicializarUsuarios();
     verificarAutenticacao();
     
@@ -410,6 +456,17 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('input-confirma-senha')?.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') redefinirSenha();
     });
+    
+    // Mudar visibilidade do campo igreja quando mudar nível
+    document.getElementById('modal-nivel')?.addEventListener('change', function() {
+        const campoIgreja = document.getElementById('campo-igreja');
+        if (this.value === '1') {
+            campoIgreja.style.display = 'none';
+        } else {
+            campoIgreja.style.display = 'block';
+            carregarSelectIgrejas();
+        }
+    });
 });
 
 // ========================================
@@ -418,9 +475,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let usuarioEditando = null;
 
+// Carregar igrejas no select
+function carregarSelectIgrejas() {
+    const select = document.getElementById('modal-igreja');
+    if (!select) return;
+    
+    const igrejas = getIgrejas().filter(i => i.ativo);
+    
+    select.innerHTML = '<option value="">Selecione uma igreja</option>' + 
+        igrejas.map(i => `<option value="${i.id}">${i.nome} - ${i.cidade}/${i.uf}</option>`).join('');
+}
+
 // Listar usuários
 function listarUsuarios() {
     const usuarios = getUsuarios();
+    const igrejas = getIgrejas();
     const container = document.getElementById('lista-usuarios');
     
     if (!container) return;
@@ -436,7 +505,11 @@ function listarUsuarios() {
         3: { texto: 'Auxiliar', classe: 'badge-auxiliar', icone: '👁️' }
     };
     
-    container.innerHTML = usuarios.map(u => `
+    container.innerHTML = usuarios.map(u => {
+        const igreja = u.igrejaId ? igrejas.find(i => i.id === u.igrejaId) : null;
+        const igrejaTexto = u.nivel === 1 ? 'Todas as Igrejas' : (igreja ? igreja.nome : 'Sem igreja');
+        
+        return `
         <div class="user-card">
             <div class="user-info-card">
                 <div class="user-name">${u.nome}</div>
@@ -444,6 +517,7 @@ function listarUsuarios() {
                     <span>👤 ${u.usuario}</span>
                     <span>📧 ${u.email}</span>
                     <span>📱 ${u.celular}</span>
+                    <span>🏛️ ${igrejaTexto}</span>
                     <span class="user-badge ${niveis[u.nivel].classe}">
                         ${niveis[u.nivel].icone} ${niveis[u.nivel].texto}
                     </span>
@@ -453,6 +527,14 @@ function listarUsuarios() {
             <div class="user-actions">
                 <button class="btn-icon" onclick="editarUsuario(${u.id})" title="Editar">✏️</button>
                 <button class="btn-icon warning" onclick="resetarSenhaUsuario(${u.id})" title="Resetar Senha">🔑</button>
+                <button class="btn-icon ${u.ativo ? 'danger' : 'success'}" onclick="toggleAtivoUsuario(${u.id})" 
+                    title="${u.ativo ? 'Desativar' : 'Ativar'}">
+                    ${u.ativo ? '🔴' : '🟢'}
+                </button>
+            </div>
+        </div>
+        `;
+    }).join('');
                 <button class="btn-icon ${u.ativo ? 'danger' : ''}" onclick="toggleAtivoUsuario(${u.id})" title="${u.ativo ? 'Desativar' : 'Ativar'}">
                     ${u.ativo ? '🚫' : '✅'}
                 </button>
@@ -473,6 +555,10 @@ function abrirModalUsuario() {
     document.getElementById('modal-nivel').value = '3';
     document.getElementById('modal-senha').value = '';
     document.getElementById('campo-senha').style.display = 'block';
+    
+    // Carregar igrejas no select
+    carregarSelectIgrejas();
+    document.getElementById('campo-igreja').style.display = 'block';
     
     const modal = document.getElementById('modal-usuario');
     if (modal) {
@@ -506,6 +592,21 @@ function editarUsuario(id) {
     document.getElementById('modal-senha').value = '';
     document.getElementById('campo-senha').style.display = 'none';
     
+    // Carregar igrejas e selecionar a do usuário
+    carregarSelectIgrejas();
+    if (usuario.nivel === 1) {
+        document.getElementById('campo-igreja').style.display = 'none';
+    } else {
+        document.getElementById('campo-igreja').style.display = 'block';
+        document.getElementById('modal-igreja').value = usuario.igrejaId || '';
+    }
+    document.getElementById('modal-input-usuario').value = usuario.usuario;
+    document.getElementById('modal-email').value = usuario.email;
+    document.getElementById('modal-celular').value = usuario.celular;
+    document.getElementById('modal-nivel').value = usuario.nivel;
+    document.getElementById('modal-senha').value = '';
+    document.getElementById('campo-senha').style.display = 'none';
+    
     const modal = document.getElementById('modal-usuario');
     if (modal) {
         modal.style.display = 'flex';
@@ -524,14 +625,21 @@ function salvarUsuario() {
     const email = document.getElementById('modal-email').value.trim();
     const celular = document.getElementById('modal-celular').value.trim();
     const nivel = parseInt(document.getElementById('modal-nivel').value);
+    const igrejaId = nivel === 1 ? null : parseInt(document.getElementById('modal-igreja').value) || null;
     const senha = document.getElementById('modal-senha').value;
     
-    console.log('📝 Dados capturados:', {nome, usuario, email, celular, nivel});
+    console.log('📝 Dados capturados:', {nome, usuario, email, celular, nivel, igrejaId});
     
     // Validações
     if (!nome || !usuario || !email || !celular) {
         alert('❌ Preencha todos os campos obrigatórios!');
         console.error('❌ Validação falhou: campos vazios');
+        return;
+    }
+    
+    if (nivel !== 1 && !igrejaId) {
+        alert('❌ Selecione uma igreja para o usuário!');
+        console.error('❌ Validação falhou: igreja não selecionada');
         return;
     }
     
@@ -568,7 +676,9 @@ function salvarUsuario() {
                 usuario,
                 email,
                 celular,
-                nivel
+                nivel,
+                igrejaId
+            };
             };
             
             console.log('💾 Salvando usuário editado:', usuarios[index]);
@@ -596,6 +706,7 @@ function salvarUsuario() {
             email,
             celular,
             nivel,
+            igrejaId,
             ativo: true
         };
         
@@ -659,3 +770,202 @@ function toggleAtivoUsuario(id) {
         listarUsuarios();
     }
 }
+
+// ========================================
+// GERENCIAMENTO DE IGREJAS (apenas Admin)
+// ========================================
+
+let igrejaEditando = null;
+
+// Listar igrejas
+function listarIgrejas() {
+    const igrejas = getIgrejas();
+    const container = document.getElementById('lista-igrejas');
+    
+    if (!container) return;
+    
+    if (igrejas.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">Nenhuma igreja cadastrada</p>';
+        return;
+    }
+    
+    container.innerHTML = igrejas.map(igreja => `
+        <div class="user-info-card" style="border-left: 4px solid ${igreja.ativo ? '#10b981' : '#ef4444'};">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                <div>
+                    <div style="font-weight: 700; font-size: 1.1rem; color: var(--primary);">
+                        ${igreja.nome}
+                        ${!igreja.ativo ? ' <span style="color: #ef4444; font-size: 0.8rem;">(Inativa)</span>' : ''}
+                    </div>
+                    <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">
+                        📍 ${igreja.endereco} - ${igreja.cidade}/${igreja.uf}
+                    </div>
+                    ${igreja.pastor ? `<div style="font-size: 0.85rem; color: #666;">👤 Pastor: ${igreja.pastor}</div>` : ''}
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-small btn-view" onclick="editarIgreja(${igreja.id})" title="Editar">✏️</button>
+                    <button class="btn-small" style="background: ${igreja.ativo ? '#fee2e2' : '#dcfce7'}; color: ${igreja.ativo ? '#dc2626' : '#16a34a'};" 
+                        onclick="toggleAtivoIgreja(${igreja.id})" title="${igreja.ativo ? 'Desativar' : 'Ativar'}">
+                        ${igreja.ativo ? '🔴' : '🟢'}
+                    </button>
+                </div>
+            </div>
+            <div style="font-size: 0.75rem; color: #999; border-top: 1px solid #e5e7eb; padding-top: 8px; margin-top: 8px;">
+                👥 ${contarUsuariosPorIgreja(igreja.id)} usuário(s) vinculado(s)
+            </div>
+        </div>
+    `).join('');
+}
+
+// Contar usuários por igreja
+function contarUsuariosPorIgreja(igrejaId) {
+    const usuarios = getUsuarios();
+    return usuarios.filter(u => u.igrejaId === igrejaId).length;
+}
+
+// Abrir modal para nova igreja
+function abrirModalIgreja() {
+    console.log('🏛️ Abrindo modal para nova igreja...');
+    igrejaEditando = null;
+    document.getElementById('modal-igreja-titulo').textContent = '➕ Nova Igreja';
+    document.getElementById('modal-igreja-nome').value = '';
+    document.getElementById('modal-igreja-endereco').value = '';
+    document.getElementById('modal-igreja-cidade').value = '';
+    document.getElementById('modal-igreja-uf').value = '';
+    document.getElementById('modal-igreja-pastor').value = '';
+    
+    const modal = document.getElementById('modal-igreja');
+    if (modal) {
+        modal.style.display = 'flex';
+        console.log('✅ Modal de igreja exibido');
+    } else {
+        console.error('❌ Modal de igreja não encontrado!');
+    }
+}
+
+// Editar igreja
+function editarIgreja(id) {
+    console.log('✏️ Editando igreja ID:', id);
+    const igrejas = getIgrejas();
+    const igreja = igrejas.find(i => i.id === id);
+    
+    if (!igreja) {
+        alert('Igreja não encontrada!');
+        console.error('❌ Igreja não encontrada:', id);
+        return;
+    }
+    
+    console.log('📋 Dados da igreja:', igreja);
+    igrejaEditando = id;
+    document.getElementById('modal-igreja-titulo').textContent = '✏️ Editar Igreja';
+    document.getElementById('modal-igreja-nome').value = igreja.nome;
+    document.getElementById('modal-igreja-endereco').value = igreja.endereco;
+    document.getElementById('modal-igreja-cidade').value = igreja.cidade;
+    document.getElementById('modal-igreja-uf').value = igreja.uf;
+    document.getElementById('modal-igreja-pastor').value = igreja.pastor || '';
+    
+    const modal = document.getElementById('modal-igreja');
+    if (modal) {
+        modal.style.display = 'flex';
+        console.log('✅ Modal de edição de igreja exibido');
+    } else {
+        console.error('❌ Modal de igreja não encontrado!');
+    }
+}
+
+// Salvar igreja (criar ou editar)
+function salvarIgreja() {
+    console.log('🔧 Iniciando salvarIgreja...', {editando: igrejaEditando});
+    
+    const nome = document.getElementById('modal-igreja-nome').value.trim();
+    const endereco = document.getElementById('modal-igreja-endereco').value.trim();
+    const cidade = document.getElementById('modal-igreja-cidade').value.trim();
+    const uf = document.getElementById('modal-igreja-uf').value.trim();
+    const pastor = document.getElementById('modal-igreja-pastor').value.trim();
+    
+    console.log('📝 Dados capturados:', {nome, endereco, cidade, uf, pastor});
+    
+    // Validações
+    if (!nome || !endereco || !cidade || !uf) {
+        alert('❌ Preencha todos os campos obrigatórios!');
+        console.error('❌ Validação falhou: campos vazios');
+        return;
+    }
+    
+    const igrejas = getIgrejas();
+    console.log('🏛️ Igrejas atuais:', igrejas.length);
+    
+    if (igrejaEditando) {
+        // Editar igreja existente
+        const index = igrejas.findIndex(i => i.id === igrejaEditando);
+        console.log('✏️ Editando igreja ID:', igrejaEditando, 'Index:', index);
+        
+        if (index !== -1) {
+            igrejas[index] = {
+                ...igrejas[index],
+                nome,
+                endereco,
+                cidade,
+                uf,
+                pastor
+            };
+            
+            console.log('💾 Salvando igreja editada:', igrejas[index]);
+            salvarIgrejas(igrejas);
+            alert('✅ Igreja atualizada com sucesso!');
+            console.log('✅ Igreja atualizada');
+        }
+    } else {
+        // Criar nova igreja
+        const novoId = igrejas.length > 0 ? Math.max(...igrejas.map(i => i.id)) + 1 : 1;
+        
+        const novaIgreja = {
+            id: novoId,
+            nome,
+            endereco,
+            cidade,
+            uf,
+            pastor,
+            ativo: true
+        };
+        
+        console.log('➕ Criando nova igreja:', novaIgreja);
+        igrejas.push(novaIgreja);
+        salvarIgrejas(igrejas);
+        alert('✅ Igreja criada com sucesso!');
+        console.log('✅ Nova igreja criada com ID:', novoId);
+    }
+    
+    fecharModalIgreja();
+    listarIgrejas();
+    console.log('🔄 Lista de igrejas atualizada');
+}
+
+// Fechar modal de igreja
+function fecharModalIgreja() {
+    document.getElementById('modal-igreja').style.display = 'none';
+    igrejaEditando = null;
+}
+
+// Ativar/Desativar igreja
+function toggleAtivoIgreja(id) {
+    const igrejas = getIgrejas();
+    const index = igrejas.findIndex(i => i.id === id);
+    
+    if (index !== -1) {
+        const usuariosDaIgreja = contarUsuariosPorIgreja(id);
+        
+        if (igrejas[index].ativo && usuariosDaIgreja > 0) {
+            const confirma = confirm(`Esta igreja possui ${usuariosDaIgreja} usuário(s) vinculado(s).\n\nDeseja realmente desativar?`);
+            if (!confirma) return;
+        }
+        
+        igrejas[index].ativo = !igrejas[index].ativo;
+        salvarIgrejas(igrejas);
+        
+        const acao = igrejas[index].ativo ? 'ativada' : 'desativada';
+        alert(`✅ Igreja ${acao} com sucesso!`);
+        listarIgrejas();
+    }
+}
+
