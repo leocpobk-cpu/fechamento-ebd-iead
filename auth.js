@@ -405,7 +405,7 @@ function abrirModalUsuario() {
     usuarioEditando = null;
     document.getElementById('modal-usuario-titulo').textContent = '➕ Novo Usuário';
     document.getElementById('modal-nome').value = '';
-    document.getElementById('modal-usuario').value = '';
+    document.getElementById('modal-input-usuario').value = '';
     document.getElementById('modal-email').value = '';
     document.getElementById('modal-celular').value = '';
     document.getElementById('modal-nivel').value = '3';
@@ -427,7 +427,7 @@ function editarUsuario(id) {
     usuarioEditando = id;
     document.getElementById('modal-usuario-titulo').textContent = '✏️ Editar Usuário';
     document.getElementById('modal-nome').value = usuario.nome;
-    document.getElementById('modal-usuario').value = usuario.usuario;
+    document.getElementById('modal-input-usuario').value = usuario.usuario;
     document.getElementById('modal-email').value = usuario.email;
     document.getElementById('modal-celular').value = usuario.celular;
     document.getElementById('modal-nivel').value = usuario.nivel;
@@ -439,7 +439,7 @@ function editarUsuario(id) {
 // Salvar usuário (criar ou editar)
 function salvarUsuario() {
     const nome = document.getElementById('modal-nome').value.trim();
-    const usuario = document.getElementById('modal-usuario').value.trim();
+    const usuario = document.getElementById('modal-input-usuario').value.trim();
     const email = document.getElementById('modal-email').value.trim();
     const celular = document.getElementById('modal-celular').value.trim();
     const nivel = parseInt(document.getElementById('modal-nivel').value);
