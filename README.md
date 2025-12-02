@@ -4,7 +4,9 @@ Sistema completo para gerenciamento de Escola Bíblica Dominical com histórico,
 
 ## 🌐 Acesso Online
 
-**URL:** https://fechamento-ebd-iead.azurestaticapps.net
+**URL:** https://leocpobk-cpu.github.io/fechamento-ebd-iead/
+
+**Hospedagem:** GitHub Pages (Deploy automático a cada push)
 
 ## ✨ Funcionalidades
 
@@ -46,9 +48,9 @@ Sistema completo para gerenciamento de Escola Bíblica Dominical com histórico,
 
 ## 🚀 Deploy
 
-O sistema está hospedado no **Azure Static Web Apps** com deploy automático via GitHub Actions.
+O sistema está hospedado no **GitHub Pages** com deploy automático.
 
-Cada push para `main` dispara um novo deploy automaticamente.
+Cada push para `main` atualiza o site automaticamente em 1-2 minutos.
 
 ## 📁 Estrutura
 
