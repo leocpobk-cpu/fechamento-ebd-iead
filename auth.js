@@ -463,6 +463,7 @@ function listarUsuarios() {
 
 // Abrir modal para novo usuário
 function abrirModalUsuario() {
+    console.log('🔓 Abrindo modal para novo usuário...');
     usuarioEditando = null;
     document.getElementById('modal-usuario-titulo').textContent = '➕ Novo Usuário';
     document.getElementById('modal-nome').value = '';
@@ -472,19 +473,29 @@ function abrirModalUsuario() {
     document.getElementById('modal-nivel').value = '3';
     document.getElementById('modal-senha').value = '';
     document.getElementById('campo-senha').style.display = 'block';
-    document.getElementById('modal-usuario').style.display = 'flex';
+    
+    const modal = document.getElementById('modal-usuario');
+    if (modal) {
+        modal.style.display = 'flex';
+        console.log('✅ Modal exibido');
+    } else {
+        console.error('❌ Modal não encontrado!');
+    }
 }
 
 // Editar usuário
 function editarUsuario(id) {
+    console.log('✏️ Editando usuário ID:', id);
     const usuarios = getUsuarios();
     const usuario = usuarios.find(u => u.id === id);
     
     if (!usuario) {
         alert('Usuário não encontrado!');
+        console.error('❌ Usuário não encontrado:', id);
         return;
     }
     
+    console.log('📋 Dados do usuário:', usuario);
     usuarioEditando = id;
     document.getElementById('modal-usuario-titulo').textContent = '✏️ Editar Usuário';
     document.getElementById('modal-nome').value = usuario.nome;
@@ -494,11 +505,20 @@ function editarUsuario(id) {
     document.getElementById('modal-nivel').value = usuario.nivel;
     document.getElementById('modal-senha').value = '';
     document.getElementById('campo-senha').style.display = 'none';
-    document.getElementById('modal-usuario').style.display = 'flex';
+    
+    const modal = document.getElementById('modal-usuario');
+    if (modal) {
+        modal.style.display = 'flex';
+        console.log('✅ Modal de edição exibido');
+    } else {
+        console.error('❌ Modal não encontrado!');
+    }
 }
 
 // Salvar usuário (criar ou editar)
 function salvarUsuario() {
+    console.log('🔧 Iniciando salvarUsuario...', {editando: usuarioEditando});
+    
     const nome = document.getElementById('modal-nome').value.trim();
     const usuario = document.getElementById('modal-input-usuario').value.trim();
     const email = document.getElementById('modal-email').value.trim();
@@ -506,22 +526,28 @@ function salvarUsuario() {
     const nivel = parseInt(document.getElementById('modal-nivel').value);
     const senha = document.getElementById('modal-senha').value;
     
+    console.log('📝 Dados capturados:', {nome, usuario, email, celular, nivel});
+    
     // Validações
     if (!nome || !usuario || !email || !celular) {
         alert('❌ Preencha todos os campos obrigatórios!');
+        console.error('❌ Validação falhou: campos vazios');
         return;
     }
     
     if (!usuarioEditando && (!senha || senha.length < 6)) {
         alert('❌ A senha deve ter pelo menos 6 caracteres!');
+        console.error('❌ Validação falhou: senha inválida');
         return;
     }
     
     const usuarios = getUsuarios();
+    console.log('👥 Usuários atuais:', usuarios.length);
     
     if (usuarioEditando) {
         // Editar usuário existente
         const index = usuarios.findIndex(u => u.id === usuarioEditando);
+        console.log('✏️ Editando usuário ID:', usuarioEditando, 'Index:', index);
         
         if (index !== -1) {
             // Verificar se usuário já existe (exceto o próprio)
@@ -532,6 +558,7 @@ function salvarUsuario() {
             
             if (usuarioExiste) {
                 alert('❌ Nome de usuário já existe!');
+                console.error('❌ Usuário duplicado');
                 return;
             }
             
@@ -544,8 +571,10 @@ function salvarUsuario() {
                 nivel
             };
             
+            console.log('💾 Salvando usuário editado:', usuarios[index]);
             salvarUsuarios(usuarios);
             alert('✅ Usuário atualizado com sucesso!');
+            console.log('✅ Usuário atualizado');
         }
     } else {
         // Criar novo usuário
@@ -553,6 +582,7 @@ function salvarUsuario() {
         
         if (usuarioExiste) {
             alert('❌ Nome de usuário já existe!');
+            console.error('❌ Usuário duplicado');
             return;
         }
         
@@ -569,13 +599,16 @@ function salvarUsuario() {
             ativo: true
         };
         
+        console.log('➕ Criando novo usuário:', novoUsuario);
         usuarios.push(novoUsuario);
         salvarUsuarios(usuarios);
         alert('✅ Usuário criado com sucesso!');
+        console.log('✅ Novo usuário criado com ID:', novoId);
     }
     
     fecharModalUsuario();
     listarUsuarios();
+    console.log('🔄 Lista de usuários atualizada');
 }
 
 // Fechar modal
