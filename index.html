@@ -9,6 +9,7 @@
     <link rel="icon" type="image/svg+xml" href="icon.svg">
     <title>Gestão EBD - IEAD</title>
     <script src="licoes.js"></script>
+    <script src="auth.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -37,6 +38,248 @@
             --danger: #ef4444;
             --warning: #f59e0b;
         }
+        
+        /* Login Screen */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .login-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 400px;
+            overflow: hidden;
+        }
+        
+        .login-header {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        
+        .login-header h2 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .login-header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .login-form {
+            padding: 30px 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+        }
+        
+        .btn-link {
+            width: 100%;
+            padding: 10px;
+            background: transparent;
+            color: #2563eb;
+            border: none;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        
+        .alert-login {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .alert-login.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        
+        .alert-login.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        /* Login Screen */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .login-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 400px;
+            overflow: hidden;
+        }
+        
+        .login-header {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        
+        .login-header h2 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .login-header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .login-form {
+            padding: 30px 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+        }
+        
+        .btn-link {
+            width: 100%;
+            padding: 10px;
+            background: transparent;
+            color: #2563eb;
+            border: none;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        
+        .alert-login {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .alert-login.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        
+        .alert-login.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         
@@ -62,6 +305,22 @@
             right: 15px;
             display: flex;
             gap: 10px;
+            align-items: center;
+        }
+        
+        .user-info {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .user-role {
+            font-size: 0.7rem;
+            opacity: 0.8;
         }
         
         .icon-btn {
@@ -318,14 +577,74 @@
     </style>
 </head>
 <body>
+    <!-- Tela de Login -->
+    <div id="tela-login" class="login-overlay">
+        <div class="login-container">
+            <div class="login-header">
+                <h2>🔐 Gestão EBD - IEAD</h2>
+                <p>Sistema de Gerenciamento</p>
+            </div>
+            
+            <div id="form-login" class="login-form">
+                <div class="form-group">
+                    <label>👤 Usuário</label>
+                    <input type="text" id="input-usuario" placeholder="Digite seu usuário" autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label>🔑 Senha</label>
+                    <input type="password" id="input-senha" placeholder="Digite sua senha" autocomplete="current-password">
+                </div>
+                <button onclick="fazerLogin()" class="btn-login">ENTRAR</button>
+                <button onclick="mostrarRecuperacao()" class="btn-link">Esqueci minha senha</button>
+            </div>
+            
+            <div id="form-recuperacao" class="login-form" style="display:none;">
+                <div class="form-group">
+                    <label>👤 Usuário</label>
+                    <input type="text" id="input-usuario-recuperacao" placeholder="Digite seu usuário">
+                </div>
+                <div class="form-group">
+                    <label>📧 Email ou 📱 Celular</label>
+                    <input type="text" id="input-contato-recuperacao" placeholder="email@exemplo.com ou (00) 00000-0000">
+                </div>
+                <button onclick="enviarRecuperacao()" class="btn-login">ENVIAR CÓDIGO</button>
+                <button onclick="voltarLogin()" class="btn-link">Voltar ao login</button>
+            </div>
+            
+            <div id="form-codigo" class="login-form" style="display:none;">
+                <div class="form-group">
+                    <label>🔢 Código de Verificação</label>
+                    <input type="text" id="input-codigo" placeholder="Digite o código recebido" maxlength="6">
+                </div>
+                <div class="form-group">
+                    <label>🔑 Nova Senha</label>
+                    <input type="password" id="input-nova-senha" placeholder="Digite a nova senha">
+                </div>
+                <div class="form-group">
+                    <label>🔑 Confirmar Senha</label>
+                    <input type="password" id="input-confirma-senha" placeholder="Confirme a nova senha">
+                </div>
+                <button onclick="redefinirSenha()" class="btn-login">REDEFINIR SENHA</button>
+                <button onclick="voltarLogin()" class="btn-link">Voltar ao login</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sistema Principal (oculto até login) -->
+    <div id="sistema-principal" style="display:none;">
 
     <header>
         <h1>📖 Gestão EBD - IEAD</h1>
         <p>Escola Bíblica Dominical</p>
         <div class="header-actions">
+            <div class="user-info" id="info-usuario">
+                <span id="nome-usuario"></span>
+                <span class="user-role" id="role-usuario"></span>
+            </div>
             <button class="icon-btn" onclick="toggleTema()" title="Alternar tema" id="btn-tema">🌙</button>
             <button class="icon-btn" onclick="exportarDados()" title="Exportar dados">💾</button>
             <button class="icon-btn" onclick="mostrarConfig()" title="Configurações">⚙️</button>
+            <button class="icon-btn" onclick="fazerLogout()" title="Sair">🚪</button>
         </div>
     </header>
 
@@ -1591,6 +1910,8 @@
         alert('⚙️ Configurações\n\n🌙 Tema: Clique no ícone ao lado\n💾 Exportar: Clique no ícone de download\n📊 Dashboard: Acesse a aba Dashboard\n\nVersão 2.0 - Todas as funcionalidades ativas!');
     }
 </script>
+
+</div> <!-- Fim sistema-principal -->
 
 </body>
 </html>
