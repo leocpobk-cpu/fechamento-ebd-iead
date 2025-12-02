@@ -842,6 +842,7 @@
                 <span id="nome-usuario"></span>
                 <span class="user-role" id="role-usuario"></span>
             </div>
+            <button class="icon-btn" id="btn-usuarios" onclick="mudarTela('usuarios')" title="Gerenciar Usuários" style="display:none;">👥</button>
             <button class="icon-btn" onclick="toggleTema()" title="Alternar tema" id="btn-tema">🌙</button>
             <button class="icon-btn" onclick="exportarDados()" title="Exportar dados">💾</button>
             <button class="icon-btn" onclick="mostrarConfig()" title="Configurações">⚙️</button>
@@ -855,6 +856,7 @@
         <div class="nav-tab" onclick="mudarTela('historico')">📋 Histórico</div>
         <div class="nav-tab" onclick="mudarTela('mensal')">📅 Mensal</div>
         <div class="nav-tab" onclick="mudarTela('licoes')">📚 Lições</div>
+        <div class="nav-tab" id="aba-usuarios" onclick="mudarTela('usuarios')" style="display:none;">👥 Usuários</div>
     </div>
 
     <!-- TELA 1: LANÇAMENTO -->

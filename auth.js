@@ -156,21 +156,20 @@ function aplicarPermissoes(nivel) {
         if (elementos.abaLicoes) elementos.abaLicoes.style.display = 'none';
         if (elementos.btnConfig) elementos.btnConfig.style.display = 'none';
         
+        // Esconder aba de usuários
+        const abaUsuarios = document.getElementById('aba-usuarios');
+        if (abaUsuarios) abaUsuarios.style.display = 'none';
+        
     } else if (nivel === 1) {
         // Admin: acesso total
-        // Adicionar aba de Usuários
-        adicionarAbaUsuarios();
+        // Mostrar aba de Usuários
+        const abaUsuarios = document.getElementById('aba-usuarios');
+        if (abaUsuarios) abaUsuarios.style.display = 'flex';
+        
+        // Mostrar botão de usuários no header
+        const btnUsuarios = document.getElementById('btn-usuarios');
+        if (btnUsuarios) btnUsuarios.style.display = 'flex';
     }
-}
-
-// Adicionar aba de gerenciamento de usuários (apenas Admin)
-function adicionarAbaUsuarios() {
-    const navTabs = document.querySelector('.nav-tabs');
-    const abaUsuarios = document.createElement('div');
-    abaUsuarios.className = 'nav-tab';
-    abaUsuarios.textContent = '👥 Usuários';
-    abaUsuarios.onclick = () => mudarTela('usuarios');
-    navTabs.appendChild(abaUsuarios);
 }
 
 // Mostrar tela de recuperação de senha
