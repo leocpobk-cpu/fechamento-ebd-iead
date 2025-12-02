@@ -5,6 +5,10 @@
 let tentativasLogin = 0;
 const MAX_TENTATIVAS = 3;
 
+// Variáveis globais para gerenciamento
+let usuarioEditando = null;
+let igrejaEditando = null;
+
 // Igrejas padrão
 const igrejaspadrao = [
     {
@@ -734,8 +738,6 @@ window.trocarIgrejaAdmin = trocarIgrejaAdmin;
 // GERENCIAMENTO DE USUÁRIOS (apenas Admin)
 // ========================================
 
-let usuarioEditando = null;
-
 // Carregar igrejas no select
 function carregarSelectIgrejas() {
     const select = document.getElementById('modal-igreja');
@@ -1038,8 +1040,6 @@ function toggleAtivoUsuario(id) {
 // ========================================
 // GERENCIAMENTO DE IGREJAS (apenas Admin)
 // ========================================
-
-let igrejaEditando = null;
 
 // Listar igrejas
 function listarIgrejas() {
