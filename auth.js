@@ -253,8 +253,11 @@ async function fazerLogin() {
             // Atualizar header com info do usuário
             atualizarHeaderUsuario(sessao);
             
-            // Aplicar permissões
-            aplicarPermissoes(sessao.nivel);
+            // Aplicar permissões com delay para garantir que DOM está pronto
+            setTimeout(() => {
+                console.log('⏰ Aplicando permissões após delay...');
+                aplicarPermissoes(sessao.nivel);
+            }, 100);
             
             // Carregar lições iniciais (se for admin ou primeira vez)
             if (typeof carregarLicoes === 'function') {
@@ -441,17 +444,29 @@ function aplicarPermissoes(nivel) {
     } else if (nivel === 1) {
         // Admin: acesso total
         console.log('👑 Aplicando permissões de Admin...');
+        console.log('🔍 Buscando elemento #aba-usuarios...');
         
         // Mostrar aba de Usuários/Igrejas com força
         const abaUsuarios = document.getElementById('aba-usuarios');
+        console.log('📦 Elemento encontrado:', abaUsuarios);
+        
         if (abaUsuarios) {
+            console.log('🎨 Display ANTES:', window.getComputedStyle(abaUsuarios).display);
+            
             // Remover qualquer estilo inline e forçar exibição
             abaUsuarios.removeAttribute('style');
             abaUsuarios.style.setProperty('display', 'flex', 'important');
+            
+            // Forçar com métodos alternativos também
+            abaUsuarios.style.display = 'flex';
+            abaUsuarios.style.visibility = 'visible';
+            abaUsuarios.classList.remove('hidden');
+            
+            console.log('🎨 Display DEPOIS:', window.getComputedStyle(abaUsuarios).display);
             console.log('✅ Aba de usuários/igrejas exibida');
-            console.log('🔍 Display atual:', window.getComputedStyle(abaUsuarios).display);
         } else {
-            console.error('❌ Elemento #aba-usuarios não encontrado');
+            console.error('❌ Elemento #aba-usuarios não encontrado no DOM');
+            console.log('🔍 Elementos disponíveis:', document.querySelectorAll('.nav-tab'));
         }
         
         // Carregar lições iniciais se houver
