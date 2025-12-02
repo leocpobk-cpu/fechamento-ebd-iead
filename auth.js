@@ -535,9 +535,18 @@ function verificarAutenticacao() {
 
 // Adicionar event listeners para Enter nos inputs
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 DOM Carregado - Inicializando sistema...');
+    
     inicializarIgrejas();
     inicializarUsuarios();
     verificarAutenticacao();
+    
+    console.log('✅ Sistema inicializado');
+    console.log('📝 Funções disponíveis:', {
+        fazerLogin: typeof window.fazerLogin,
+        mostrarRecuperacao: typeof window.mostrarRecuperacao,
+        voltarLogin: typeof window.voltarLogin
+    });
     
     // Enter no login
     document.getElementById('input-senha')?.addEventListener('keypress', (e) => {
@@ -565,6 +574,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+// Expor funções globalmente para uso inline no HTML
+window.fazerLogin = fazerLogin;
+window.fazerLogout = fazerLogout;
+window.mostrarRecuperacao = mostrarRecuperacao;
+window.voltarLogin = voltarLogin;
+window.enviarRecuperacao = enviarRecuperacao;
+window.redefinirSenha = redefinirSenha;
+window.trocarSenhaPrimeiroAcesso = trocarSenhaPrimeiroAcesso;
+window.mudarTelaLogin = mudarTelaLogin;
 
 // ========================================
 // GERENCIAMENTO DE USUÁRIOS (apenas Admin)
@@ -1065,4 +1084,19 @@ function toggleAtivoIgreja(id) {
         listarIgrejas();
     }
 }
+
+// Expor funções de usuários e igrejas globalmente
+window.listarUsuarios = listarUsuarios;
+window.abrirModalUsuario = abrirModalUsuario;
+window.editarUsuario = editarUsuario;
+window.salvarUsuario = salvarUsuario;
+window.fecharModalUsuario = fecharModalUsuario;
+window.resetarSenhaUsuario = resetarSenhaUsuario;
+window.toggleAtivoUsuario = toggleAtivoUsuario;
+window.listarIgrejas = listarIgrejas;
+window.abrirModalIgreja = abrirModalIgreja;
+window.editarIgreja = editarIgreja;
+window.salvarIgreja = salvarIgreja;
+window.fecharModalIgreja = fecharModalIgreja;
+window.toggleAtivoIgreja = toggleAtivoIgreja;
 
