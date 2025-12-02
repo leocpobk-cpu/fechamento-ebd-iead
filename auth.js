@@ -740,7 +740,7 @@ window.trocarIgrejaAdmin = trocarIgrejaAdmin;
 
 // Carregar igrejas no select
 function carregarSelectIgrejas() {
-    const select = document.getElementById('modal-igreja');
+    const select = document.getElementById('modal-select-igreja');
     if (!select) return;
     
     const igrejas = getIgrejas().filter(i => i.ativo);
@@ -865,7 +865,7 @@ function editarUsuario(id) {
         document.getElementById('campo-igreja').style.display = 'none';
     } else {
         document.getElementById('campo-igreja').style.display = 'block';
-        document.getElementById('modal-igreja').value = usuario.igrejaId || '';
+        document.getElementById('modal-select-igreja').value = usuario.igrejaId || '';
     }
     document.getElementById('modal-input-usuario').value = usuario.usuario;
     document.getElementById('modal-email').value = usuario.email;
@@ -892,7 +892,7 @@ function salvarUsuario() {
     const email = document.getElementById('modal-email').value.trim();
     const celular = document.getElementById('modal-celular').value.trim();
     const nivel = parseInt(document.getElementById('modal-nivel').value);
-    const igrejaId = nivel === 1 ? null : parseInt(document.getElementById('modal-igreja').value) || null;
+    const igrejaId = nivel === 1 ? null : parseInt(document.getElementById('modal-select-igreja').value) || null;
     const senha = document.getElementById('modal-senha').value;
     
     console.log('📝 Dados capturados:', {nome, usuario, email, celular, nivel, igrejaId});
