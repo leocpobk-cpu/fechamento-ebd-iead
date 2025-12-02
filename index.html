@@ -1515,11 +1515,46 @@
     }
     
     // Carregar lições (do arquivo ou localStorage)
-    function carregarLicoes() {
-        const licoesLocal = localStorage.getItem('licoesEBD');
-        if(!licoesLocal && typeof licoesEBD !== 'undefined') {
-            // Primeira vez: salvar lições do arquivo no localStorage
-            localStorage.setItem('licoesEBD', JSON.stringify(licoesEBD));
+    async function carregarLicoes() {
+        // Verificar se as lições do arquivo já foram importadas
+        const importado = localStorage.getItem('licoesImportadasSupabase');
+        
+        if (!importado && typeof licoesEBD !== 'undefined') {
+            console.log('📚 Importando lições iniciais para o Supabase...');
+            
+            const igrejaId = getIgrejaUsuarioLogado();
+            if (!igrejaId) {
+                console.warn('⚠️ Aguardando login para importar lições');
+                return;
+            }
+            
+            try {
+                const sb = getSupabase();
+                
+                // Inserir lições para esta igreja
+                for (const licao of licoesEBD) {
+                    const { error } = await sb
+                        .from('licoes')
+                        .insert([{
+                            data: licao.data,
+                            licao: licao.licao,
+                            tema: licao.tema,
+                            igreja_id: igrejaId
+                        }])
+                        .select();
+                    
+                    // Ignorar erro de duplicação (já existe)
+                    if (error && !error.message.includes('duplicate')) {
+                        console.error('❌ Erro ao importar lição:', licao, error);
+                    }
+                }
+                
+                // Marcar como importado para esta igreja
+                localStorage.setItem('licoesImportadasSupabase', igrejaId);
+                console.log('✅ Lições importadas com sucesso!');
+            } catch (error) {
+                console.error('❌ Erro ao importar lições:', error);
+            }
         }
     }
     
@@ -2953,6 +2988,23 @@
     }
     
     // Inicializar swipe ao carregar (removido - será chamado no window.load)
+</script>
+
+<script>
+    // Inicialização do sistema
+    window.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 Sistema EBD IEAD carregado');
+        
+        // Verificar se há convite na URL
+        if (typeof verificarConviteNaURL === 'function') {
+            verificarConviteNaURL();
+        }
+        
+        // Aplicar tema escuro se preferido
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+        }
+    });
 </script>
 
 </div> <!-- Fim sistema-principal -->

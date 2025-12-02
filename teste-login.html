@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste de Login - EBD IEAD</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+</head>
+<body>
+    <h1>Teste de Login Admin</h1>
+    
+    <div>
+        <h2>1. Verificar Conexão com Supabase</h2>
+        <button onclick="testarConexao()">Testar Conexão</button>
+        <pre id="resultado-conexao"></pre>
+    </div>
+
+    <div>
+        <h2>2. Listar Todos os Usuários</h2>
+        <button onclick="listarUsuarios()">Listar Usuários</button>
+        <pre id="resultado-usuarios"></pre>
+    </div>
+
+    <div>
+        <h2>3. Testar Login Admin</h2>
+        <input type="text" id="usuario" value="admin" placeholder="Usuário">
+        <input type="password" id="senha" value="admin123" placeholder="Senha">
+        <button onclick="testarLogin()">Testar Login</button>
+        <pre id="resultado-login"></pre>
+    </div>
+
+    <div>
+        <h2>4. Inserir Admin Manualmente</h2>
+        <button onclick="inserirAdmin()">Inserir Admin</button>
+        <pre id="resultado-insert"></pre>
+    </div>
+
+    <script>
+        async function testarConexao() {
+            const resultado = document.getElementById('resultado-conexao');
+            try {
+                const sb = getSupabase();
+                resultado.textContent = '✅ Supabase configurado!\n\n' +
+                    'URL: ' + SUPABASE_URL + '\n' +
+                    'Chave Anon: ' + SUPABASE_ANON_KEY.substring(0, 20) + '...';
+            } catch (error) {
+                resultado.textContent = '❌ Erro: ' + error.message;
+            }
+        }
+
+        async function listarUsuarios() {
+            const resultado = document.getElementById('resultado-usuarios');
+            resultado.textContent = 'Carregando...';
+            
+            try {
+                const sb = getSupabase();
+                const { data, error } = await sb
+                    .from('usuarios')
+                    .select('id, usuario, senha, nome, nivel, ativo, primeiro_acesso');
+                
+                if (error) throw error;
+                
+                resultado.textContent = '✅ Usuários encontrados: ' + data.length + '\n\n' +
+                    JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultado.textContent = '❌ Erro: ' + error.message + '\n\n' +
+                    JSON.stringify(error, null, 2);
+            }
+        }
+
+        async function testarLogin() {
+            const resultado = document.getElementById('resultado-login');
+            const usuario = document.getElementById('usuario').value;
+            const senha = document.getElementById('senha').value;
+            
+            resultado.textContent = 'Tentando login...';
+            
+            try {
+                const sb = getSupabase();
+                const { data, error } = await sb
+                    .from('usuarios')
+                    .select('*')
+                    .eq('usuario', usuario)
+                    .eq('senha', senha)
+                    .eq('ativo', true)
+                    .limit(1);
+                
+                if (error) throw error;
+                
+                if (data && data.length > 0) {
+                    resultado.textContent = '✅ LOGIN SUCESSO!\n\n' +
+                        'Usuário encontrado:\n' +
+                        JSON.stringify(data[0], null, 2);
+                } else {
+                    resultado.textContent = '❌ LOGIN FALHOU!\n\n' +
+                        'Nenhum usuário encontrado com estas credenciais.\n' +
+                        'Usuário: ' + usuario + '\n' +
+                        'Senha: ' + senha;
+                }
+            } catch (error) {
+                resultado.textContent = '❌ Erro: ' + error.message + '\n\n' +
+                    JSON.stringify(error, null, 2);
+            }
+        }
+
+        async function inserirAdmin() {
+            const resultado = document.getElementById('resultado-insert');
+            resultado.textContent = 'Inserindo admin...';
+            
+            try {
+                const sb = getSupabase();
+                
+                // Deletar admin antigo se existir
+                await sb.from('usuarios').delete().eq('usuario', 'admin');
+                
+                // Inserir novo admin
+                const { data, error } = await sb
+                    .from('usuarios')
+                    .insert([{
+                        usuario: 'admin',
+                        senha: 'admin123',
+                        nome: 'Administrador Sistema',
+                        email: 'admin@iead.com',
+                        celular: '(00) 00000-0000',
+                        nivel: 1,
+                        igreja_id: null,
+                        ativo: true,
+                        primeiro_acesso: false
+                    }])
+                    .select();
+                
+                if (error) throw error;
+                
+                resultado.textContent = '✅ Admin inserido com sucesso!\n\n' +
+                    JSON.stringify(data, null, 2) + '\n\n' +
+                    'Agora teste o login com:\n' +
+                    'Usuário: admin\n' +
+                    'Senha: admin123';
+            } catch (error) {
+                resultado.textContent = '❌ Erro: ' + error.message + '\n\n' +
+                    JSON.stringify(error, null, 2);
+            }
+        }
+
+        // Auto-testar ao carregar
+        window.onload = function() {
+            console.log('🔍 Teste de Login Carregado');
+            console.log('Execute os testes clicando nos botões acima');
+        };
+    </script>
+</body>
+</html>

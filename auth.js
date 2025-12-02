@@ -256,6 +256,11 @@ async function fazerLogin() {
             // Aplicar permissões
             aplicarPermissoes(sessao.nivel);
             
+            // Carregar lições iniciais (se for admin ou primeira vez)
+            if (typeof carregarLicoes === 'function') {
+                setTimeout(() => carregarLicoes(), 500);
+            }
+            
             // Inicializar swipe em dispositivos móveis
             if (window.innerWidth <= 768 && typeof inicializarSwipe === 'function') {
                 setTimeout(() => inicializarSwipe(), 100);
@@ -437,22 +442,18 @@ function aplicarPermissoes(nivel) {
         // Admin: acesso total
         console.log('👑 Aplicando permissões de Admin...');
         
-        // Mostrar aba de Usuários
+        // Mostrar aba de Usuários/Igrejas
         const abaUsuarios = document.getElementById('aba-usuarios');
         if (abaUsuarios) {
             abaUsuarios.style.display = 'block';
-            console.log('✅ Aba de usuários exibida');
+            console.log('✅ Aba de usuários/igrejas exibida');
         } else {
             console.error('❌ Elemento #aba-usuarios não encontrado');
         }
         
-        // Mostrar botão de usuários no header
-        const btnUsuarios = document.getElementById('btn-usuarios');
-        if (btnUsuarios) {
-            btnUsuarios.style.display = 'block';
-            console.log('✅ Botão de usuários no header exibido');
-        } else {
-            console.error('❌ Elemento #btn-usuarios não encontrado');
+        // Carregar lições iniciais se houver
+        if (typeof carregarLicoes === 'function') {
+            carregarLicoes();
         }
     }
 }
