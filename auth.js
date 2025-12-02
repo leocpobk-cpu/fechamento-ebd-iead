@@ -486,7 +486,7 @@ function mostrarRecuperacao() {
 }
 
 // Mostrar tela de primeiro acesso
-function mostrarTelaPrimeiroAcesso() {
+async function mostrarTelaPrimeiroAcesso() {
     document.getElementById('form-login').style.display = 'none';
     document.getElementById('form-primeiro-acesso').style.display = 'block';
     
@@ -500,7 +500,8 @@ function mostrarTelaPrimeiroAcesso() {
             const campoIgreja = document.getElementById('campo-igreja-primeiro-acesso');
             
             if (selectIgreja && campoIgreja) {
-                const igrejas = getIgrejas().filter(i => i.ativo);
+                const todasIgrejas = await getIgrejas();
+                const igrejas = todasIgrejas.filter(i => i.ativo);
                 selectIgreja.innerHTML = '<option value="">Selecione sua igreja</option>' +
                     igrejas.map(i => `<option value="${i.id}">${i.nome}</option>`).join('');
                 campoIgreja.style.display = 'block';
@@ -514,7 +515,7 @@ function mostrarTelaPrimeiroAcesso() {
 }
 
 // Trocar senha no primeiro acesso
-function trocarSenhaPrimeiroAcesso() {
+async function trocarSenhaPrimeiroAcesso() {
     const novaSenha = document.getElementById('input-nova-senha-primeiro').value;
     const confirmaSenha = document.getElementById('input-confirma-senha-primeiro').value;
     const usuarioTemp = JSON.parse(sessionStorage.getItem('usuarioPrimeiroAcesso'));
@@ -552,20 +553,27 @@ function trocarSenhaPrimeiroAcesso() {
         return;
     }
     
-    // Atualizar senha e igreja do usuário
-    const usuarios = getUsuarios();
-    const index = usuarios.findIndex(u => u.id === usuarioTemp.id);
-    
-    if (index !== -1) {
-        usuarios[index].senha = novaSenha;
-        usuarios[index].primeiroAcesso = false;
+    try {
+        const sb = getSupabase();
         
-        // Salvar igreja se não for Admin
+        // Preparar dados de atualização
+        const updateData = {
+            senha: novaSenha,
+            primeiro_acesso: false
+        };
+        
+        // Adicionar igreja se não for Admin
         if (usuarioTemp.nivel !== 1 && igrejaId) {
-            usuarios[index].igrejaId = igrejaId;
+            updateData.igreja_id = igrejaId;
         }
         
-        salvarUsuarios(usuarios);
+        // Atualizar no Supabase
+        const { error } = await sb
+            .from('usuarios')
+            .update(updateData)
+            .eq('id', usuarioTemp.id);
+        
+        if (error) throw error;
         
         mostrarAlertaLogin('✅ Senha alterada com sucesso! Faça login com a nova senha.', 'success');
         
@@ -573,7 +581,8 @@ function trocarSenhaPrimeiroAcesso() {
             sessionStorage.removeItem('usuarioPrimeiroAcesso');
             voltarLogin();
         }, 2000);
-    } else {
+    } catch (error) {
+        console.error('❌ Erro ao atualizar senha:', error);
         mostrarAlertaLogin('Erro ao atualizar senha. Tente novamente.', 'error');
     }
 }
