@@ -1,6 +1,10 @@
 // Sistema de Autenticação e Controle de Acesso
 // Níveis: 1=Admin, 2=Diretoria EBD, 3=Auxiliar
 
+// Contador de tentativas de login
+let tentativasLogin = 0;
+const MAX_TENTATIVAS = 3;
+
 // Usuários padrão (em produção, usar backend real)
 const usuariosPadrao = [
     {
@@ -61,49 +65,97 @@ function getUsuarioLogado() {
 function fazerLogin() {
     const usuario = document.getElementById('input-usuario').value.trim();
     const senha = document.getElementById('input-senha').value;
+    const btnLogin = document.querySelector('.btn-login');
     
     if (!usuario || !senha) {
         mostrarAlertaLogin('Por favor, preencha todos os campos!', 'error');
         return;
     }
     
-    const usuarios = getUsuarios();
-    const usuarioEncontrado = usuarios.find(u => 
-        u.usuario.toLowerCase() === usuario.toLowerCase() && 
-        u.senha === senha &&
-        u.ativo
-    );
-    
-    if (usuarioEncontrado) {
-        // Salvar sessão
-        const sessao = {
-            id: usuarioEncontrado.id,
-            usuario: usuarioEncontrado.usuario,
-            nome: usuarioEncontrado.nome,
-            nivel: usuarioEncontrado.nivel,
-            loginEm: new Date().toISOString()
-        };
-        sessionStorage.setItem('usuarioLogado', JSON.stringify(sessao));
-        
-        // Esconder login e mostrar sistema
-        document.getElementById('tela-login').style.display = 'none';
-        document.getElementById('sistema-principal').style.display = 'block';
-        
-        // Atualizar header com info do usuário
-        atualizarHeaderUsuario(sessao);
-        
-        // Aplicar permissões
-        aplicarPermissoes(sessao.nivel);
-        
-        // Inicializar swipe em dispositivos móveis
-        if (window.innerWidth <= 768 && typeof inicializarSwipe === 'function') {
-            setTimeout(() => inicializarSwipe(), 100);
-        }
-        
-        mostrarAlertaLogin('Login realizado com sucesso!', 'success');
-    } else {
-        mostrarAlertaLogin('Usuário ou senha inválidos!', 'error');
+    // Mostrar estado de carregamento
+    if (btnLogin) {
+        btnLogin.textContent = 'Entrando...';
+        btnLogin.disabled = true;
     }
+    
+    // Delay pequeno para melhor UX em mobile
+    setTimeout(() => {
+        const usuarios = getUsuarios();
+        const usuarioEncontrado = usuarios.find(u => 
+            u.usuario.toLowerCase() === usuario.toLowerCase() && 
+            u.senha === senha &&
+            u.ativo
+        );
+        
+        if (usuarioEncontrado) {
+            // Resetar tentativas
+            tentativasLogin = 0;
+            
+            // Salvar sessão
+            const sessao = {
+                id: usuarioEncontrado.id,
+                usuario: usuarioEncontrado.usuario,
+                nome: usuarioEncontrado.nome,
+                nivel: usuarioEncontrado.nivel,
+                loginEm: new Date().toISOString()
+            };
+            sessionStorage.setItem('usuarioLogado', JSON.stringify(sessao));
+            
+            // Esconder login e mostrar sistema
+            document.getElementById('tela-login').style.display = 'none';
+            document.getElementById('sistema-principal').style.display = 'block';
+            
+            // Atualizar header com info do usuário
+            atualizarHeaderUsuario(sessao);
+            
+            // Aplicar permissões
+            aplicarPermissoes(sessao.nivel);
+            
+            // Inicializar swipe em dispositivos móveis
+            if (window.innerWidth <= 768 && typeof inicializarSwipe === 'function') {
+                setTimeout(() => inicializarSwipe(), 100);
+            }
+            
+            mostrarAlertaLogin('Login realizado com sucesso!', 'success');
+        } else {
+            // Incrementar tentativas
+            tentativasLogin++;
+            
+            // Restaurar botão
+            if (btnLogin) {
+                btnLogin.textContent = 'ENTRAR';
+                btnLogin.disabled = false;
+            }
+            
+            // Verificar se atingiu o máximo de tentativas
+            if (tentativasLogin >= MAX_TENTATIVAS) {
+                const desejaRecuperar = confirm(
+                    `Você errou a senha ${MAX_TENTATIVAS} vezes.\n\nDeseja redefinir sua senha?`
+                );
+                
+                if (desejaRecuperar) {
+                    // Resetar contador e ir para recuperação
+                    tentativasLogin = 0;
+                    mudarTelaLogin('recuperacao');
+                    // Pré-preencher o usuário
+                    const inputRecupUsuario = document.getElementById('input-recup-usuario');
+                    if (inputRecupUsuario) {
+                        inputRecupUsuario.value = usuario;
+                    }
+                } else {
+                    // Resetar contador para nova tentativa
+                    tentativasLogin = 0;
+                }
+            } else {
+                // Mostrar tentativas restantes
+                const restantes = MAX_TENTATIVAS - tentativasLogin;
+                mostrarAlertaLogin(
+                    `Usuário ou senha inválidos!\nTentativa ${tentativasLogin} de ${MAX_TENTATIVAS} (${restantes} restante${restantes !== 1 ? 's' : ''})`, 
+                    'error'
+                );
+            }
+        }
+    }, 300);
 }
 
 // Fazer logout
