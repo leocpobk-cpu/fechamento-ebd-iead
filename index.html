@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Gestão EBD - IEAD</title>
+    <script src="licoes.js"></script>
     <style>
         :root {
             --primary: #2563eb;
@@ -281,6 +282,7 @@
         <div class="nav-tab active" onclick="mudarTela('lancamento')">📝 Lançamento</div>
         <div class="nav-tab" onclick="mudarTela('historico')">📋 Histórico</div>
         <div class="nav-tab" onclick="mudarTela('mensal')">📊 Mensal</div>
+        <div class="nav-tab" onclick="mudarTela('licoes')">📚 Lições</div>
     </div>
 
     <!-- TELA 1: LANÇAMENTO -->
@@ -295,12 +297,15 @@
                     </div>
                     <div class="form-group">
                         <label>📖 Lição Nº</label>
-                        <input type="number" id="numero-licao" min="1" max="52" placeholder="Ex: 10">
+                        <input type="number" id="numero-licao" min="1" max="52" placeholder="Ex: 10" oninput="buscarLicaoPorNumero()">
                     </div>
                 </div>
                 <div class="form-group" style="margin-top: 10px;">
                     <label>📝 Tema da Lição</label>
                     <input type="text" id="tema-licao" placeholder="Digite o tema da lição">
+                    <small style="color: #6b7280; font-size: 0.75rem; display: block; margin-top: 4px;">
+                        💡 <span id="licao-hint">Selecione um domingo ou digite o número da lição para buscar automaticamente</span>
+                    </small>
                 </div>
             </div>
 
@@ -329,7 +334,37 @@
         <div id="conteudo-mensal"></div>
     </div>
 
-    <!-- TELA 4: RELATÓRIO -->
+    <!-- TELA 4: GERENCIAR LIÇÕES -->
+    <div id="tela-licoes" class="tela container">
+        <h2 style="margin: 20px 0;">📚 Gerenciar Lições</h2>
+        
+        <div class="card">
+            <h3 style="margin-bottom: 15px;">Lições Cadastradas</h3>
+            <div id="lista-licoes" style="max-height: 500px; overflow-y: auto;"></div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+            <h3 style="margin-bottom: 15px;">➕ Adicionar/Editar Lição</h3>
+            <div class="input-grid-2">
+                <div class="form-group">
+                    <label>Data do Domingo</label>
+                    <input type="date" id="nova-data-licao">
+                </div>
+                <div class="form-group">
+                    <label>Número da Lição</label>
+                    <input type="number" id="nova-numero-licao" min="1" max="52">
+                </div>
+            </div>
+            <div class="form-group" style="margin-top: 10px;">
+                <label>Tema da Lição</label>
+                <input type="text" id="nova-tema-licao" placeholder="Digite o tema completo">
+            </div>
+            <button class="btn btn-primary" style="margin-top: 10px;" onclick="salvarLicao()">💾 Salvar Lição</button>
+            <button class="btn btn-secondary" style="margin-top: 10px;" onclick="limparFormLicao()">🗑️ Limpar Formulário</button>
+        </div>
+    </div>
+
+    <!-- TELA 5: RELATÓRIO -->
     <div id="tela-relatorio" class="tela container">
         <div class="report-header">
             <h2>Relatório Geral EBD</h2>
@@ -460,6 +495,8 @@
         gerarFormulario();
         carregarHistorico();
         definirMesAtual();
+        carregarLicoes();
+        buscarLicaoPorData(); // Busca automática ao carregar
     });
 
     // Gerar lista de domingos
@@ -487,6 +524,71 @@
             if(i === 0) option.selected = true;
             
             select.appendChild(option);
+        }
+        
+        // Adicionar evento de mudança para buscar lição automaticamente
+        select.addEventListener('change', buscarLicaoPorData);
+    }
+    
+    // Carregar lições (do arquivo ou localStorage)
+    function carregarLicoes() {
+        const licoesLocal = localStorage.getItem('licoesEBD');
+        if(!licoesLocal && typeof licoesEBD !== 'undefined') {
+            // Primeira vez: salvar lições do arquivo no localStorage
+            localStorage.setItem('licoesEBD', JSON.stringify(licoesEBD));
+        }
+    }
+    
+    function getLicoes() {
+        const licoesLocal = localStorage.getItem('licoesEBD');
+        return licoesLocal ? JSON.parse(licoesLocal) : [];
+    }
+    
+    // Buscar lição por data selecionada
+    function buscarLicaoPorData() {
+        const dataSelecionada = document.getElementById('data-ebd').value;
+        const licoes = getLicoes();
+        
+        const licaoEncontrada = licoes.find(l => l.data === dataSelecionada);
+        
+        if(licaoEncontrada) {
+            document.getElementById('numero-licao').value = licaoEncontrada.licao;
+            document.getElementById('tema-licao').value = licaoEncontrada.tema;
+            document.getElementById('licao-hint').innerHTML = `✅ Lição ${licaoEncontrada.licao} encontrada automaticamente!`;
+            document.getElementById('licao-hint').style.color = '#10b981';
+        } else {
+            document.getElementById('licao-hint').innerHTML = 'Nenhuma lição cadastrada para este domingo';
+            document.getElementById('licao-hint').style.color = '#f59e0b';
+        }
+    }
+    
+    // Buscar lição por número
+    function buscarLicaoPorNumero() {
+        const numeroLicao = document.getElementById('numero-licao').value;
+        const dataSelecionada = document.getElementById('data-ebd').value;
+        
+        if(!numeroLicao) return;
+        
+        const licoes = getLicoes();
+        
+        // Buscar pela data e número
+        let licaoEncontrada = licoes.find(l => l.data === dataSelecionada && l.licao == numeroLicao);
+        
+        // Se não encontrar, buscar apenas pelo número (mais recente)
+        if(!licaoEncontrada) {
+            const licoesPorNumero = licoes.filter(l => l.licao == numeroLicao);
+            if(licoesPorNumero.length > 0) {
+                licaoEncontrada = licoesPorNumero[licoesPorNumero.length - 1];
+            }
+        }
+        
+        if(licaoEncontrada) {
+            document.getElementById('tema-licao').value = licaoEncontrada.tema;
+            document.getElementById('licao-hint').innerHTML = `✅ Tema encontrado!`;
+            document.getElementById('licao-hint').style.color = '#10b981';
+        } else {
+            document.getElementById('licao-hint').innerHTML = 'Lição não encontrada. Digite o tema manualmente';
+            document.getElementById('licao-hint').style.color = '#f59e0b';
         }
     }
 
@@ -742,10 +844,108 @@
         } else if(tela === 'mensal') {
             document.getElementById('tela-mensal').classList.add('active');
             document.querySelectorAll('.nav-tab')[2].classList.add('active');
+        } else if(tela === 'licoes') {
+            document.getElementById('tela-licoes').classList.add('active');
+            document.querySelectorAll('.nav-tab')[3].classList.add('active');
+            listarLicoes();
         } else if(tela === 'relatorio') {
             document.getElementById('tela-relatorio').classList.add('active');
         }
         window.scrollTo(0, 0);
+    }
+    
+    // Gerenciamento de Lições
+    function listarLicoes() {
+        const licoes = getLicoes();
+        const container = document.getElementById('lista-licoes');
+        
+        if(licoes.length === 0) {
+            container.innerHTML = '<p style="text-align:center;color:#999;padding:20px;">Nenhuma lição cadastrada ainda.</p>';
+            return;
+        }
+        
+        // Ordenar por data
+        licoes.sort((a, b) => new Date(a.data) - new Date(b.data));
+        
+        let html = '<div style="display:flex;flex-direction:column;gap:10px;">';
+        licoes.forEach((licao, index) => {
+            const dataFormatada = new Date(licao.data + 'T12:00:00').toLocaleDateString('pt-BR');
+            html += `
+            <div style="background:#f9fafb;padding:12px;border-radius:8px;border-left:3px solid var(--primary);">
+                <div style="display:flex;justify-content:space-between;align-items:start;">
+                    <div>
+                        <div style="font-weight:700;color:var(--primary);">📅 ${dataFormatada} - Lição ${licao.licao}</div>
+                        <div style="color:#666;margin-top:5px;">${licao.tema}</div>
+                    </div>
+                    <div style="display:flex;gap:5px;">
+                        <button class="btn-small btn-view" onclick='editarLicao(${JSON.stringify(licao)})'>✏️</button>
+                        <button class="btn-small btn-delete" onclick="excluirLicao('${licao.data}', ${licao.licao})">🗑️</button>
+                    </div>
+                </div>
+            </div>`;
+        });
+        html += '</div>';
+        
+        container.innerHTML = html;
+    }
+    
+    function salvarLicao() {
+        const data = document.getElementById('nova-data-licao').value;
+        const numero = document.getElementById('nova-numero-licao').value;
+        const tema = document.getElementById('nova-tema-licao').value;
+        
+        if(!data || !numero || !tema) {
+            alert('⚠️ Preencha todos os campos!');
+            return;
+        }
+        
+        const licoes = getLicoes();
+        
+        // Verificar se já existe
+        const index = licoes.findIndex(l => l.data === data && l.licao == numero);
+        
+        const novaLicao = { data, licao: parseInt(numero), tema };
+        
+        if(index >= 0) {
+            if(confirm('Já existe uma lição para esta data e número. Deseja substituir?')) {
+                licoes[index] = novaLicao;
+            } else {
+                return;
+            }
+        } else {
+            licoes.push(novaLicao);
+        }
+        
+        localStorage.setItem('licoesEBD', JSON.stringify(licoes));
+        
+        alert('✅ Lição salva com sucesso!');
+        limparFormLicao();
+        listarLicoes();
+    }
+    
+    function editarLicao(licao) {
+        document.getElementById('nova-data-licao').value = licao.data;
+        document.getElementById('nova-numero-licao').value = licao.licao;
+        document.getElementById('nova-tema-licao').value = licao.tema;
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+    
+    function excluirLicao(data, numero) {
+        if(!confirm('Tem certeza que deseja excluir esta lição?')) return;
+        
+        const licoes = getLicoes();
+        const novasLicoes = licoes.filter(l => !(l.data === data && l.licao == numero));
+        
+        localStorage.setItem('licoesEBD', JSON.stringify(novasLicoes));
+        
+        alert('✅ Lição excluída!');
+        listarLicoes();
+    }
+    
+    function limparFormLicao() {
+        document.getElementById('nova-data-licao').value = '';
+        document.getElementById('nova-numero-licao').value = '';
+        document.getElementById('nova-tema-licao').value = '';
     }
 
     function voltarParaEdicao() {
