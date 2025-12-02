@@ -349,11 +349,13 @@ function atualizarHeaderUsuario(usuario) {
         if (usuario.nivel === 1) {
             igrejaSpan.textContent = '';
         } else if (usuario.igrejaId) {
-            const igrejas = getIgrejas();
-            const igreja = igrejas.find(i => i.id === usuario.igrejaId);
-            if (igreja) {
-                igrejaSpan.textContent = `🏛️ ${igreja.nome}`;
-            }
+            // Async: buscar igreja do usuário
+            getIgrejas().then(igrejas => {
+                const igreja = igrejas.find(i => i.id === usuario.igrejaId);
+                if (igreja) {
+                    igrejaSpan.textContent = `🏛️ ${igreja.nome}`;
+                }
+            });
         }
     }
     
@@ -364,11 +366,12 @@ function atualizarHeaderUsuario(usuario) {
 }
 
 // Carregar seletor de igreja para Admin visualizar dados
-function carregarSeletorIgrejaAdmin() {
+async function carregarSeletorIgrejaAdmin() {
     const select = document.getElementById('select-igreja-admin');
     if (!select) return;
     
-    const igrejas = getIgrejas().filter(i => i.ativo);
+    const todasIgrejas = await getIgrejas();
+    const igrejas = todasIgrejas.filter(i => i.ativo);
     select.innerHTML = '<option value="">Todas as Igrejas</option>' +
         igrejas.map(i => `<option value="${i.id}">${i.nome}</option>`).join('');
     
