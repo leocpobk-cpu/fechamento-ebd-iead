@@ -1,3 +1,16 @@
+# Arquivos desnecessários
+29112025*.txt
+deploy-azure.ps1
+deploy.cmd
+ebdv2.html
+FechamentoEBD.html
+*.pdf
+*.jpg
+*.png
+README-AZURE.md
+web.config
+.deployment
+
 # Azure
 .azure/
 *.zip
