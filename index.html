@@ -1709,7 +1709,7 @@
     }
 
     // Gerar Relatório
-    function gerarRelatorio() {
+    async function gerarRelatorio() {
         const dataEbd = document.getElementById('data-ebd').value;
         const numeroLicao = document.getElementById('numero-licao').value;
         const temaLicao = document.getElementById('tema-licao').value;
@@ -1780,7 +1780,7 @@
         const usuario = JSON.parse(sessionStorage.getItem('usuarioLogado'));
         let nomeIgreja = '';
         if (usuario) {
-            const igrejas = JSON.parse(localStorage.getItem('igrejasEBD') || '[]');
+            const igrejas = await getIgrejas();
             if (usuario.nivel === 1) {
                 const igrejaVisualizacao = sessionStorage.getItem('igrejaVisualizacaoAdmin');
                 if (igrejaVisualizacao) {

@@ -597,7 +597,7 @@ function voltarLogin() {
 }
 
 // Enviar código de recuperação
-function enviarRecuperacao() {
+async function enviarRecuperacao() {
     const usuario = document.getElementById('input-usuario-recuperacao').value.trim();
     const contato = document.getElementById('input-contato-recuperacao').value.trim();
     
@@ -606,11 +606,19 @@ function enviarRecuperacao() {
         return;
     }
     
-    const usuarios = getUsuarios();
-    const usuarioEncontrado = usuarios.find(u => 
-        u.usuario.toLowerCase() === usuario.toLowerCase() &&
-        (u.email.toLowerCase() === contato.toLowerCase() || u.celular === contato)
-    );
+    try {
+        const sb = getSupabase();
+        const { data: usuarios, error } = await sb
+            .from('usuarios')
+            .select('*')
+            .eq('usuario', usuario);
+        
+        if (error) throw error;
+        
+        const usuarioEncontrado = usuarios.find(u => 
+            u.usuario.toLowerCase() === usuario.toLowerCase() &&
+            (u.email?.toLowerCase() === contato.toLowerCase() || u.celular === contato)
+        );
     
     if (usuarioEncontrado) {
         // Gerar código aleatório de 6 dígitos
@@ -634,10 +642,14 @@ function enviarRecuperacao() {
     } else {
         mostrarAlertaLogin('Usuário não encontrado ou contato não corresponde!', 'error');
     }
+    } catch (error) {
+        console.error('❌ Erro ao buscar usuário:', error);
+        mostrarAlertaLogin('Erro ao processar recuperação. Tente novamente.', 'error');
+    }
 }
 
 // Redefinir senha
-function redefinirSenha() {
+async function redefinirSenha() {
     const codigo = document.getElementById('input-codigo').value.trim();
     const novaSenha = document.getElementById('input-nova-senha').value;
     const confirmaSenha = document.getElementById('input-confirma-senha').value;
@@ -677,13 +689,15 @@ function redefinirSenha() {
         return;
     }
     
-    // Atualizar senha
-    const usuarios = getUsuarios();
-    const usuarioIndex = usuarios.findIndex(u => u.usuario === recuperacao.usuario);
-    
-    if (usuarioIndex !== -1) {
-        usuarios[usuarioIndex].senha = novaSenha;
-        salvarUsuarios(usuarios);
+    // Atualizar senha no Supabase
+    try {
+        const sb = getSupabase();
+        const { error } = await sb
+            .from('usuarios')
+            .update({ senha: novaSenha })
+            .eq('usuario', recuperacao.usuario);
+        
+        if (error) throw error;
         
         mostrarAlertaLogin('Senha redefinida com sucesso!', 'success');
         sessionStorage.removeItem('codigoRecuperacao');
@@ -691,6 +705,9 @@ function redefinirSenha() {
         setTimeout(() => {
             voltarLogin();
         }, 2000);
+    } catch (error) {
+        console.error('❌ Erro ao atualizar senha:', error);
+        mostrarAlertaLogin('Erro ao redefinir senha. Tente novamente.', 'error');
     }
 }
 
