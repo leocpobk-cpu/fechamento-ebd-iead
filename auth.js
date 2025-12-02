@@ -29,7 +29,8 @@ const usuariosPadrao = [
         celular: '(11) 99999-9999',
         nivel: 1, // Admin - acesso total
         igrejaId: null, // Admin vê todas as igrejas
-        ativo: true
+        ativo: true,
+        primeiroAcesso: true
     },
     {
         id: 2,
@@ -40,7 +41,8 @@ const usuariosPadrao = [
         celular: '(11) 98888-8888',
         nivel: 2, // Diretoria - lançamento e visualização
         igrejaId: 1, // Pertence à igreja 1
-        ativo: true
+        ativo: true,
+        primeiroAcesso: true
     },
     {
         id: 3,
@@ -51,7 +53,8 @@ const usuariosPadrao = [
         celular: '(11) 97777-7777',
         nivel: 3, // Auxiliar - apenas visualização
         igrejaId: 1, // Pertence à igreja 1
-        ativo: true
+        ativo: true,
+        primeiroAcesso: true
     }
 ];
 
@@ -112,6 +115,8 @@ function fazerLogin() {
     const senha = document.getElementById('input-senha').value;
     const btnLogin = document.querySelector('.btn-login');
     
+    console.log('🔐 Tentativa de login:', {usuario, senhaLength: senha?.length});
+    
     if (!usuario || !senha) {
         mostrarAlertaLogin('Por favor, preencha todos os campos!', 'error');
         return;
@@ -126,13 +131,41 @@ function fazerLogin() {
     // Delay pequeno para melhor UX em mobile
     setTimeout(() => {
         const usuarios = getUsuarios();
-        const usuarioEncontrado = usuarios.find(u => 
-            u.usuario.toLowerCase() === usuario.toLowerCase() && 
-            u.senha === senha &&
-            u.ativo
-        );
+        console.log('👥 Total de usuários:', usuarios.length);
+        console.log('🔍 Procurando por:', usuario);
+        
+        const usuarioEncontrado = usuarios.find(u => {
+            const match = u.usuario.toLowerCase() === usuario.toLowerCase() && 
+                         u.senha === senha &&
+                         u.ativo;
+            console.log(`Verificando ${u.usuario}: usuario=${u.usuario.toLowerCase() === usuario.toLowerCase()}, senha=${u.senha === senha}, ativo=${u.ativo}`);
+            return match;
+        });
         
         if (usuarioEncontrado) {
+            console.log('✅ Usuário encontrado:', usuarioEncontrado.usuario);
+            
+            // Verificar se é primeiro acesso
+            if (usuarioEncontrado.primeiroAcesso) {
+                console.log('🆕 Primeiro acesso detectado');
+                // Salvar dados temporários
+                sessionStorage.setItem('usuarioPrimeiroAcesso', JSON.stringify({
+                    id: usuarioEncontrado.id,
+                    usuario: usuarioEncontrado.usuario,
+                    nome: usuarioEncontrado.nome
+                }));
+                
+                // Restaurar botão
+                if (btnLogin) {
+                    btnLogin.textContent = 'ENTRAR';
+                    btnLogin.disabled = false;
+                }
+                
+                // Mostrar tela de primeiro acesso
+                mostrarTelaPrimeiroAcesso();
+                return;
+            }
+            
             // Resetar tentativas
             tentativasLogin = 0;
             
@@ -142,9 +175,12 @@ function fazerLogin() {
                 usuario: usuarioEncontrado.usuario,
                 nome: usuarioEncontrado.nome,
                 nivel: usuarioEncontrado.nivel,
+                igrejaId: usuarioEncontrado.igrejaId,
                 loginEm: new Date().toISOString()
             };
             sessionStorage.setItem('usuarioLogado', JSON.stringify(sessao));
+            
+            console.log('💾 Sessão salva:', sessao);
             
             // Esconder login e mostrar sistema
             document.getElementById('tela-login').style.display = 'none';
@@ -158,6 +194,52 @@ function fazerLogin() {
             
             // Inicializar swipe em dispositivos móveis
             if (window.innerWidth <= 768 && typeof inicializarSwipe === 'function') {
+                setTimeout(() => inicializarSwipe(), 100);
+            }
+            
+            mostrarAlertaLogin('Login realizado com sucesso!', 'success');
+        } else {
+            console.error('❌ Usuário não encontrado ou credenciais inválidas');
+            
+            // Incrementar tentativas
+            tentativasLogin++;
+            
+            // Restaurar botão
+            if (btnLogin) {
+                btnLogin.textContent = 'ENTRAR';
+                btnLogin.disabled = false;
+            }
+            
+            // Verificar se atingiu o máximo de tentativas
+            if (tentativasLogin >= MAX_TENTATIVAS) {
+                const desejaRecuperar = confirm(
+                    `Você errou a senha ${MAX_TENTATIVAS} vezes.\n\nDeseja redefinir sua senha?`
+                );
+                
+                if (desejaRecuperar) {
+                    // Resetar contador e ir para recuperação
+                    tentativasLogin = 0;
+                    mudarTelaLogin('recuperacao');
+                    // Pré-preencher o usuário
+                    const inputRecupUsuario = document.getElementById('input-recup-usuario');
+                    if (inputRecupUsuario) {
+                        inputRecupUsuario.value = usuario;
+                    }
+                } else {
+                    // Resetar contador para nova tentativa
+                    tentativasLogin = 0;
+                }
+            } else {
+                // Mostrar tentativas restantes
+                const restantes = MAX_TENTATIVAS - tentativasLogin;
+                mostrarAlertaLogin(
+                    `Usuário ou senha inválidos!\nTentativa ${tentativasLogin} de ${MAX_TENTATIVAS} (${restantes} restante${restantes !== 1 ? 's' : ''})\n\n💡 Dica: Senha padrão do admin é "admin123"`, 
+                    'error'
+                );
+            }
+        }
+    }, 300);
+}
                 setTimeout(() => inicializarSwipe(), 100);
             }
             
@@ -275,11 +357,70 @@ function mostrarRecuperacao() {
     document.getElementById('form-recuperacao').style.display = 'block';
 }
 
+// Mostrar tela de primeiro acesso
+function mostrarTelaPrimeiroAcesso() {
+    document.getElementById('form-login').style.display = 'none';
+    document.getElementById('form-primeiro-acesso').style.display = 'block';
+    
+    const usuario = JSON.parse(sessionStorage.getItem('usuarioPrimeiroAcesso'));
+    if (usuario) {
+        document.getElementById('nome-usuario-primeiro-acesso').textContent = usuario.nome;
+    }
+}
+
+// Trocar senha no primeiro acesso
+function trocarSenhaPrimeiroAcesso() {
+    const novaSenha = document.getElementById('input-nova-senha-primeiro').value;
+    const confirmaSenha = document.getElementById('input-confirma-senha-primeiro').value;
+    
+    if (!novaSenha || !confirmaSenha) {
+        mostrarAlertaLogin('Preencha todos os campos!', 'error');
+        return;
+    }
+    
+    if (novaSenha.length < 6) {
+        mostrarAlertaLogin('A senha deve ter pelo menos 6 caracteres!', 'error');
+        return;
+    }
+    
+    if (novaSenha !== confirmaSenha) {
+        mostrarAlertaLogin('As senhas não coincidem!', 'error');
+        return;
+    }
+    
+    const usuarioTemp = JSON.parse(sessionStorage.getItem('usuarioPrimeiroAcesso'));
+    if (!usuarioTemp) {
+        mostrarAlertaLogin('Sessão expirada. Faça login novamente.', 'error');
+        voltarLogin();
+        return;
+    }
+    
+    // Atualizar senha do usuário
+    const usuarios = getUsuarios();
+    const index = usuarios.findIndex(u => u.id === usuarioTemp.id);
+    
+    if (index !== -1) {
+        usuarios[index].senha = novaSenha;
+        usuarios[index].primeiroAcesso = false;
+        salvarUsuarios(usuarios);
+        
+        mostrarAlertaLogin('✅ Senha alterada com sucesso! Faça login com a nova senha.', 'success');
+        
+        setTimeout(() => {
+            sessionStorage.removeItem('usuarioPrimeiroAcesso');
+            voltarLogin();
+        }, 2000);
+    } else {
+        mostrarAlertaLogin('Erro ao atualizar senha. Tente novamente.', 'error');
+    }
+}
+
 // Voltar ao login
 function voltarLogin() {
     document.getElementById('form-login').style.display = 'block';
     document.getElementById('form-recuperacao').style.display = 'none';
     document.getElementById('form-codigo').style.display = 'none';
+    document.getElementById('form-primeiro-acesso').style.display = 'none';
     limparFormularios();
 }
 

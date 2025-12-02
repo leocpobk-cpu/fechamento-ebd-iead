@@ -872,9 +872,37 @@
                 <button onclick="voltarLogin()" class="btn-link">Voltar ao login</button>
             </div>
             
+            <!-- Tela de Primeiro Acesso -->
+            <div id="form-primeiro-acesso" class="login-form" style="display:none;">
+                <div style="text-align: center; margin-bottom: 20px; padding: 15px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">🎉</div>
+                    <h3 style="margin: 0 0 8px 0; color: #92400e; font-size: 1.1rem;">Bem-vindo(a), <span id="nome-usuario-primeiro-acesso"></span>!</h3>
+                    <p style="margin: 0; color: #78350f; font-size: 0.9rem;">
+                        Por segurança, altere sua senha no primeiro acesso.
+                    </p>
+                </div>
+                
+                <div class="form-group">
+                    <label>🔑 Nova Senha</label>
+                    <input type="password" id="input-nova-senha-primeiro" placeholder="Digite sua nova senha (mínimo 6 caracteres)">
+                </div>
+                <div class="form-group">
+                    <label>🔑 Confirmar Nova Senha</label>
+                    <input type="password" id="input-confirma-senha-primeiro" placeholder="Confirme sua nova senha">
+                </div>
+                
+                <div style="background: #dbeafe; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 0.85rem; color: #1e40af;">
+                    <strong>💡 Dica de Segurança:</strong><br>
+                    Use uma senha forte com pelo menos 6 caracteres
+                </div>
+                
+                <button onclick="trocarSenhaPrimeiroAcesso()" class="btn-login">ALTERAR SENHA E ENTRAR</button>
+                <button onclick="voltarLogin()" class="btn-link">Cancelar</button>
+            </div>
+            
             <!-- Versão do Sistema -->
             <div style="text-align: center; padding: 15px; color: #6b7280; font-size: 0.75rem; border-top: 1px solid #e5e7eb;">
-                📦 Versão 3.0.0 | Build 24f0a4c<br>
+                📦 Versão 3.1.0 | Build c63105c<br>
                 <span style="font-size: 0.7rem;">Atualizado em 02/12/2025</span>
             </div>
         </div>
