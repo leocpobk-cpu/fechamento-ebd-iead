@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gestão EBD - IEAD</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #64748b;
+            --bg: #f3f4f6;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --border: #e5e7eb;
+            --success: #25D366;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        
+        body { background-color: var(--bg); color: var(--text); padding-bottom: 80px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+        /* Header */
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        header h1 { font-size: 1.2rem; font-weight: 600; }
+        header p { font-size: 0.8rem; opacity: 0.9; margin-top: 4px; }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            background: white;
+            border-bottom: 2px solid var(--border);
+            position: sticky;
+            top: 68px;
+            z-index: 99;
+        }
+        .nav-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .nav-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: #f0f9ff;
+        }
+
+        .container { max-width: 700px; margin: 0 auto; padding: 15px; }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+
+        .card.special-group {
+            border: 2px solid var(--warning);
+            background-color: #fffbf0;
+        }
+        .card.special-group .card-title { color: #d97706; }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--bg);
+            padding-bottom: 8px;
+        }
+
+        .card-title { font-weight: 700; color: var(--primary); font-size: 1rem; }
+        .card-subtitle { font-size: 0.8rem; color: #6b7280; font-style: italic; }
+
+        /* Inputs Grid */
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        .input-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .form-group { display: flex; flex-direction: column; }
+        .form-group.full { grid-column: span 3; }
+        .form-group.span-2 { grid-column: span 2; }
+        
+        label { font-size: 0.7rem; font-weight: 600; color: #4b5563; margin-bottom: 4px; text-transform: uppercase; }
+        
+        input[type="number"], input[type="text"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: #f9fafb;
+        }
+
+        input:focus, select:focus { outline: none; border-color: var(--primary); background: #fff; }
+
+        .auto-calc {
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .percent-display {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Buttons */
+        .fab-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            background: white;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            z-index: 100;
+        }
+
+        .btn {
+            width: 100%;
+            max-width: 600px;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 8px auto;
+        }
+
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-success { background-color: var(--success); color: white; }
+        .btn-secondary { background-color: var(--secondary); color: white; }
+        .btn-warning { background-color: var(--warning); color: white; }
+
+        /* Relatório */
+        .report-header { text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--border); }
+        
+        .summary-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .sum-card { background: var(--primary); color: white; padding: 20px; border-radius: 12px; text-align: center; }
+        .sum-val { font-size: 2rem; font-weight: bold; }
+        .sum-lbl { font-size: 0.8rem; opacity: 0.9; margin-bottom: 5px; }
+        
+        .details-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+        .detail-item { background: rgba(255,255,255,0.2); padding: 10px; border-radius: 8px; text-align: center; }
+        .d-val { font-weight: bold; font-size: 1.2rem; }
+        .d-lbl { font-size: 0.7rem; opacity: 0.9; }
+
+        .report-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; }
+        .report-table th { text-align: center; background: #f3f4f6; padding: 8px; border: 1px solid var(--border); font-size: 0.75rem; }
+        .report-table td { padding: 8px; border: 1px solid var(--border); text-align: center; }
+        .report-table td:first-child { text-align: left; font-weight: 600; }
+
+        .prof-section { margin-top: 20px; border: 2px dashed var(--warning); padding: 15px; border-radius: 12px; background: #fffbf0; }
+        .prof-header { color: #d97706; font-weight: bold; margin-bottom: 10px; font-size: 1rem; }
+
+        /* Rankings */
+        .rankings-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .ranking-box { background: var(--card-bg); border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid var(--border); }
+        .ranking-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 12px; color: var(--primary); }
+        .ranking-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--bg); font-size: 0.85rem; }
+        .ranking-item:last-child { border-bottom: none; }
+        .ranking-position { font-weight: 700; color: var(--primary); min-width: 30px; }
+        .ranking-position.first { color: #f59e0b; font-size: 1.1rem; }
+        .ranking-position.second { color: #94a3b8; }
+        .ranking-position.third { color: #cd7f32; }
+        .ranking-name { flex: 1; margin: 0 8px; font-weight: 500; }
+        .ranking-value { font-weight: 700; color: var(--success); }
+        .ranking-value.percent { color: var(--primary); }
+
+        /* Histórico */
+        .history-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--primary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .history-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(-2px); }
+        .history-date { font-weight: 700; color: var(--primary); margin-bottom: 5px; }
+        .history-stats { font-size: 0.85rem; color: #666; }
+        .history-actions { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-small { padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; }
+        .btn-view { background: #e0f2fe; color: #0369a1; }
+        .btn-delete { background: #fee2e2; color: #dc2626; }
+
+        /* Telas */
+        .tela { display: none; }
+        .tela.active { display: block; }
+
+        @media print {
+            body { background: white; padding: 0; }
+            header, .fab-container, .nav-tabs, .no-print { display: none !important; }
+            #tela-relatorio { display: block !important; }
+            .sum-card { background: #eee !important; color: black !important; border: 1px solid #000; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>📖 Gestão EBD - IEAD</h1>
+        <p>Escola Bíblica Dominical</p>
+    </header>
+
+    <div class="nav-tabs no-print">
+        <div class="nav-tab active" onclick="mudarTela('lancamento')">📝 Lançamento</div>
+        <div class="nav-tab" onclick="mudarTela('historico')">📋 Histórico</div>
+        <div class="nav-tab" onclick="mudarTela('mensal')">📊 Mensal</div>
+    </div>
+
+    <!-- TELA 1: LANÇAMENTO -->
+    <div id="tela-lancamento" class="tela active">
+        <div class="container">
+            <!-- Data e Lição -->
+            <div class="card">
+                <div class="input-grid-2">
+                    <div class="form-group">
+                        <label>📅 Domingo da EBD</label>
+                        <select id="data-ebd"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>📖 Lição Nº</label>
+                        <input type="number" id="numero-licao" min="1" max="52" placeholder="Ex: 10">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: 10px;">
+                    <label>📝 Tema da Lição</label>
+                    <input type="text" id="tema-licao" placeholder="Digite o tema da lição">
+                </div>
+            </div>
+
+            <div id="grupos-container"></div>
+        </div>
+
+        <div class="fab-container">
+            <button class="btn btn-primary" onclick="gerarRelatorio()">✅ GERAR FECHAMENTO</button>
+        </div>
+    </div>
+
+    <!-- TELA 2: HISTÓRICO -->
+    <div id="tela-historico" class="tela container">
+        <h2 style="margin: 20px 0;">📋 Histórico de Fechamentos</h2>
+        <div id="lista-historico"></div>
+    </div>
+
+    <!-- TELA 3: RESUMO MENSAL -->
+    <div id="tela-mensal" class="tela container">
+        <h2 style="margin: 20px 0;">📊 Resumo Mensal</h2>
+        <div class="card">
+            <label>Selecione o Mês/Ano</label>
+            <input type="month" id="mes-ano" style="padding: 12px; font-size: 1rem;">
+            <button class="btn btn-primary" style="margin-top: 10px;" onclick="gerarResumoMensal()">Gerar Resumo</button>
+        </div>
+        <div id="conteudo-mensal"></div>
+    </div>
+
+    <!-- TELA 4: RELATÓRIO -->
+    <div id="tela-relatorio" class="tela container">
+        <div class="report-header">
+            <h2>Relatório Geral EBD</h2>
+            <p id="res-data" style="color: #666; white-space: pre-line;"></p>
+        </div>
+
+        <div class="summary-cards">
+            <div class="sum-card">
+                <div class="sum-lbl">OFERTA TOTAL</div>
+                <div class="sum-val" id="res-oferta-total">R$ 0,00</div>
+            </div>
+            <div class="sum-card">
+                <div class="sum-lbl">% PRESENÇA GERAL</div>
+                <div class="sum-val" id="res-percentual">0%</div>
+            </div>
+        </div>
+
+        <div class="sum-card" style="grid-column: span 2; margin-top: -5px; padding: 15px;">
+            <div class="details-grid">
+                <div class="detail-item">
+                    <div class="d-val" id="res-matriculados">0</div>
+                    <div class="d-lbl">Matriculados</div>
+                </div>
+                <div class="detail-item">
+                    <div class="d-val" id="res-presentes">0</div>
+                    <div class="d-lbl">Presentes</div>
+                </div>
+                <div class="detail-item">
+                    <div class="d-val" id="res-visitantes">0</div>
+                    <div class="d-lbl">Visitantes</div>
+                </div>
+                <div class="detail-item">
+                    <div class="d-val" id="res-faltantes">0</div>
+                    <div class="d-lbl">Faltantes</div>
+                </div>
+                <div class="detail-item">
+                    <div class="d-val" id="res-biblias">0</div>
+                    <div class="d-lbl">Bíblias</div>
+                </div>
+                <div class="detail-item">
+                    <div class="d-val" id="res-revistas">0</div>
+                    <div class="d-lbl">Revistas</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 15px; font-size: 1rem;">Detalhamento por Classe</h3>
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Classe</th>
+                        <th>Mat</th>
+                        <th>Pres</th>
+                        <th>Falta</th>
+                        <th>Visit</th>
+                        <th>Bíb</th>
+                        <th>Rev</th>
+                        <th>Oferta</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-corpo"></tbody>
+            </table>
+        </div>
+
+        <div class="prof-section">
+            <div class="prof-header">🎓 Controle Interno - Professores</div>
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Classe</th>
+                        <th>Mat</th>
+                        <th>Pres</th>
+                        <th>Falta</th>
+                        <th>Bíb</th>
+                        <th>Rev</th>
+                        <th>Oferta</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-professores"></tbody>
+            </table>
+            <div style="font-size: 0.7rem; margin-top: 8px; text-align: center; color: #666;">
+                * Não contabilizado nos totais gerais acima.
+            </div>
+        </div>
+
+        <div class="rankings-container">
+            <div class="ranking-box">
+                <div class="ranking-title">🏆 Ranking de Presença</div>
+                <div id="ranking-presenca"></div>
+            </div>
+            <div class="ranking-box">
+                <div class="ranking-title">💰 Ranking de Ofertas</div>
+                <div id="ranking-ofertas"></div>
+            </div>
+        </div>
+
+        <div class="no-print" style="margin-top: 30px; margin-bottom: 100px;">
+            <button class="btn btn-success" onclick="enviarWhatsapp()">📱 COPIAR P/ WHATSAPP</button>
+            <button class="btn btn-secondary" onclick="window.print()">🖨️ SALVAR PDF / IMPRIMIR</button>
+            <button class="btn btn-warning" onclick="salvarHistorico()">💾 SALVAR NO HISTÓRICO</button>
+            <button class="btn" style="background: #6b7280; color: white;" onclick="voltarParaEdicao()">✏️ VOLTAR E EDITAR</button>
+        </div>
+    </div>
+
+<script>
+    // Configuração dos Grupos
+    const grupos = [
+        { id: 'jardim', nome: 'Jardim de Deus', sub: 'Crianças', isSeparate: false },
+        { id: 'pedacinho', nome: 'Pedacinho do Céu', sub: 'Crianças', isSeparate: false },
+        { id: 'adolescentes', nome: 'Manancial', sub: 'Adolescentes', isSeparate: false },
+        { id: 'jovens', nome: 'Embaixadores', sub: 'Jovens', isSeparate: false },
+        { id: 'novos', nome: 'Discipulado', sub: 'Novos Convertidos', isSeparate: false },
+        { id: 'irmas', nome: 'Dorcas', sub: 'Irmãs', isSeparate: false },
+        { id: 'varoes', nome: 'Abraão', sub: 'Varões', isSeparate: false },
+        { id: 'professores', nome: 'EBD', sub: 'Professores', isSeparate: true }
+    ];
+
+    let relatorioAtual = null;
+
+    // Inicialização
+    window.addEventListener('load', () => {
+        gerarDomingos();
+        gerarFormulario();
+        carregarHistorico();
+        definirMesAtual();
+    });
+
+    // Gerar lista de domingos
+    function gerarDomingos() {
+        const select = document.getElementById('data-ebd');
+        const hoje = new Date();
+        
+        let dataRef = new Date(hoje);
+        while(dataRef.getDay() !== 0) {
+            dataRef.setDate(dataRef.getDate() - 1);
+        }
+        
+        for(let i = -4; i <= 3; i++) {
+            const domingo = new Date(dataRef);
+            domingo.setDate(dataRef.getDate() + (i * 7));
+            
+            const dataFormatada = domingo.toLocaleDateString('pt-BR', { 
+                day: '2-digit', month: '2-digit', year: 'numeric'
+            });
+            
+            const option = document.createElement('option');
+            option.value = domingo.toISOString().split('T')[0];
+            option.textContent = dataFormatada;
+            
+            if(i === 0) option.selected = true;
+            
+            select.appendChild(option);
+        }
+    }
+
+    // Gerar formulário
+    function gerarFormulario() {
+        const container = document.getElementById('grupos-container');
+        
+        grupos.forEach(grupo => {
+            const specialClass = grupo.isSeparate ? 'special-group' : '';
+            const titleNote = grupo.isSeparate ? '(Controle Separado)' : '';
+            
+            const html = `
+            <div class="card ${specialClass}">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">${grupo.nome} <span style="font-size:0.7em; font-weight:normal">${titleNote}</span></div>
+                        <div class="card-subtitle">${grupo.sub}</div>
+                    </div>
+                </div>
+                
+                <div class="input-grid">
+                    <div class="form-group">
+                        <label>Matriculados</label>
+                        <input type="number" id="mat-${grupo.id}" placeholder="0" oninput="calcularAutomatico('${grupo.id}')">
+                    </div>
+                    <div class="form-group">
+                        <label>Presentes</label>
+                        <input type="number" id="pres-${grupo.id}" placeholder="0" oninput="calcularAutomatico('${grupo.id}')">
+                    </div>
+                    <div class="form-group">
+                        <label>Faltantes</label>
+                        <div id="falta-${grupo.id}" class="auto-calc">0</div>
+                    </div>
+                </div>
+
+                <div class="input-grid" style="margin-top: 10px;">
+                    <div class="form-group">
+                        <label>Visitantes</label>
+                        <input type="number" id="vis-${grupo.id}" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Bíblias</label>
+                        <input type="number" id="bib-${grupo.id}" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Revistas</label>
+                        <input type="number" id="rev-${grupo.id}" placeholder="0">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 10px;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <label>Oferta (R$)</label>
+                        <span id="perc-${grupo.id}" class="percent-display">0% presença</span>
+                    </div>
+                    <input type="number" id="oferta-${grupo.id}" step="0.01" placeholder="0,00">
+                </div>
+            </div>`;
+            container.innerHTML += html;
+        });
+    }
+
+    // Calcular faltantes e percentual automaticamente
+    function calcularAutomatico(id) {
+        const mat = parseInt(document.getElementById(`mat-${id}`).value) || 0;
+        const pres = parseInt(document.getElementById(`pres-${id}`).value) || 0;
+        
+        let faltas = mat - pres;
+        if(faltas < 0) faltas = 0;
+        
+        const perc = mat > 0 ? (pres / mat) * 100 : 0;
+        
+        document.getElementById(`falta-${id}`).innerText = faltas;
+        document.getElementById(`perc-${id}`).innerText = perc.toFixed(1) + '% presença';
+    }
+
+    // Gerar Relatório
+    function gerarRelatorio() {
+        const dataEbd = document.getElementById('data-ebd').value;
+        const numeroLicao = document.getElementById('numero-licao').value;
+        const temaLicao = document.getElementById('tema-licao').value;
+        
+        const data = new Date(dataEbd + 'T12:00:00');
+        const dataFormatada = data.toLocaleDateString('pt-BR', { 
+            weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
+        });
+        
+        let tMat = 0, tPres = 0, tVis = 0, tFalta = 0, tBib = 0, tRev = 0, tOferta = 0;
+        let htmlGeral = '', htmlProf = '';
+        let dadosPresenca = [], dadosOfertas = [];
+        
+        let zapText = `*📖 RELATÓRIO EBD*\n\n📅 ${dataFormatada}\n`;
+        if(numeroLicao || temaLicao) {
+            zapText += `📚 Lição ${numeroLicao || ''}${temaLicao ? ': ' + temaLicao : ''}\n`;
+        }
+        zapText += '\n';
+
+        const dadosRelatorio = {};
+
+        grupos.forEach(grupo => {
+            const mat = parseInt(document.getElementById(`mat-${grupo.id}`).value) || 0;
+            const pres = parseInt(document.getElementById(`pres-${grupo.id}`).value) || 0;
+            const vis = parseInt(document.getElementById(`vis-${grupo.id}`).value) || 0;
+            const bib = parseInt(document.getElementById(`bib-${grupo.id}`).value) || 0;
+            const rev = parseInt(document.getElementById(`rev-${grupo.id}`).value) || 0;
+            const oferta = parseFloat(document.getElementById(`oferta-${grupo.id}`).value) || 0;
+
+            let faltas = mat - pres;
+            if(faltas < 0) faltas = 0;
+            const perc = mat > 0 ? (pres / mat) * 100 : 0;
+
+            dadosRelatorio[grupo.id] = { mat, pres, vis, bib, rev, oferta, faltas, perc };
+
+            const tr = `
+            <tr>
+                <td><strong>${grupo.nome}</strong><br><span style="font-size:0.7em;color:#666">${grupo.sub}</span></td>
+                <td>${mat}</td>
+                <td>${pres} <span style="font-size:0.7em;color:blue">(${perc.toFixed(0)}%)</span></td>
+                <td style="color:red;font-weight:bold">${faltas}</td>
+                <td>${vis || '-'}</td>
+                <td>${bib}</td>
+                <td>${rev}</td>
+                <td>${formatarMoeda(oferta)}</td>
+            </tr>`;
+
+            if (grupo.isSeparate) {
+                htmlProf += tr;
+            } else {
+                tMat += mat; tPres += pres; tVis += vis; tFalta += faltas; 
+                tBib += bib; tRev += rev; tOferta += oferta;
+                htmlGeral += tr;
+                
+                if(mat > 0) dadosPresenca.push({ nome: grupo.nome, percentual: perc, presentes: pres, matriculados: mat });
+                if(oferta > 0) dadosOfertas.push({ nome: grupo.nome, oferta: oferta });
+
+                zapText += `*${grupo.nome}*\n`;
+                zapText += `👥 Mat: ${mat} | Pres: ${pres} (${perc.toFixed(0)}%) | Falta: ${faltas}\n`;
+                zapText += `🆕 Vis: ${vis} | 📖 Bíb: ${bib} | 📘 Rev: ${rev}\n`;
+                zapText += `💰 Oferta: ${formatarMoeda(oferta)}\n\n`;
+            }
+        });
+
+        const tPerc = tMat > 0 ? (tPres / tMat) * 100 : 0;
+
+        let textoData = '📅 ' + dataFormatada;
+        if(numeroLicao || temaLicao) {
+            textoData += '\n📖 Lição ' + (numeroLicao || '');
+            if(temaLicao) textoData += ': ' + temaLicao;
+        }
+        document.getElementById('res-data').innerText = textoData;
+        
+        document.getElementById('res-oferta-total').innerText = formatarMoeda(tOferta);
+        document.getElementById('res-percentual').innerText = tPerc.toFixed(1) + '%';
+        document.getElementById('res-matriculados').innerText = tMat;
+        document.getElementById('res-presentes').innerText = tPres;
+        document.getElementById('res-visitantes').innerText = tVis;
+        document.getElementById('res-faltantes').innerText = tFalta;
+        document.getElementById('res-biblias').innerText = tBib;
+        document.getElementById('res-revistas').innerText = tRev;
+        
+        document.getElementById('tabela-corpo').innerHTML = htmlGeral;
+        document.getElementById('tabela-professores').innerHTML = htmlProf;
+
+        gerarRankings(dadosPresenca, dadosOfertas);
+
+        // Professores no Zap
+        const profMat = parseInt(document.getElementById('mat-professores').value) || 0;
+        if(profMat > 0) {
+            zapText += `----------------\n*🎓 PROFESSORES (Controle)*\n`;
+            zapText += `Presença: ${document.getElementById('pres-professores').value}/${profMat}\n\n`;
+        }
+
+        zapText += `================\n*RESUMO GERAL*\n`;
+        zapText += `💰 *TOTAL OFERTA: ${formatarMoeda(tOferta)}*\n`;
+        zapText += `📊 Presença: ${tPerc.toFixed(1)}%\n`;
+        zapText += `👥 Mat: ${tMat} | ✅ Pres: ${tPres}\n`;
+        zapText += `❌ Faltas: ${tFalta} | 🆕 Visit: ${tVis}\n`;
+        zapText += `📖 Bíblias: ${tBib} | 📘 Revistas: ${tRev}`;
+
+        if(dadosPresenca.length > 0) {
+            zapText += '\n\n🏆 *TOP 3 PRESENÇA*\n';
+            dadosPresenca.slice(0, 3).forEach((item, i) => {
+                zapText += `${['🥇','🥈','🥉'][i]} ${item.nome}: ${item.percentual.toFixed(1)}%\n`;
+            });
+        }
+        if(dadosOfertas.length > 0) {
+            zapText += '\n💰 *TOP 3 OFERTAS*\n';
+            dadosOfertas.slice(0, 3).forEach((item, i) => {
+                zapText += `${['🥇','🥈','🥉'][i]} ${item.nome}: ${formatarMoeda(item.oferta)}\n`;
+            });
+        }
+
+        window.textoZap = zapText;
+        
+        relatorioAtual = {
+            data: dataEbd,
+            dataFormatada: dataFormatada,
+            numeroLicao: numeroLicao,
+            temaLicao: temaLicao,
+            totais: { tMat, tPres, tVis, tFalta, tBib, tRev, tOferta, tPerc },
+            dados: dadosRelatorio
+        };
+
+        mudarTela('relatorio');
+    }
+
+    function gerarRankings(dadosPresenca, dadosOfertas) {
+        dadosPresenca.sort((a, b) => b.percentual - a.percentual);
+        dadosOfertas.sort((a, b) => b.oferta - a.oferta);
+        
+        let htmlPresenca = '';
+        dadosPresenca.forEach((item, i) => {
+            const pos = i + 1;
+            const classe = ['first', 'second', 'third'][i] || '';
+            htmlPresenca += `
+            <div class="ranking-item">
+                <span class="ranking-position ${classe}">${pos}º</span>
+                <span class="ranking-name">${item.nome}</span>
+                <span class="ranking-value percent">${item.percentual.toFixed(1)}%</span>
+            </div>`;
+        });
+        document.getElementById('ranking-presenca').innerHTML = htmlPresenca || '<div style="text-align:center;color:#999;">Sem dados</div>';
+        
+        let htmlOfertas = '';
+        dadosOfertas.forEach((item, i) => {
+            const pos = i + 1;
+            const classe = ['first', 'second', 'third'][i] || '';
+            htmlOfertas += `
+            <div class="ranking-item">
+                <span class="ranking-position ${classe}">${pos}º</span>
+                <span class="ranking-name">${item.nome}</span>
+                <span class="ranking-value">${formatarMoeda(item.oferta)}</span>
+            </div>`;
+        });
+        document.getElementById('ranking-ofertas').innerHTML = htmlOfertas || '<div style="text-align:center;color:#999;">Sem dados</div>';
+    }
+
+    function formatarMoeda(valor) {
+        return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function mudarTela(tela) {
+        document.querySelectorAll('.tela').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        
+        if(tela === 'lancamento') {
+            document.getElementById('tela-lancamento').classList.add('active');
+            document.querySelectorAll('.nav-tab')[0].classList.add('active');
+        } else if(tela === 'historico') {
+            document.getElementById('tela-historico').classList.add('active');
+            document.querySelectorAll('.nav-tab')[1].classList.add('active');
+            carregarHistorico();
+        } else if(tela === 'mensal') {
+            document.getElementById('tela-mensal').classList.add('active');
+            document.querySelectorAll('.nav-tab')[2].classList.add('active');
+        } else if(tela === 'relatorio') {
+            document.getElementById('tela-relatorio').classList.add('active');
+        }
+        window.scrollTo(0, 0);
+    }
+
+    function voltarParaEdicao() {
+        if(confirm('⚠️ Deseja voltar para editar os dados?\n\nVocê poderá alterar qualquer informação.')) {
+            mudarTela('lancamento');
+        }
+    }
+
+    function enviarWhatsapp() {
+        const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(window.textoZap)}`;
+        window.open(url, '_blank');
+    }
+
+    // Sistema de Histórico
+    function salvarHistorico() {
+        if(!relatorioAtual) {
+            alert('Nenhum relatório para salvar!');
+            return;
+        }
+
+        const historico = JSON.parse(localStorage.getItem('historicoEBD') || '[]');
+        
+        // Verificar se já existe
+        const existe = historico.findIndex(h => h.data === relatorioAtual.data);
+        if(existe >= 0) {
+            if(!confirm('Já existe um relatório para esta data. Deseja substituir?')) {
+                return;
+            }
+            historico[existe] = relatorioAtual;
+        } else {
+            historico.push(relatorioAtual);
+        }
+        
+        historico.sort((a, b) => new Date(b.data) - new Date(a.data));
+        localStorage.setItem('historicoEBD', JSON.stringify(historico));
+        
+        alert('✅ Relatório salvo no histórico!');
+        mudarTela('historico');
+    }
+
+    function carregarHistorico() {
+        const historico = JSON.parse(localStorage.getItem('historicoEBD') || '[]');
+        const container = document.getElementById('lista-historico');
+        
+        if(historico.length === 0) {
+            container.innerHTML = '<p style="text-align:center;color:#999;margin-top:50px;">Nenhum relatório salvo ainda.</p>';
+            return;
+        }
+
+        let html = '';
+        historico.forEach((rel, index) => {
+            const t = rel.totais;
+            html += `
+            <div class="history-item">
+                <div class="history-date">${rel.dataFormatada}</div>
+                ${rel.numeroLicao ? `<div class="history-stats">📖 Lição ${rel.numeroLicao}${rel.temaLicao ? ': ' + rel.temaLicao : ''}</div>` : ''}
+                <div class="history-stats">
+                    💰 ${formatarMoeda(t.tOferta)} | 📊 ${t.tPerc.toFixed(1)}% presença | 👥 ${t.tPres}/${t.tMat}
+                </div>
+                <div class="history-actions">
+                    <button class="btn-small btn-view" onclick="visualizarHistorico(${index})">👁️ Visualizar</button>
+                    <button class="btn-small btn-delete" onclick="excluirHistorico(${index})">🗑️ Excluir</button>
+                </div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    function visualizarHistorico(index) {
+        const historico = JSON.parse(localStorage.getItem('historicoEBD') || '[]');
+        relatorioAtual = historico[index];
+        
+        // Recriar o relatório visual
+        const t = relatorioAtual.totais;
+        let textoData = '📅 ' + relatorioAtual.dataFormatada;
+        if(relatorioAtual.numeroLicao || relatorioAtual.temaLicao) {
+            textoData += '\n📖 Lição ' + (relatorioAtual.numeroLicao || '');
+            if(relatorioAtual.temaLicao) textoData += ': ' + relatorioAtual.temaLicao;
+        }
+        document.getElementById('res-data').innerText = textoData;
+        document.getElementById('res-oferta-total').innerText = formatarMoeda(t.tOferta);
+        document.getElementById('res-percentual').innerText = t.tPerc.toFixed(1) + '%';
+        document.getElementById('res-matriculados').innerText = t.tMat;
+        document.getElementById('res-presentes').innerText = t.tPres;
+        document.getElementById('res-visitantes').innerText = t.tVis;
+        document.getElementById('res-faltantes').innerText = t.tFalta;
+        document.getElementById('res-biblias').innerText = t.tBib;
+        document.getElementById('res-revistas').innerText = t.tRev;
+
+        // Reconstruir tabelas
+        let htmlGeral = '', htmlProf = '';
+        let dadosPresenca = [], dadosOfertas = [];
+        
+        grupos.forEach(grupo => {
+            const d = relatorioAtual.dados[grupo.id];
+            if(!d) return;
+            
+            const tr = `
+            <tr>
+                <td><strong>${grupo.nome}</strong><br><span style="font-size:0.7em;color:#666">${grupo.sub}</span></td>
+                <td>${d.mat}</td>
+                <td>${d.pres} <span style="font-size:0.7em;color:blue">(${d.perc.toFixed(0)}%)</span></td>
+                <td style="color:red;font-weight:bold">${d.faltas}</td>
+                <td>${d.vis || '-'}</td>
+                <td>${d.bib}</td>
+                <td>${d.rev}</td>
+                <td>${formatarMoeda(d.oferta)}</td>
+            </tr>`;
+            
+            if(grupo.isSeparate) {
+                htmlProf += tr;
+            } else {
+                htmlGeral += tr;
+                if(d.mat > 0) dadosPresenca.push({ nome: grupo.nome, percentual: d.perc });
+                if(d.oferta > 0) dadosOfertas.push({ nome: grupo.nome, oferta: d.oferta });
+            }
+        });
+        
+        document.getElementById('tabela-corpo').innerHTML = htmlGeral;
+        document.getElementById('tabela-professores').innerHTML = htmlProf;
+        gerarRankings(dadosPresenca, dadosOfertas);
+        
+        mudarTela('relatorio');
+    }
+
+    function excluirHistorico(index) {
+        if(!confirm('Tem certeza que deseja excluir este relatório?')) return;
+        
+        const historico = JSON.parse(localStorage.getItem('historicoEBD') || '[]');
+        historico.splice(index, 1);
+        localStorage.setItem('historicoEBD', JSON.stringify(historico));
+        carregarHistorico();
+    }
+
+    // Resumo Mensal
+    function definirMesAtual() {
+        const hoje = new Date();
+        const mesAno = hoje.toISOString().substring(0, 7);
+        document.getElementById('mes-ano').value = mesAno;
+    }
+
+    function gerarResumoMensal() {
+        const mesAno = document.getElementById('mes-ano').value;
+        if(!mesAno) {
+            alert('Selecione um mês/ano');
+            return;
+        }
+
+        const [ano, mes] = mesAno.split('-');
+        const historico = JSON.parse(localStorage.getItem('historicoEBD') || '[]');
+        
+        const relatoriosMes = historico.filter(rel => {
+            const dataRel = new Date(rel.data);
+            return dataRel.getFullYear() == ano && (dataRel.getMonth() + 1) == mes;
+        });
+
+        if(relatoriosMes.length === 0) {
+            document.getElementById('conteudo-mensal').innerHTML = '<p style="text-align:center;color:#999;margin-top:30px;">Nenhum relatório encontrado para este mês.</p>';
+            return;
+        }
+
+        // Calcular totais do mês
+        let totalOferta = 0, totalPres = 0, totalMat = 0, totalVis = 0;
+        let totalBib = 0, totalRev = 0, totalFalta = 0;
+
+        relatoriosMes.forEach(rel => {
+            const t = rel.totais;
+            totalOferta += t.tOferta;
+            totalPres += t.tPres;
+            totalMat += t.tMat;
+            totalVis += t.tVis;
+            totalBib += t.tBib;
+            totalRev += t.tRev;
+            totalFalta += t.tFalta;
+        });
+
+        const mediaPresenca = totalMat > 0 ? (totalPres / totalMat) * 100 : 0;
+        const nomeMes = new Date(ano, mes - 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+        let html = `
+        <div class="card" style="margin-top: 20px;">
+            <h3 style="margin-bottom: 15px;">📊 Resumo de ${nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1)}</h3>
+            
+            <div class="summary-cards" style="margin-top: 15px;">
+                <div class="sum-card">
+                    <div class="sum-lbl">TOTAL DE OFERTAS</div>
+                    <div class="sum-val">${formatarMoeda(totalOferta)}</div>
+                </div>
+                <div class="sum-card">
+                    <div class="sum-lbl">MÉDIA DE PRESENÇA</div>
+                    <div class="sum-val">${mediaPresenca.toFixed(1)}%</div>
+                </div>
+            </div>
+
+            <div class="details-grid" style="margin-top: 15px;">
+                <div class="detail-item" style="background: #e0f2fe; color: #0369a1;">
+                    <div class="d-val">${relatoriosMes.length}</div>
+                    <div class="d-lbl">Domingos</div>
+                </div>
+                <div class="detail-item" style="background: #dcfce7; color: #15803d;">
+                    <div class="d-val">${totalPres}</div>
+                    <div class="d-lbl">Total Presentes</div>
+                </div>
+                <div class="detail-item" style="background: #fef3c7; color: #92400e;">
+                    <div class="d-val">${totalVis}</div>
+                    <div class="d-lbl">Visitantes</div>
+                </div>
+                <div class="detail-item" style="background: #fee2e2; color: #991b1b;">
+                    <div class="d-val">${totalFalta}</div>
+                    <div class="d-lbl">Faltas</div>
+                </div>
+                <div class="detail-item" style="background: #e0e7ff; color: #3730a3;">
+                    <div class="d-val">${totalBib}</div>
+                    <div class="d-lbl">Bíblias</div>
+                </div>
+                <div class="detail-item" style="background: #fce7f3; color: #831843;">
+                    <div class="d-val">${totalRev}</div>
+                    <div class="d-lbl">Revistas</div>
+                </div>
+            </div>
+
+            <h4 style="margin-top: 20px; margin-bottom: 10px;">Domingos do Mês:</h4>
+            <div style="display: flex; flex-direction: column; gap: 10px;">`;
+
+        relatoriosMes.forEach((rel, i) => {
+            html += `
+            <div style="background: #f9fafb; padding: 12px; border-radius: 8px; border-left: 3px solid var(--primary);">
+                <div style="font-weight: 600;">${rel.dataFormatada}</div>
+                ${rel.numeroLicao ? `<div style="font-size: 0.85rem; color: #666;">📖 Lição ${rel.numeroLicao}</div>` : ''}
+                <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">
+                    💰 ${formatarMoeda(rel.totais.tOferta)} | 📊 ${rel.totais.tPerc.toFixed(1)}% | 👥 ${rel.totais.tPres}/${rel.totais.tMat}
+                </div>
+                <button class="btn-small btn-view" style="margin-top: 8px;" onclick="visualizarHistorico(${historico.indexOf(rel)})">Ver Detalhes</button>
+            </div>`;
+        });
+
+        html += `
+            </div>
+        </div>`;
+
+        document.getElementById('conteudo-mensal').innerHTML = html;
+    }
+</script>
+
+</body>
+</html>
