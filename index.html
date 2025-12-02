@@ -557,6 +557,35 @@
         .card-title { font-weight: 700; color: var(--primary); font-size: 1rem; }
         .card-subtitle { font-size: 0.8rem; color: #6b7280; font-style: italic; }
 
+        /* Swipe Indicator */
+        .swipe-indicator {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(37, 99, 235, 0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 50%;
+            font-size: 2rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .swipe-indicator.left {
+            left: 20px;
+        }
+        
+        .swipe-indicator.right {
+            right: 20px;
+        }
+        
+        .swipe-indicator.show {
+            opacity: 1;
+        }
+
         /* Inputs Grid */
         .input-grid {
             display: grid;
@@ -739,6 +768,10 @@
     </style>
 </head>
 <body>
+    <!-- Indicadores de Swipe -->
+    <div id="swipe-left" class="swipe-indicator left">👈</div>
+    <div id="swipe-right" class="swipe-indicator right">👉</div>
+    
     <!-- Tela de Login -->
     <div id="tela-login" class="login-overlay">
         <div class="login-container">
@@ -1119,6 +1152,11 @@
         buscarLicaoPorData(); // Busca automática ao carregar
         inicializarTema();
         registrarServiceWorker();
+        
+        // Inicializar swipe em dispositivos móveis
+        if (window.innerWidth <= 768) {
+            inicializarSwipe();
+        }
     });
 
     // PWA - Service Worker
@@ -2136,6 +2174,128 @@
     function mostrarConfig() {
         alert('⚙️ Configurações\n\n🌙 Tema: Clique no ícone ao lado\n💾 Exportar: Clique no ícone de download\n📊 Dashboard: Acesse a aba Dashboard\n\nVersão 2.0 - Todas as funcionalidades ativas!');
     }
+
+    // ========================================
+    // SWIPE PARA TROCAR ABAS (Mobile/Tablet)
+    // ========================================
+    
+    let touchStartX = 0;
+    let touchEndX = 0;
+    let touchStartY = 0;
+    let touchEndY = 0;
+    let isSwipping = false;
+    
+    const abas = ['lancamento', 'dashboard', 'historico', 'mensal', 'licoes', 'usuarios'];
+    let abaAtualIndex = 0;
+    
+    function getAbaAtualIndex() {
+        const telaAtiva = document.querySelector('.tela.active');
+        if (!telaAtiva) return 0;
+        
+        const id = telaAtiva.id.replace('tela-', '');
+        const index = abas.indexOf(id);
+        return index >= 0 ? index : 0;
+    }
+    
+    function mostrarIndicadorSwipe(direcao) {
+        const indicador = document.getElementById(`swipe-${direcao}`);
+        if (indicador) {
+            indicador.classList.add('show');
+            setTimeout(() => {
+                indicador.classList.remove('show');
+            }, 300);
+        }
+    }
+    
+    function handleSwipe() {
+        const diffX = touchEndX - touchStartX;
+        const diffY = touchEndY - touchStartY;
+        
+        // Verificar se é um swipe horizontal (não vertical)
+        if (Math.abs(diffX) > Math.abs(diffY)) {
+            // Swipe mínimo de 80px para maior precisão
+            if (Math.abs(diffX) > 80) {
+                abaAtualIndex = getAbaAtualIndex();
+                
+                if (diffX > 0) {
+                    // Swipe para direita - aba anterior
+                    if (abaAtualIndex > 0) {
+                        mostrarIndicadorSwipe('left');
+                        setTimeout(() => {
+                            mudarTela(abas[abaAtualIndex - 1]);
+                        }, 100);
+                    }
+                } else {
+                    // Swipe para esquerda - próxima aba
+                    const usuarioLogado = getUsuarioLogado();
+                    const maxIndex = usuarioLogado?.nivel === 1 ? abas.length - 1 : abas.length - 2;
+                    
+                    if (abaAtualIndex < maxIndex) {
+                        mostrarIndicadorSwipe('right');
+                        setTimeout(() => {
+                            mudarTela(abas[abaAtualIndex + 1]);
+                        }, 100);
+                    }
+                }
+            }
+        }
+        
+        isSwipping = false;
+    }
+    }
+    
+    // Adicionar listeners de touch em todas as telas
+    function inicializarSwipe() {
+        const telas = document.querySelectorAll('.tela');
+        
+        telas.forEach(tela => {
+            tela.addEventListener('touchstart', (e) => {
+                // Ignorar se tocar em input, select ou button
+                if (['INPUT', 'SELECT', 'BUTTON', 'TEXTAREA'].includes(e.target.tagName)) {
+                    return;
+                }
+                
+                isSwipping = true;
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }, { passive: true });
+            
+            tela.addEventListener('touchmove', (e) => {
+                if (!isSwipping) return;
+                
+                const currentX = e.changedTouches[0].screenX;
+                const diffX = currentX - touchStartX;
+                
+                // Mostrar indicador visual durante o arraste
+                if (Math.abs(diffX) > 30) {
+                    if (diffX > 0 && getAbaAtualIndex() > 0) {
+                        document.getElementById('swipe-left').style.opacity = Math.min(Math.abs(diffX) / 100, 0.5);
+                    } else if (diffX < 0) {
+                        const usuarioLogado = getUsuarioLogado();
+                        const maxIndex = usuarioLogado?.nivel === 1 ? abas.length - 1 : abas.length - 2;
+                        if (getAbaAtualIndex() < maxIndex) {
+                            document.getElementById('swipe-right').style.opacity = Math.min(Math.abs(diffX) / 100, 0.5);
+                        }
+                    }
+                }
+            }, { passive: true });
+            
+            tela.addEventListener('touchend', (e) => {
+                if (!isSwipping) return;
+                
+                touchEndX = e.changedTouches[0].screenX;
+                touchEndY = e.changedTouches[0].screenY;
+                
+                // Resetar opacidade dos indicadores
+                document.getElementById('swipe-left').style.opacity = 0;
+                document.getElementById('swipe-right').style.opacity = 0;
+                
+                handleSwipe();
+            }, { passive: true });
+        });
+    }
+    
+    // Inicializar swipe ao carregar (removido - será chamado no window.load)
 </script>
 
 </div> <!-- Fim sistema-principal -->
