@@ -26,14 +26,14 @@
         header {
             background-color: var(--primary);
             color: white;
-            padding: 20px;
+            padding: 15px;
             text-align: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             position: sticky;
             top: 0;
             z-index: 100;
         }
-        header h1 { font-size: 1.2rem; font-weight: 600; }
+        header h1 { font-size: 1.2rem; font-weight: 600; line-height: 1.3; }
         header p { font-size: 0.8rem; opacity: 0.9; margin-top: 4px; }
 
         /* Navigation Tabs */
@@ -183,10 +183,11 @@
         .d-val { font-weight: bold; font-size: 1.2rem; }
         .d-lbl { font-size: 0.7rem; opacity: 0.9; }
 
-        .report-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; }
-        .report-table th { text-align: center; background: #f3f4f6; padding: 8px; border: 1px solid var(--border); font-size: 0.75rem; }
+        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .report-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; min-width: 600px; }
+        .report-table th { text-align: center; background: #f3f4f6; padding: 8px; border: 1px solid var(--border); font-size: 0.75rem; white-space: nowrap; }
         .report-table td { padding: 8px; border: 1px solid var(--border); text-align: center; }
-        .report-table td:first-child { text-align: left; font-weight: 600; }
+        .report-table td:first-child { text-align: left; font-weight: 600; white-space: nowrap; }
 
         .prof-section { margin-top: 20px; border: 2px dashed var(--warning); padding: 15px; border-radius: 12px; background: #fffbf0; }
         .prof-header { color: #d97706; font-weight: bold; margin-bottom: 10px; font-size: 1rem; }
@@ -226,6 +227,40 @@
         /* Telas */
         .tela { display: none; }
         .tela.active { display: block; }
+
+        /* Responsividade Mobile/Tablet */
+        @media (max-width: 768px) {
+            .input-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .input-grid .form-group.full { grid-column: span 2; }
+            .summary-cards { grid-template-columns: 1fr; gap: 10px; }
+            .rankings-container { grid-template-columns: 1fr; }
+            .details-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .sum-val { font-size: 1.5rem; }
+            .report-table { font-size: 0.75rem; }
+            .report-table th, .report-table td { padding: 6px 4px; }
+            header h1 { font-size: 1rem; }
+            .btn { font-size: 0.9rem; padding: 12px; }
+        }
+
+        @media (max-width: 480px) {
+            .input-grid { grid-template-columns: 1fr; }
+            .input-grid-2 { grid-template-columns: 1fr; }
+            .details-grid { grid-template-columns: 1fr; }
+            .report-table { font-size: 0.7rem; }
+            .report-table th, .report-table td { padding: 4px 2px; }
+            .nav-tab { font-size: 0.85rem; padding: 10px 5px; }
+            .card { padding: 12px; }
+        }
+
+        /* Melhorias de toque */
+        @media (hover: none) and (pointer: coarse) {
+            .btn, input, select { min-height: 44px; }
+            .nav-tab { min-height: 48px; }
+            .btn-small { min-height: 36px; padding: 8px 12px; }
+            input[type="number"], input[type="text"], select {
+                font-size: 16px; /* Evita zoom no iOS */
+            }
+        }
 
         @media print {
             body { background: white; padding: 0; }
@@ -343,39 +378,43 @@
 
         <div class="card">
             <h3 style="margin-bottom: 15px; font-size: 1rem;">Detalhamento por Classe</h3>
-            <table class="report-table">
-                <thead>
-                    <tr>
-                        <th>Classe</th>
-                        <th>Mat</th>
-                        <th>Pres</th>
-                        <th>Falta</th>
-                        <th>Visit</th>
-                        <th>Bíb</th>
-                        <th>Rev</th>
-                        <th>Oferta</th>
-                    </tr>
-                </thead>
-                <tbody id="tabela-corpo"></tbody>
-            </table>
+            <div class="table-wrapper">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Classe</th>
+                            <th>Mat</th>
+                            <th>Pres</th>
+                            <th>Falta</th>
+                            <th>Visit</th>
+                            <th>Bíb</th>
+                            <th>Rev</th>
+                            <th>Oferta</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-corpo"></tbody>
+                </table>
+            </div>
         </div>
 
         <div class="prof-section">
             <div class="prof-header">🎓 Controle Interno - Professores</div>
-            <table class="report-table">
-                <thead>
-                    <tr>
-                        <th>Classe</th>
-                        <th>Mat</th>
-                        <th>Pres</th>
-                        <th>Falta</th>
-                        <th>Bíb</th>
-                        <th>Rev</th>
-                        <th>Oferta</th>
-                    </tr>
-                </thead>
-                <tbody id="tabela-professores"></tbody>
-            </table>
+            <div class="table-wrapper">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Classe</th>
+                            <th>Mat</th>
+                            <th>Pres</th>
+                            <th>Falta</th>
+                            <th>Bíb</th>
+                            <th>Rev</th>
+                            <th>Oferta</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-professores"></tbody>
+                </table>
+            </div>
             <div style="font-size: 0.7rem; margin-top: 8px; text-align: center; color: #666;">
                 * Não contabilizado nos totais gerais acima.
             </div>
@@ -710,7 +749,7 @@
     }
 
     function voltarParaEdicao() {
-        if(confirm('⚠️ Deseja voltar para editar os dados?\n\nVocê poderá alterar qualquer informação.')) {
+        if(confirm('✏️ Voltar para editar o fechamento?\n\nO relatório atual será atualizado com as novas informações.')) {
             mudarTela('lancamento');
         }
     }
