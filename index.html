@@ -2185,124 +2185,347 @@
     }
 
     // Sistema de Histórico
-    function salvarHistorico() {
+    async function salvarHistorico() {
         if(!relatorioAtual) {
             alert('Nenhum relatório para salvar!');
             return;
         }
 
-        const historico = JSON.parse(localStorage.getItem('historicoEBD') || '[]');
+        const usuarioLogado = getUsuarioLogado();
+        const igrejaId = getIgrejaUsuarioLogado();
         
-        // Verificar se já existe
-        const existe = historico.findIndex(h => h.data === relatorioAtual.data);
-        if(existe >= 0) {
-            if(!confirm('Já existe um relatório para esta data. Deseja substituir?')) {
-                return;
-            }
-            historico[existe] = relatorioAtual;
-        } else {
-            historico.push(relatorioAtual);
-        }
-        
-        historico.sort((a, b) => new Date(b.data) - new Date(a.data));
-        localStorage.setItem('historicoEBD', JSON.stringify(historico));
-        
-        alert('✅ Relatório salvo no histórico!');
-        mudarTela('historico');
-    }
-
-    function carregarHistorico() {
-        const historico = JSON.parse(localStorage.getItem('historicoEBD') || '[]');
-        const container = document.getElementById('lista-historico');
-        
-        if(historico.length === 0) {
-            container.innerHTML = '<p style="text-align:center;color:#999;margin-top:50px;">Nenhum relatório salvo ainda.</p>';
+        if(!igrejaId) {
+            alert('❌ Igreja não identificada!');
             return;
         }
 
-        let html = '';
-        historico.forEach((rel, index) => {
-            const t = rel.totais;
-            html += `
-            <div class="history-item">
-                <div class="history-date">${rel.dataFormatada}</div>
-                ${rel.numeroLicao ? `<div class="history-stats">📖 Lição ${rel.numeroLicao}${rel.temaLicao ? ': ' + rel.temaLicao : ''}</div>` : ''}
-                <div class="history-stats">
-                    💰 ${formatarMoeda(t.tOferta)} | 📊 ${t.tPerc.toFixed(1)}% presença | 👥 ${t.tPres}/${t.tMat}
-                </div>
-                <div class="history-actions">
-                    <button class="btn-small btn-view" onclick="visualizarHistorico(${index})">👁️ Visualizar</button>
-                    <button class="btn-small btn-delete" onclick="excluirHistorico(${index})">🗑️ Excluir</button>
-                </div>
-            </div>`;
-        });
-        container.innerHTML = html;
-    }
-
-    function visualizarHistorico(index) {
-        const historico = JSON.parse(localStorage.getItem('historicoEBD') || '[]');
-        relatorioAtual = historico[index];
-        
-        // Recriar o relatório visual
-        const t = relatorioAtual.totais;
-        let textoData = '📅 ' + relatorioAtual.dataFormatada;
-        if(relatorioAtual.numeroLicao || relatorioAtual.temaLicao) {
-            textoData += '\n📖 Lição ' + (relatorioAtual.numeroLicao || '');
-            if(relatorioAtual.temaLicao) textoData += ': ' + relatorioAtual.temaLicao;
-        }
-        document.getElementById('res-data').innerText = textoData;
-        document.getElementById('res-oferta-total').innerText = formatarMoeda(t.tOferta);
-        document.getElementById('res-percentual').innerText = t.tPerc.toFixed(1) + '%';
-        document.getElementById('res-matriculados').innerText = t.tMat;
-        document.getElementById('res-presentes').innerText = t.tPres;
-        document.getElementById('res-visitantes').innerText = t.tVis;
-        document.getElementById('res-faltantes').innerText = t.tFalta;
-        document.getElementById('res-biblias').innerText = t.tBib;
-        document.getElementById('res-revistas').innerText = t.tRev;
-
-        // Reconstruir tabelas
-        let htmlGeral = '', htmlProf = '';
-        let dadosPresenca = [], dadosOfertas = [];
-        
-        grupos.forEach(grupo => {
-            const d = relatorioAtual.dados[grupo.id];
-            if(!d) return;
+        try {
+            const sb = getSupabase();
             
-            const tr = `
-            <tr>
-                <td><strong>${grupo.nome}</strong><br><span style="font-size:0.7em;color:#666">${grupo.sub}</span></td>
-                <td>${d.mat}</td>
-                <td>${d.pres} <span style="font-size:0.7em;color:blue">(${d.perc.toFixed(0)}%)</span></td>
-                <td style="color:red;font-weight:bold">${d.faltas}</td>
-                <td>${d.vis || '-'}</td>
-                <td>${d.bib}</td>
-                <td>${d.rev}</td>
-                <td>${formatarMoeda(d.oferta)}</td>
-            </tr>`;
+            // Verificar se já existe lançamento para esta data/igreja
+            const { data: existente, error: errBusca } = await sb
+                .from('lancamentos')
+                .select('id')
+                .eq('data', relatorioAtual.data)
+                .eq('igreja_id', igrejaId)
+                .limit(1);
             
-            if(grupo.isSeparate) {
-                htmlProf += tr;
+            if (errBusca) throw errBusca;
+            
+            let lancamentoId;
+            
+            if (existente && existente.length > 0) {
+                if(!confirm('Já existe um relatório para esta data. Deseja substituir?')) {
+                    return;
+                }
+                
+                lancamentoId = existente[0].id;
+                
+                // Deletar grupos e ofertas antigas
+                await sb.from('grupos_presenca').delete().eq('lancamento_id', lancamentoId);
+                await sb.from('ofertas').delete().eq('lancamento_id', lancamentoId);
+                
+                // Atualizar lançamento
+                const { error: errUpdate } = await sb
+                    .from('lancamentos')
+                    .update({
+                        licao: relatorioAtual.numeroLicao || null,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', lancamentoId);
+                
+                if (errUpdate) throw errUpdate;
             } else {
-                htmlGeral += tr;
-                if(d.mat > 0) dadosPresenca.push({ nome: grupo.nome, percentual: d.perc });
-                if(d.oferta > 0) dadosOfertas.push({ nome: grupo.nome, oferta: d.oferta });
+                // Criar novo lançamento
+                const { data: novoLancamento, error: errInsert } = await sb
+                    .from('lancamentos')
+                    .insert([{
+                        data: relatorioAtual.data,
+                        licao: relatorioAtual.numeroLicao || null,
+                        igreja_id: igrejaId
+                    }])
+                    .select();
+                
+                if (errInsert) throw errInsert;
+                lancamentoId = novoLancamento[0].id;
             }
-        });
-        
-        document.getElementById('tabela-corpo').innerHTML = htmlGeral;
-        document.getElementById('tabela-professores').innerHTML = htmlProf;
-        gerarRankings(dadosPresenca, dadosOfertas);
-        
-        mudarTela('relatorio');
+            
+            // Inserir grupos de presença
+            const gruposData = [];
+            grupos.forEach(grupo => {
+                const d = relatorioAtual.dados[grupo.id];
+                if (d) {
+                    gruposData.push({
+                        lancamento_id: lancamentoId,
+                        grupo_id: grupo.id,
+                        presente: d.pres || 0,
+                        ausente: d.faltas || 0,
+                        visita: d.vis || 0
+                    });
+                }
+            });
+            
+            if (gruposData.length > 0) {
+                const { error: errGrupos } = await sb
+                    .from('grupos_presenca')
+                    .insert(gruposData);
+                
+                if (errGrupos) throw errGrupos;
+            }
+            
+            // Inserir ofertas
+            const t = relatorioAtual.totais;
+            const ofertasData = [];
+            
+            if (t.tOferta > 0) {
+                ofertasData.push({
+                    lancamento_id: lancamentoId,
+                    tipo: 'geral',
+                    valor: t.tOferta,
+                    observacao: null
+                });
+            }
+            
+            if (ofertasData.length > 0) {
+                const { error: errOfertas } = await sb
+                    .from('ofertas')
+                    .insert(ofertasData);
+                
+                if (errOfertas) throw errOfertas;
+            }
+            
+            alert('✅ Relatório salvo no histórico!');
+            await carregarHistorico();
+            mudarTela('historico');
+        } catch (error) {
+            console.error('❌ Erro ao salvar histórico:', error);
+            alert('❌ Erro ao salvar relatório. Tente novamente.');
+        }
     }
 
-    function excluirHistorico(index) {
+    async function carregarHistorico() {
+        const container = document.getElementById('lista-historico');
+        const igrejaId = getIgrejaUsuarioLogado();
+        
+        if (!igrejaId) {
+            container.innerHTML = '<p style="text-align:center;color:#999;margin-top:50px;">Igreja não identificada.</p>';
+            return;
+        }
+        
+        try {
+            const sb = getSupabase();
+            
+            // Buscar lançamentos com grupos e ofertas
+            const { data: lancamentos, error } = await sb
+                .from('lancamentos')
+                .select(`
+                    id,
+                    data,
+                    licao,
+                    grupos_presenca(grupo_id, presente, ausente, visita),
+                    ofertas(valor)
+                `)
+                .eq('igreja_id', igrejaId)
+                .order('data', { ascending: false });
+            
+            if (error) throw error;
+            
+            if (!lancamentos || lancamentos.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:#999;margin-top:50px;">Nenhum relatório salvo ainda.</p>';
+                return;
+            }
+
+            let html = '';
+            lancamentos.forEach((lanc, index) => {
+                const dataFormatada = new Date(lanc.data + 'T00:00:00').toLocaleDateString('pt-BR');
+                
+                // Calcular totais
+                let tPres = 0, tMat = 0, tVis = 0;
+                lanc.grupos_presenca?.forEach(g => {
+                    tPres += g.presente || 0;
+                    tMat += (g.presente || 0) + (g.ausente || 0);
+                    tVis += g.visita || 0;
+                });
+                
+                const tPerc = tMat > 0 ? (tPres / tMat) * 100 : 0;
+                const tOferta = lanc.ofertas?.reduce((sum, o) => sum + parseFloat(o.valor || 0), 0) || 0;
+                
+                html += `
+                <div class="history-item">
+                    <div class="history-date">${dataFormatada}</div>
+                    ${lanc.licao ? `<div class="history-stats">📖 Lição ${lanc.licao}</div>` : ''}
+                    <div class="history-stats">
+                        💰 ${formatarMoeda(tOferta)} | 📊 ${tPerc.toFixed(1)}% presença | 👥 ${tPres}/${tMat}
+                    </div>
+                    <div class="history-actions">
+                        <button class="btn-small btn-view" onclick="visualizarHistorico(${lanc.id})">👁️ Visualizar</button>
+                        <button class="btn-small btn-delete" onclick="excluirHistorico(${lanc.id})">🗑️ Excluir</button>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        } catch (error) {
+            console.error('❌ Erro ao carregar histórico:', error);
+            container.innerHTML = '<p style="text-align:center;color:#f44;margin-top:50px;">Erro ao carregar histórico.</p>';
+        }
+    }
+
+    async function visualizarHistorico(lancamentoId) {
+        try {
+            const sb = getSupabase();
+            
+            // Buscar lançamento completo
+            const { data: lancamentos, error } = await sb
+                .from('lancamentos')
+                .select(`
+                    id,
+                    data,
+                    licao,
+                    grupos_presenca(grupo_id, presente, ausente, visita),
+                    ofertas(tipo, valor)
+                `)
+                .eq('id', lancamentoId)
+                .limit(1);
+            
+            if (error) throw error;
+            
+            const lanc = lancamentos?.[0];
+            if (!lanc) {
+                alert('Relatório não encontrado!');
+                return;
+            }
+            
+            // Reconstruir objeto relatorioAtual
+            relatorioAtual = {
+                data: lanc.data,
+                dataFormatada: new Date(lanc.data + 'T00:00:00').toLocaleDateString('pt-BR'),
+                numeroLicao: lanc.licao,
+                dados: {},
+                totais: {
+                    tMat: 0,
+                    tPres: 0,
+                    tFalta: 0,
+                    tVis: 0,
+                    tBib: 0,
+                    tRev: 0,
+                    tOferta: 0,
+                    tPerc: 0
+                }
+            };
+            
+            // Processar grupos
+            lanc.grupos_presenca?.forEach(g => {
+                const grupo = grupos.find(gr => gr.id === g.grupo_id);
+                if (!grupo) return;
+                
+                const pres = g.presente || 0;
+                const aus = g.ausente || 0;
+                const vis = g.visita || 0;
+                const mat = pres + aus;
+                const perc = mat > 0 ? (pres / mat) * 100 : 0;
+                
+                relatorioAtual.dados[g.grupo_id] = {
+                    mat,
+                    pres,
+                    faltas: aus,
+                    vis,
+                    perc,
+                    bib: 0, // Não estamos salvando ainda
+                    rev: 0, // Não estamos salvando ainda
+                    oferta: 0
+                };
+                
+                relatorioAtual.totais.tMat += mat;
+                relatorioAtual.totais.tPres += pres;
+                relatorioAtual.totais.tFalta += aus;
+                relatorioAtual.totais.tVis += vis;
+            });
+            
+            // Processar ofertas
+            lanc.ofertas?.forEach(o => {
+                relatorioAtual.totais.tOferta += parseFloat(o.valor || 0);
+            });
+            
+            relatorioAtual.totais.tPerc = relatorioAtual.totais.tMat > 0 
+                ? (relatorioAtual.totais.tPres / relatorioAtual.totais.tMat) * 100 
+                : 0;
+            
+            // Renderizar relatório
+            const t = relatorioAtual.totais;
+            let textoData = '📅 ' + relatorioAtual.dataFormatada;
+            if(relatorioAtual.numeroLicao) {
+                textoData += '\\n📖 Lição ' + relatorioAtual.numeroLicao;
+            }
+            document.getElementById('res-data').innerText = textoData;
+            document.getElementById('res-oferta-total').innerText = formatarMoeda(t.tOferta);
+            document.getElementById('res-percentual').innerText = t.tPerc.toFixed(1) + '%';
+            document.getElementById('res-matriculados').innerText = t.tMat;
+            document.getElementById('res-presentes').innerText = t.tPres;
+            document.getElementById('res-visitantes').innerText = t.tVis;
+            document.getElementById('res-faltantes').innerText = t.tFalta;
+            document.getElementById('res-biblias').innerText = t.tBib;
+            document.getElementById('res-revistas').innerText = t.tRev;
+
+            // Reconstruir tabelas
+            let htmlGeral = '', htmlProf = '';
+            let dadosPresenca = [], dadosOfertas = [];
+            
+            grupos.forEach(grupo => {
+                const d = relatorioAtual.dados[grupo.id];
+                if(!d) return;
+                
+                const tr = `
+                <tr>
+                    <td><strong>${grupo.nome}</strong><br><span style=\"font-size:0.7em;color:#666\">${grupo.sub}</span></td>
+                    <td>${d.mat}</td>
+                    <td>${d.pres} <span style=\"font-size:0.7em;color:blue\">(${d.perc.toFixed(0)}%)</span></td>
+                    <td style=\"color:red;font-weight:bold\">${d.faltas}</td>
+                    <td>${d.vis || '-'}</td>
+                    <td>${d.bib}</td>
+                    <td>${d.rev}</td>
+                    <td>${formatarMoeda(d.oferta)}</td>
+                </tr>`;
+                
+                if(grupo.isSeparate) {
+                    htmlProf += tr;
+                } else {
+                    htmlGeral += tr;
+                    if(d.mat > 0) dadosPresenca.push({ nome: grupo.nome, percentual: d.perc });
+                    if(d.oferta > 0) dadosOfertas.push({ nome: grupo.nome, oferta: d.oferta });
+                }
+            });
+            
+            document.getElementById('tabela-corpo').innerHTML = htmlGeral;
+            document.getElementById('tabela-professores').innerHTML = htmlProf;
+            gerarRankings(dadosPresenca, dadosOfertas);
+            
+            mudarTela('relatorio');
+        } catch (error) {
+            console.error('❌ Erro ao visualizar histórico:', error);
+            alert('❌ Erro ao carregar relatório. Tente novamente.');
+        }
+    }
+
+    async function excluirHistorico(lancamentoId) {
         if(!confirm('Tem certeza que deseja excluir este relatório?')) return;
         
-        const historico = JSON.parse(localStorage.getItem('historicoEBD') || '[]');
-        historico.splice(index, 1);
-        localStorage.setItem('historicoEBD', JSON.stringify(historico));
-        carregarHistorico();
+        try {
+            const sb = getSupabase();
+            
+            // Deletar lançamento (CASCADE deleta grupos e ofertas automaticamente)
+            const { error } = await sb
+                .from('lancamentos')
+                .delete()
+                .eq('id', lancamentoId);
+            
+            if (error) throw error;
+            
+            alert('✅ Relatório excluído com sucesso!');
+            await carregarHistorico();
+        } catch (error) {
+            console.error('❌ Erro ao excluir histórico:', error);
+            alert('❌ Erro ao excluir relatório. Tente novamente.');
+        }
     }
 
     // Resumo Mensal
