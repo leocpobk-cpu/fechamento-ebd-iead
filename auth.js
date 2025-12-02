@@ -95,6 +95,11 @@ function fazerLogin() {
         // Aplicar permissões
         aplicarPermissoes(sessao.nivel);
         
+        // Inicializar swipe em dispositivos móveis
+        if (window.innerWidth <= 768 && typeof inicializarSwipe === 'function') {
+            setTimeout(() => inicializarSwipe(), 100);
+        }
+        
         mostrarAlertaLogin('Login realizado com sucesso!', 'success');
     } else {
         mostrarAlertaLogin('Usuário ou senha inválidos!', 'error');
@@ -324,6 +329,11 @@ function verificarAutenticacao() {
         document.getElementById('sistema-principal').style.display = 'block';
         atualizarHeaderUsuario(usuarioLogado);
         aplicarPermissoes(usuarioLogado.nivel);
+        
+        // Inicializar swipe em dispositivos móveis
+        if (window.innerWidth <= 768 && typeof inicializarSwipe === 'function') {
+            setTimeout(() => inicializarSwipe(), 100);
+        }
     } else {
         document.getElementById('tela-login').style.display = 'flex';
         document.getElementById('sistema-principal').style.display = 'none';

@@ -1152,11 +1152,6 @@
         buscarLicaoPorData(); // Busca automática ao carregar
         inicializarTema();
         registrarServiceWorker();
-        
-        // Inicializar swipe em dispositivos móveis
-        if (window.innerWidth <= 768) {
-            inicializarSwipe();
-        }
     });
 
     // PWA - Service Worker
@@ -2241,7 +2236,6 @@
         }
         
         isSwipping = false;
-    }
     }
     
     // Adicionar listeners de touch em todas as telas

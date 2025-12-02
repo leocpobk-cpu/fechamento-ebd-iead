@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Test Mobile - EBD</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #2563eb;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .info {
+            padding: 20px;
+        }
+        
+        .info-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f3f4f6;
+            border-radius: 5px;
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        
+        .btn:active {
+            background: #1e40af;
+        }
+        
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Teste Mobile - EBD</h1>
+        </div>
+        
+        <div class="info">
+            <h3>Informações do Dispositivo:</h3>
+            <div class="info-item">
+                📱 Largura: <strong id="screen-width"></strong>px
+            </div>
+            <div class="info-item">
+                📐 Altura: <strong id="screen-height"></strong>px
+            </div>
+            <div class="info-item">
+                👆 Touch: <strong id="touch-support"></strong>
+            </div>
+            <div class="info-item">
+                🌐 User Agent: <strong id="user-agent"></strong>
+            </div>
+            
+            <button class="btn" onclick="abrirSite()">🚀 Abrir Site EBD</button>
+            
+            <h3>Teste de Swipe:</h3>
+            <div id="swipe-test" style="background: #e5e7eb; padding: 40px; text-align: center; border-radius: 8px; margin: 10px 0;">
+                👆 Arraste aqui para testar
+            </div>
+            <div id="swipe-status"></div>
+            
+            <h3>Instruções:</h3>
+            <ol style="font-size: 14px; line-height: 1.6;">
+                <li>Verifique se o Touch está ativo</li>
+                <li>Teste o arraste na caixa cinza acima</li>
+                <li>Clique em "Abrir Site EBD"</li>
+                <li>Faça login (admin/admin123)</li>
+                <li>Tente arrastar entre as abas</li>
+            </ol>
+        </div>
+    </div>
+    
+    <script>
+        // Detectar informações
+        document.getElementById('screen-width').textContent = window.innerWidth;
+        document.getElementById('screen-height').textContent = window.innerHeight;
+        document.getElementById('touch-support').textContent = 'ontouchstart' in window ? '✅ Sim' : '❌ Não';
+        document.getElementById('user-agent').textContent = navigator.userAgent.substring(0, 50) + '...';
+        
+        // Teste de swipe
+        let startX = 0;
+        let endX = 0;
+        
+        const swipeTest = document.getElementById('swipe-test');
+        const swipeStatus = document.getElementById('swipe-status');
+        
+        swipeTest.addEventListener('touchstart', (e) => {
+            startX = e.changedTouches[0].screenX;
+            swipeStatus.innerHTML = '<div class="status">👆 Tocou na posição: ' + startX + 'px</div>';
+        });
+        
+        swipeTest.addEventListener('touchmove', (e) => {
+            const currentX = e.changedTouches[0].screenX;
+            const diff = currentX - startX;
+            swipeStatus.innerHTML = '<div class="status">👉 Arrastando: ' + diff + 'px</div>';
+        });
+        
+        swipeTest.addEventListener('touchend', (e) => {
+            endX = e.changedTouches[0].screenX;
+            const diff = endX - startX;
+            
+            if (Math.abs(diff) > 50) {
+                const direction = diff > 0 ? '➡️ Direita' : '⬅️ Esquerda';
+                swipeStatus.innerHTML = '<div class="status success">✅ Swipe detectado: ' + direction + ' (' + Math.abs(diff) + 'px)</div>';
+            } else {
+                swipeStatus.innerHTML = '<div class="status error">❌ Movimento muito curto: ' + diff + 'px (mínimo 50px)</div>';
+            }
+        });
+        
+        // Abrir site
+        function abrirSite() {
+            window.open('https://leocpobk-cpu.github.io/fechamento-ebd-iead/', '_blank');
+        }
+    </script>
+</body>
+</html>
