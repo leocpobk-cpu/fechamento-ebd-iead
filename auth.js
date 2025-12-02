@@ -1410,7 +1410,7 @@ function fecharModalConvite() {
 }
 
 // Gerar link de convite
-function gerarLinkConvite() {
+async function gerarLinkConvite() {
     const nome = document.getElementById('convite-nome').value.trim();
     const nivel = document.getElementById('convite-nivel').value;
     const igrejaId = document.getElementById('convite-igreja').value;
@@ -1421,59 +1421,69 @@ function gerarLinkConvite() {
         return;
     }
     
-    // Criar token de convite
-    const convite = {
-        id: Date.now().toString(),
-        nivel: parseInt(nivel),
-        igrejaId: parseInt(igrejaId),
-        criadoEm: new Date().toISOString(),
-        expiraEm: new Date(Date.now() + (parseInt(validade) * 60 * 60 * 1000)).toISOString(),
-        usado: false,
-        criadoPor: getUsuarioLogado().id
-    };
-    
-    // Obter nome da igreja
-    const igrejas = getIgrejas();
-    const igreja = igrejas.find(i => i.id == igrejaId);
-    const nomeIgreja = igreja ? igreja.nome : '';
-    
-    // Codificar dados do convite na URL (funciona entre dispositivos)
-    const dadosConvite = btoa(JSON.stringify({
-        id: convite.id,
-        igrejaId: convite.igrejaId,
-        igrejaName: nomeIgreja,
-        nivel: convite.nivel,
-        expiraEm: convite.expiraEm
-    }));
-    
-    const baseUrl = window.location.origin + window.location.pathname;
-    const linkConvite = `${baseUrl}?convite=${dadosConvite}`;
-    
-    // Salvar convite localmente apenas para histórico
-    const convites = JSON.parse(localStorage.getItem('convitesEBD') || '[]');
-    convites.push(convite);
-    localStorage.setItem('convitesEBD', JSON.stringify(convites));
-    
-    // Criar mensagem WhatsApp
-    const nivelTexto = nivel == '2' ? 'Editor (Diretoria EBD)' : 'Visualizador (Auxiliar)';
-    
-    let mensagem = `🎉 *Convite - Sistema EBD IEAD*\n\n`;
-    if (nome) {
-        mensagem += `Olá *${nome}*! `;
+    try {
+        const sb = getSupabase();
+        const usuarioLogado = getUsuarioLogado();
+        
+        // Criar token de convite
+        const conviteId = Date.now().toString();
+        const expiraEm = new Date(Date.now() + (parseInt(validade) * 60 * 60 * 1000)).toISOString();
+        
+        // Salvar convite no Supabase
+        const { error } = await sb
+            .from('convites')
+            .insert([{
+                id: conviteId,
+                nivel: parseInt(nivel),
+                igreja_id: parseInt(igrejaId),
+                expira_em: expiraEm,
+                usado: false,
+                criado_por: usuarioLogado.id
+            }]);
+        
+        if (error) throw error;
+        
+        // Obter nome da igreja
+        const igrejas = await getIgrejas();
+        const igreja = igrejas.find(i => i.id == igrejaId);
+        const nomeIgreja = igreja ? igreja.nome : '';
+        
+        // Codificar dados do convite na URL (funciona entre dispositivos)
+        const dadosConvite = btoa(JSON.stringify({
+            id: conviteId,
+            igrejaId: parseInt(igrejaId),
+            igrejaName: nomeIgreja,
+            nivel: parseInt(nivel),
+            expiraEm: expiraEm
+        }));
+        
+        const baseUrl = window.location.origin + window.location.pathname;
+        const linkConvite = `${baseUrl}?convite=${dadosConvite}`;
+        
+        // Criar mensagem WhatsApp
+        const nivelTexto = nivel == '2' ? 'Editor (Diretoria EBD)' : 'Visualizador (Auxiliar)';
+        
+        let mensagem = `🎉 *Convite - Sistema EBD IEAD*\n\n`;
+        if (nome) {
+            mensagem += `Olá *${nome}*! `;
+        }
+        mensagem += `Você foi convidado(a) para fazer parte da equipe da *${nomeIgreja}*!\n\n`;
+        mensagem += `📋 *Nível de Acesso:* ${nivelTexto}\n`;
+        mensagem += `⏰ *Validade:* ${validade} horas\n\n`;
+        mensagem += `👉 *Clique no link abaixo para criar sua conta:*\n`;
+        mensagem += `${linkConvite}\n\n`;
+        mensagem += `_Este link expira em ${validade}h ou após ser usado._`;
+        
+        // Abrir WhatsApp
+        const urlWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensagem)}`;
+        window.open(urlWhatsApp, '_blank');
+        
+        alert('✅ Link de convite gerado!\n\nO WhatsApp será aberto para você enviar o convite.');
+        fecharModalConvite();
+    } catch (error) {
+        console.error('❌ Erro ao gerar convite:', error);
+        alert('❌ Erro ao gerar convite. Tente novamente.');
     }
-    mensagem += `Você foi convidado(a) para fazer parte da equipe da *${nomeIgreja}*!\n\n`;
-    mensagem += `📋 *Nível de Acesso:* ${nivelTexto}\n`;
-    mensagem += `⏰ *Validade:* ${validade} horas\n\n`;
-    mensagem += `👉 *Clique no link abaixo para criar sua conta:*\n`;
-    mensagem += `${linkConvite}\n\n`;
-    mensagem += `_Este link expira em ${validade}h ou após ser usado._`;
-    
-    // Abrir WhatsApp
-    const urlWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensagem)}`;
-    window.open(urlWhatsApp, '_blank');
-    
-    alert('✅ Link de convite gerado!\n\nO WhatsApp será aberto para você enviar o convite.');
-    fecharModalConvite();
 }
 
 // Verificar se há convite na URL
@@ -1488,7 +1498,7 @@ function verificarConviteNaURL() {
 }
 
 // Processar convite
-function processarConvite(conviteId) {
+async function processarConvite(conviteId) {
     try {
         // Decodificar dados do convite da URL
         const dadosConvite = JSON.parse(atob(conviteId));
@@ -1502,9 +1512,17 @@ function processarConvite(conviteId) {
             return;
         }
         
-        // Verificar se já foi usado (pelo ID único)
-        const convitesUsados = JSON.parse(localStorage.getItem('convitesUsadosEBD') || '[]');
-        if (convitesUsados.includes(dadosConvite.id)) {
+        // Verificar no Supabase se já foi usado
+        const sb = getSupabase();
+        const { data: convites, error } = await sb
+            .from('convites')
+            .select('usado')
+            .eq('id', dadosConvite.id)
+            .limit(1);
+        
+        if (error) throw error;
+        
+        if (convites && convites.length > 0 && convites[0].usado) {
             alert('❌ Este convite já foi utilizado!');
             return;
         }
@@ -1585,7 +1603,7 @@ function mostrarTelaCadastroConvite(convite) {
 }
 
 // Finalizar cadastro via convite
-function finalizarCadastroConvite() {
+async function finalizarCadastroConvite() {
     const nome = document.getElementById('cadastro-nome').value.trim();
     const usuario = document.getElementById('cadastro-usuario').value.trim();
     const email = document.getElementById('cadastro-email').value.trim();
@@ -1608,13 +1626,6 @@ function finalizarCadastroConvite() {
         return;
     }
     
-    // Verificar se usuário já existe
-    const usuarios = getUsuarios();
-    if (usuarios.find(u => u.usuario.toLowerCase() === usuario.toLowerCase())) {
-        alert('⚠️ Este nome de usuário já está em uso!');
-        return;
-    }
-    
     // Obter dados do convite
     const convite = JSON.parse(sessionStorage.getItem('conviteAtivo'));
     if (!convite) {
@@ -1622,51 +1633,68 @@ function finalizarCadastroConvite() {
         return;
     }
     
-    // Criar novo usuário
-    const novoId = usuarios.length > 0 ? Math.max(...usuarios.map(u => u.id)) + 1 : 1;
-    const novoUsuario = {
-        id: novoId,
-        usuario,
-        senha,
-        nome,
-        email,
-        celular,
-        nivel: convite.nivel,
-        igrejaId: convite.igrejaId,
-        ativo: true,
-        primeiroAcesso: false,
-        criadoViaConvite: true,
-        criadoEm: new Date().toISOString()
-    };
-    
-    usuarios.push(novoUsuario);
-    salvarUsuarios(usuarios);
-    
-    // Marcar convite como usado globalmente
-    const convitesUsados = JSON.parse(localStorage.getItem('convitesUsadosEBD') || '[]');
-    convitesUsados.push(convite.id);
-    localStorage.setItem('convitesUsadosEBD', JSON.stringify(convitesUsados));
-    
-    // Atualizar histórico local se existir
-    const convites = JSON.parse(localStorage.getItem('convitesEBD') || '[]');
-    const index = convites.findIndex(c => c.id === convite.id);
-    if (index !== -1) {
-        convites[index].usado = true;
-        convites[index].usadoEm = new Date().toISOString();
-        convites[index].usuarioCriadoId = novoId;
-        localStorage.setItem('convitesEBD', JSON.stringify(convites));
+    try {
+        const sb = getSupabase();
+        
+        // Verificar se usuário já existe
+        const { data: usuariosExistentes, error: errCheck } = await sb
+            .from('usuarios')
+            .select('id')
+            .eq('usuario', usuario.toLowerCase())
+            .limit(1);
+        
+        if (errCheck) throw errCheck;
+        
+        if (usuariosExistentes && usuariosExistentes.length > 0) {
+            alert('⚠️ Este nome de usuário já está em uso!');
+            return;
+        }
+        
+        // Criar novo usuário
+        const { data: novoUsuario, error: errInsert } = await sb
+            .from('usuarios')
+            .insert([{
+                usuario: usuario.toLowerCase(),
+                senha,
+                nome,
+                email,
+                celular,
+                nivel: convite.nivel,
+                igreja_id: convite.igrejaId,
+                ativo: true,
+                primeiro_acesso: false,
+                criado_via_convite: true
+            }])
+            .select();
+        
+        if (errInsert) throw errInsert;
+        
+        // Marcar convite como usado no Supabase
+        const { error: errUpdate } = await sb
+            .from('convites')
+            .update({
+                usado: true,
+                usado_em: new Date().toISOString(),
+                usuario_criado_id: novoUsuario[0].id
+            })
+            .eq('id', convite.id);
+        
+        if (errUpdate) throw errUpdate;
+        
+        // Limpar convite da sessão
+        sessionStorage.removeItem('conviteAtivo');
+        
+        // Limpar URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        alert('✅ Conta criada com sucesso!\n\nFaça login com suas credenciais.');
+        
+        // Voltar para tela de login
+        cancelarCadastroConvite();
+    } catch (error) {
+        console.error('❌ Erro ao criar conta via convite:', error);
+        alert('❌ Erro ao criar conta. Tente novamente.');
     }
-    
-    // Limpar convite da sessão
-    sessionStorage.removeItem('conviteAtivo');
-    
-    // Limpar URL
-    window.history.replaceState({}, document.title, window.location.pathname);
-    
-    alert('✅ Conta criada com sucesso!\n\nFaça login com suas credenciais.');
-    
-    // Voltar para tela de login
-    cancelarCadastroConvite();
 }
 
 // Cancelar cadastro via convite
