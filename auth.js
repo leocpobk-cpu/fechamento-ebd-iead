@@ -297,13 +297,25 @@ function aplicarPermissoes(nivel) {
         
     } else if (nivel === 1) {
         // Admin: acesso total
+        console.log('👑 Aplicando permissões de Admin...');
+        
         // Mostrar aba de Usuários
         const abaUsuarios = document.getElementById('aba-usuarios');
-        if (abaUsuarios) abaUsuarios.style.display = 'flex';
+        if (abaUsuarios) {
+            abaUsuarios.style.display = 'block';
+            console.log('✅ Aba de usuários exibida');
+        } else {
+            console.error('❌ Elemento #aba-usuarios não encontrado');
+        }
         
         // Mostrar botão de usuários no header
         const btnUsuarios = document.getElementById('btn-usuarios');
-        if (btnUsuarios) btnUsuarios.style.display = 'flex';
+        if (btnUsuarios) {
+            btnUsuarios.style.display = 'block';
+            console.log('✅ Botão de usuários no header exibido');
+        } else {
+            console.error('❌ Elemento #btn-usuarios não encontrado');
+        }
     }
 }
 
@@ -604,13 +616,23 @@ function carregarSelectIgrejas() {
 
 // Listar usuários
 function listarUsuarios() {
+    console.log('👥 Iniciando listagem de usuários...');
+    
     const usuarios = getUsuarios();
     const igrejas = getIgrejas();
     const container = document.getElementById('lista-usuarios');
     
-    if (!container) return;
+    console.log('📊 Total de usuários:', usuarios.length);
+    console.log('📊 Total de igrejas:', igrejas.length);
+    console.log('📦 Container encontrado:', !!container);
+    
+    if (!container) {
+        console.error('❌ Container #lista-usuarios não encontrado!');
+        return;
+    }
     
     if (usuarios.length === 0) {
+        console.log('⚠️ Nenhum usuário cadastrado');
         container.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">Nenhum usuário cadastrado.</p>';
         return;
     }

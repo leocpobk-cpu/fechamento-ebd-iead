@@ -3,15 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#2563eb">
-    <meta name="description" content="Sistema completo de gestão da Escola Bíblica Dominical">
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/svg+xml" href="icon.svg">
     <title>Gestão EBD - IEAD</title>
     <script src="licoes.js"></script>
-    <script src="auth.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         :root {
             --primary: #2563eb;
@@ -26,421 +19,6 @@
             --warning: #f59e0b;
         }
 
-        [data-theme="dark"] {
-            --primary: #3b82f6;
-            --primary-dark: #2563eb;
-            --secondary: #94a3b8;
-            --bg: #0f172a;
-            --card-bg: #1e293b;
-            --text: #f1f5f9;
-            --border: #334155;
-            --success: #25D366;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-        }
-        
-        /* Login Screen */
-        .login-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        
-        .login-container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            width: 90%;
-            max-width: 400px;
-            overflow: hidden;
-        }
-        
-        .login-header {
-            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-            color: white;
-            padding: 30px 20px;
-            text-align: center;
-        }
-        
-        .login-header h2 {
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-        }
-        
-        .login-header p {
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
-        
-        .login-form {
-            padding: 30px 20px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #374151;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-        
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-        
-        .form-group input:focus {
-            outline: none;
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-        
-        .btn-login {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 10px;
-        }
-        
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
-        }
-        
-        .btn-link {
-            width: 100%;
-            padding: 10px;
-            background: transparent;
-            color: #2563eb;
-            border: none;
-            font-size: 0.9rem;
-            cursor: pointer;
-            text-decoration: underline;
-        }
-        
-        .alert-login {
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            text-align: center;
-            font-size: 0.9rem;
-        }
-        
-        .alert-login.error {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fecaca;
-        }
-        
-        .alert-login.success {
-            background: #d1fae5;
-            color: #065f46;
-            border: 1px solid #a7f3d0;
-        }
-        
-        /* Login Screen */
-        .login-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        
-        .login-container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            width: 90%;
-            max-width: 400px;
-            overflow: hidden;
-        }
-        
-        .login-header {
-            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-            color: white;
-            padding: 30px 20px;
-            text-align: center;
-        }
-        
-        .login-header h2 {
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-        }
-        
-        .login-header p {
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
-        
-        .login-form {
-            padding: 30px 20px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #374151;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-        
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-        
-        .form-group input:focus {
-            outline: none;
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-        
-        .btn-login {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 10px;
-        }
-        
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
-        }
-        
-        .btn-link {
-            width: 100%;
-            padding: 10px;
-            background: transparent;
-            color: #2563eb;
-            border: none;
-            font-size: 0.9rem;
-            cursor: pointer;
-            text-decoration: underline;
-        }
-        
-        .alert-login {
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            text-align: center;
-            font-size: 0.9rem;
-        }
-        
-        .alert-login.error {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fecaca;
-        }
-        
-        .alert-login.success {
-            background: #d1fae5;
-            color: #065f46;
-            border: 1px solid #a7f3d0;
-        }
-        
-        /* Gerenciamento de Usuários */
-        .user-list {
-            display: grid;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        
-        .user-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.2s;
-        }
-        
-        .user-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
-        }
-        
-        .user-info-card {
-            flex: 1;
-        }
-        
-        .user-name {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 4px;
-        }
-        
-        .user-details {
-            font-size: 0.85rem;
-            color: var(--secondary);
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        
-        .user-badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        
-        .badge-admin {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-        
-        .badge-diretoria {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-        
-        .badge-auxiliar {
-            background: #d1fae5;
-            color: #065f46;
-        }
-        
-        .user-actions {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .btn-icon {
-            background: var(--primary);
-            color: white;
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            transition: all 0.2s;
-        }
-        
-        .btn-icon:hover {
-            transform: scale(1.1);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-        
-        .btn-icon.danger {
-            background: var(--danger);
-        }
-        
-        .btn-icon.warning {
-            background: var(--warning);
-        }
-        
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            animation: fadeIn 0.2s;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        .modal-content {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 24px;
-            width: 90%;
-            max-width: 500px;
-            max-height: 90vh;
-            overflow-y: auto;
-            animation: slideUp 0.3s;
-        }
-        
-        @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid var(--border);
-        }
-        
-        .modal-header h3 {
-            font-size: 1.3rem;
-            color: var(--text);
-        }
-        
-        .btn-close {
-            background: transparent;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--secondary);
-            line-height: 1;
-        }
-        
-        .btn-close:hover {
-            color: var(--danger);
-        }
-
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         
         body { background-color: var(--bg); color: var(--text); padding-bottom: 80px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -450,73 +28,19 @@
             background-color: var(--primary);
             color: white;
             padding: 15px;
-            padding-right: 60px;
             text-align: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             position: sticky;
             top: 0;
             z-index: 100;
-            position: relative;
         }
-        header h1 { font-size: 1.2rem; font-weight: 600; line-height: 1.3; margin: 0; }
-        header p { font-size: 0.8rem; opacity: 0.9; margin: 4px 0 0 0; }
-        
-        .header-actions {
-            position: absolute;
-            top: 50%;
-            right: 15px;
-            transform: translateY(-50%);
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-direction: row;
-        }
-        
-        .user-info {
-            background: rgba(255,255,255,0.2);
-            padding: 8px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            gap: 6px;
-            position: absolute;
-            top: 50%;
-            left: 15px;
-            transform: translateY(-50%);
-            line-height: 1.2;
-        }
-        
-        .user-role {
-            font-size: 0.7rem;
-            opacity: 0.85;
-            white-space: nowrap;
-        }
-        
-        .icon-btn {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            transition: all 0.2s;
-        }
-        
-        .icon-btn:hover {
-            background: rgba(255,255,255,0.3);
-            transform: scale(1.1);
-        }
+        header h1 { font-size: 1.2rem; font-weight: 600; line-height: 1.3; }
+        header p { font-size: 0.8rem; opacity: 0.9; margin-top: 4px; }
 
         /* Navigation Tabs */
         .nav-tabs {
             display: flex;
-            background: var(--card-bg);
+            background: white;
             border-bottom: 2px solid var(--border);
             position: sticky;
             top: 68px;
@@ -530,12 +54,11 @@
             cursor: pointer;
             border-bottom: 3px solid transparent;
             transition: all 0.2s;
-            color: var(--text);
         }
         .nav-tab.active {
             color: var(--primary);
             border-bottom-color: var(--primary);
-            background: rgba(37, 99, 235, 0.1);
+            background: #f0f9ff;
         }
 
         .container { max-width: 700px; margin: 0 auto; padding: 15px; }
@@ -568,35 +91,6 @@
         .card-title { font-weight: 700; color: var(--primary); font-size: 1rem; }
         .card-subtitle { font-size: 0.8rem; color: #6b7280; font-style: italic; }
 
-        /* Swipe Indicator */
-        .swipe-indicator {
-            position: fixed;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(37, 99, 235, 0.9);
-            color: white;
-            padding: 20px;
-            border-radius: 50%;
-            font-size: 2rem;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.2s;
-            z-index: 999;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-        
-        .swipe-indicator.left {
-            left: 20px;
-        }
-        
-        .swipe-indicator.right {
-            right: 20px;
-        }
-        
-        .swipe-indicator.show {
-            opacity: 1;
-        }
-
         /* Inputs Grid */
         .input-grid {
             display: grid;
@@ -615,19 +109,18 @@
         .form-group.full { grid-column: span 3; }
         .form-group.span-2 { grid-column: span 2; }
         
-        label { font-size: 0.7rem; font-weight: 600; color: var(--text); margin-bottom: 4px; text-transform: uppercase; opacity: 0.8; }
+        label { font-size: 0.7rem; font-weight: 600; color: #4b5563; margin-bottom: 4px; text-transform: uppercase; }
         
-        input[type="number"], input[type="text"], select, textarea {
+        input[type="number"], input[type="text"], select {
             width: 100%;
             padding: 10px;
             border: 1px solid var(--border);
             border-radius: 8px;
             font-size: 1rem;
-            background: var(--card-bg);
-            color: var(--text);
+            background: #f9fafb;
         }
 
-        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        input:focus, select:focus { outline: none; border-color: var(--primary); background: #fff; }
 
         .auto-calc {
             font-size: 0.85rem;
@@ -735,10 +228,6 @@
         /* Telas */
         .tela { display: none; }
         .tela.active { display: block; }
-        
-        /* Subtelas */
-        .subtela { display: none; }
-        .subtela.active { display: block; }
 
         /* Responsividade Mobile/Tablet */
         @media (max-width: 768px) {
@@ -750,26 +239,7 @@
             .sum-val { font-size: 1.5rem; }
             .report-table { font-size: 0.75rem; }
             .report-table th, .report-table td { padding: 6px 4px; }
-            header { padding: 10px 55px; }
-            header h1 { font-size: 0.95rem; }
-            header p { font-size: 0.7rem; }
-            /* Mobile: user-info em coluna, actions em coluna */
-            .user-info { 
-                font-size: 0.7rem; 
-                padding: 4px 8px;
-                flex-direction: column;
-                gap: 2px;
-                left: 10px;
-            }
-            .user-role { font-size: 0.6rem; }
-            .header-actions { 
-                gap: 6px; 
-                max-width: 45px; 
-                right: 8px;
-                flex-direction: column;
-                flex-wrap: wrap;
-            }
-            .icon-btn { width: 32px; height: 32px; font-size: 1rem; }
+            header h1 { font-size: 1rem; }
             .btn { font-size: 0.9rem; padding: 12px; }
         }
 
@@ -781,21 +251,6 @@
             .report-table th, .report-table td { padding: 4px 2px; }
             .nav-tab { font-size: 0.85rem; padding: 10px 5px; }
             .card { padding: 12px; }
-            header { padding: 8px 50px 8px 80px; }
-            header h1 { font-size: 0.85rem; }
-            header p { font-size: 0.65rem; }
-            /* Muito pequeno: ajustes extras */
-            .user-info { 
-                font-size: 0.65rem; 
-                padding: 3px 6px; 
-                max-width: 70px;
-                flex-direction: column;
-                left: 5px;
-            }
-            .user-info span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 65px; }
-            .user-role { font-size: 0.55rem; }
-            .header-actions { max-width: 40px; gap: 4px; right: 5px; }
-            .icon-btn { width: 28px; height: 28px; font-size: 0.9rem; }
         }
 
         /* Melhorias de toque */
@@ -817,123 +272,17 @@
     </style>
 </head>
 <body>
-    <!-- Indicadores de Swipe -->
-    <div id="swipe-left" class="swipe-indicator left">👈</div>
-    <div id="swipe-right" class="swipe-indicator right">👉</div>
-    
-    <!-- Tela de Login -->
-    <div id="tela-login" class="login-overlay">
-        <div class="login-container">
-            <div class="login-header">
-                <h2>🔐 Gestão EBD - IEAD</h2>
-                <p>Sistema de Gerenciamento</p>
-            </div>
-            
-            <div id="form-login" class="login-form">
-                <div class="form-group">
-                    <label>👤 Usuário</label>
-                    <input type="text" id="input-usuario" placeholder="Digite seu usuário" autocomplete="username">
-                </div>
-                <div class="form-group">
-                    <label>🔑 Senha</label>
-                    <input type="password" id="input-senha" placeholder="Digite sua senha" autocomplete="current-password">
-                </div>
-                <button onclick="fazerLogin()" class="btn-login">ENTRAR</button>
-                <button onclick="mostrarRecuperacao()" class="btn-link">Esqueci minha senha</button>
-            </div>
-            
-            <div id="form-recuperacao" class="login-form" style="display:none;">
-                <div class="form-group">
-                    <label>👤 Usuário</label>
-                    <input type="text" id="input-usuario-recuperacao" placeholder="Digite seu usuário">
-                </div>
-                <div class="form-group">
-                    <label>📧 Email ou 📱 Celular</label>
-                    <input type="text" id="input-contato-recuperacao" placeholder="email@exemplo.com ou (00) 00000-0000">
-                </div>
-                <button onclick="enviarRecuperacao()" class="btn-login">ENVIAR CÓDIGO</button>
-                <button onclick="voltarLogin()" class="btn-link">Voltar ao login</button>
-            </div>
-            
-            <div id="form-codigo" class="login-form" style="display:none;">
-                <div class="form-group">
-                    <label>🔢 Código de Verificação</label>
-                    <input type="text" id="input-codigo" placeholder="Digite o código recebido" maxlength="6">
-                </div>
-                <div class="form-group">
-                    <label>🔑 Nova Senha</label>
-                    <input type="password" id="input-nova-senha" placeholder="Digite a nova senha">
-                </div>
-                <div class="form-group">
-                    <label>🔑 Confirmar Senha</label>
-                    <input type="password" id="input-confirma-senha" placeholder="Confirme a nova senha">
-                </div>
-                <button onclick="redefinirSenha()" class="btn-login">REDEFINIR SENHA</button>
-                <button onclick="voltarLogin()" class="btn-link">Voltar ao login</button>
-            </div>
-            
-            <!-- Tela de Primeiro Acesso -->
-            <div id="form-primeiro-acesso" class="login-form" style="display:none;">
-                <div style="text-align: center; margin-bottom: 20px; padding: 15px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
-                    <div style="font-size: 2rem; margin-bottom: 10px;">🎉</div>
-                    <h3 style="margin: 0 0 8px 0; color: #92400e; font-size: 1.1rem;">Bem-vindo(a), <span id="nome-usuario-primeiro-acesso"></span>!</h3>
-                    <p style="margin: 0; color: #78350f; font-size: 0.9rem;">
-                        Por segurança, altere sua senha no primeiro acesso.
-                    </p>
-                </div>
-                
-                <div class="form-group">
-                    <label>🔑 Nova Senha</label>
-                    <input type="password" id="input-nova-senha-primeiro" placeholder="Digite sua nova senha (mínimo 6 caracteres)">
-                </div>
-                <div class="form-group">
-                    <label>🔑 Confirmar Nova Senha</label>
-                    <input type="password" id="input-confirma-senha-primeiro" placeholder="Confirme sua nova senha">
-                </div>
-                
-                <div style="background: #dbeafe; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 0.85rem; color: #1e40af;">
-                    <strong>💡 Dica de Segurança:</strong><br>
-                    Use uma senha forte com pelo menos 6 caracteres
-                </div>
-                
-                <button onclick="trocarSenhaPrimeiroAcesso()" class="btn-login">ALTERAR SENHA E ENTRAR</button>
-                <button onclick="voltarLogin()" class="btn-link">Cancelar</button>
-            </div>
-            
-            <!-- Versão do Sistema -->
-            <div style="text-align: center; padding: 15px; color: #6b7280; font-size: 0.75rem; border-top: 1px solid #e5e7eb;">
-                📦 Versão 3.1.0 | Build c63105c<br>
-                <span style="font-size: 0.7rem;">Atualizado em 02/12/2025</span>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Sistema Principal (oculto até login) -->
-    <div id="sistema-principal" style="display:none;">
 
     <header>
         <h1>📖 Gestão EBD - IEAD</h1>
         <p>Escola Bíblica Dominical</p>
-        <div class="header-actions">
-            <div class="user-info" id="info-usuario">
-                <span id="nome-usuario"></span>
-                <span class="user-role" id="role-usuario"></span>
-            </div>
-            <button class="icon-btn" id="btn-usuarios" onclick="mudarTela('usuarios')" title="Gerenciar Usuários" style="display:none;">👥</button>
-            <button class="icon-btn" onclick="toggleTema()" title="Alternar tema" id="btn-tema">🌙</button>
-            <button class="icon-btn" onclick="exportarDados()" title="Exportar dados">💾</button>
-            <button class="icon-btn" onclick="mostrarConfig()" title="Configurações">⚙️</button>
-            <button class="icon-btn" onclick="fazerLogout()" title="Sair">🚪</button>
-        </div>
     </header>
 
     <div class="nav-tabs no-print">
         <div class="nav-tab active" onclick="mudarTela('lancamento')">📝 Lançamento</div>
-        <div class="nav-tab" onclick="mudarTela('dashboard')">📊 Dashboard</div>
         <div class="nav-tab" onclick="mudarTela('historico')">📋 Histórico</div>
-        <div class="nav-tab" onclick="mudarTela('mensal')">📅 Mensal</div>
+        <div class="nav-tab" onclick="mudarTela('mensal')">📊 Mensal</div>
         <div class="nav-tab" onclick="mudarTela('licoes')">📚 Lições</div>
-        <div class="nav-tab" id="aba-usuarios" onclick="mudarTela('usuarios')" style="display:none;">👥 Usuários</div>
     </div>
 
     <!-- TELA 1: LANÇAMENTO -->
@@ -968,32 +317,7 @@
         </div>
     </div>
 
-    <!-- TELA 2: DASHBOARD -->
-    <div id="tela-dashboard" class="tela container">
-        <h2 style="margin: 20px 0;">📊 Dashboard - Análises e Estatísticas</h2>
-        
-        <div class="card">
-            <h3 style="margin-bottom: 15px;">📈 Evolução de Presença (Últimos 8 Domingos)</h3>
-            <canvas id="grafico-presenca" style="max-height: 300px;"></canvas>
-        </div>
-
-        <div class="card">
-            <h3 style="margin-bottom: 15px;">💰 Evolução de Ofertas</h3>
-            <canvas id="grafico-ofertas" style="max-height: 300px;"></canvas>
-        </div>
-
-        <div class="card">
-            <h3 style="margin-bottom: 15px;">🏆 Ranking Geral de Grupos</h3>
-            <canvas id="grafico-ranking" style="max-height: 300px;"></canvas>
-        </div>
-
-        <div class="card">
-            <h3 style="margin-bottom: 15px;">📊 Estatísticas Gerais</h3>
-            <div id="estatisticas-gerais"></div>
-        </div>
-    </div>
-
-    <!-- TELA 3: HISTÓRICO -->
+    <!-- TELA 2: HISTÓRICO -->
     <div id="tela-historico" class="tela container">
         <h2 style="margin: 20px 0;">📋 Histórico de Fechamentos</h2>
         <div id="lista-historico"></div>
@@ -1040,39 +364,7 @@
         </div>
     </div>
 
-    <!-- TELA 6: GERENCIAMENTO DE USUÁRIOS (apenas Admin) -->
-    <div id="tela-usuarios" class="tela container">
-        <div class="card">
-            <h2 style="margin-bottom: 15px;">👥 Gerenciamento de Usuários</h2>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button class="btn btn-primary" onclick="abrirModalUsuario()">➕ Novo Usuário</button>
-                <button class="btn" style="background: #10b981; color: white;" onclick="mudarSubTela('igrejas')">🏛️ Gerenciar Igrejas</button>
-            </div>
-        </div>
-        
-        <div id="subtela-usuarios" class="subtela active">
-            <div id="lista-usuarios" class="user-list">
-                <!-- Lista será preenchida dinamicamente -->
-            </div>
-        </div>
-        
-        <div id="subtela-igrejas" class="subtela" style="display: none;">
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3>🏛️ Igrejas Cadastradas</h3>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-primary" onclick="abrirModalIgreja()">➕ Nova Igreja</button>
-                        <button class="btn btn-secondary" onclick="mudarSubTela('usuarios')">👥 Voltar para Usuários</button>
-                    </div>
-                </div>
-            </div>
-            <div id="lista-igrejas" class="user-list">
-                <!-- Lista será preenchida dinamicamente -->
-            </div>
-        </div>
-    </div>
-
-    <!-- TELA 7: RELATÓRIO -->
+    <!-- TELA 5: RELATÓRIO -->
     <div id="tela-relatorio" class="tela container">
         <div class="report-header">
             <h2>Relatório Geral EBD</h2>
@@ -1176,110 +468,9 @@
 
         <div class="no-print" style="margin-top: 30px; margin-bottom: 100px;">
             <button class="btn btn-success" onclick="enviarWhatsapp()">📱 COPIAR P/ WHATSAPP</button>
-            <button class="btn" style="background: #10b981; color: white;" onclick="exportarParaExcel()">📊 EXPORTAR EXCEL</button>
             <button class="btn btn-secondary" onclick="window.print()">🖨️ SALVAR PDF / IMPRIMIR</button>
             <button class="btn btn-warning" onclick="salvarHistorico()">💾 SALVAR NO HISTÓRICO</button>
             <button class="btn" style="background: #6b7280; color: white;" onclick="voltarParaEdicao()">✏️ VOLTAR E EDITAR</button>
-        </div>
-    </div>
-
-    <!-- Modal de Usuário -->
-    <div id="modal-usuario" class="modal-overlay" style="display:none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modal-usuario-titulo">➕ Novo Usuário</h3>
-                <button class="btn-close" onclick="fecharModalUsuario()">×</button>
-            </div>
-            
-            <div class="form-group">
-                <label>👤 Nome Completo</label>
-                <input type="text" id="modal-nome" placeholder="Digite o nome completo">
-            </div>
-            
-            <div class="form-group">
-                <label>🔑 Nome de Usuário</label>
-                <input type="text" id="modal-input-usuario" placeholder="Digite o usuário (login)">
-            </div>
-            
-            <div class="form-group">
-                <label>📧 Email</label>
-                <input type="email" id="modal-email" placeholder="email@exemplo.com">
-            </div>
-            
-            <div class="form-group">
-                <label>📱 Celular</label>
-                <input type="text" id="modal-celular" placeholder="(00) 00000-0000">
-            </div>
-            
-            <div class="form-group">
-                <label>🎯 Nível de Acesso</label>
-                <select id="modal-nivel">
-                    <option value="1">👑 Administrador - Acesso Total (Todas as Igrejas)</option>
-                    <option value="2">📋 Diretoria EBD - Lançamento e Visualização</option>
-                    <option value="3">👁️ Auxiliar - Apenas Visualização</option>
-                </select>
-            </div>
-            
-            <div class="form-group" id="campo-igreja">
-                <label>🏛️ Igreja</label>
-                <select id="modal-igreja">
-                    <option value="">Selecione uma igreja</option>
-                </select>
-                <small style="color: #6b7280; font-size: 0.75rem; display: block; margin-top: 4px;">
-                    💡 Administradores têm acesso a todas as igrejas
-                </small>
-            </div>
-            
-            <div class="form-group" id="campo-senha">
-                <label>🔐 Senha</label>
-                <input type="password" id="modal-senha" placeholder="Digite a senha (mínimo 6 caracteres)">
-            </div>
-            
-            <div style="display:flex; gap:10px; margin-top:20px;">
-                <button class="btn btn-primary" onclick="salvarUsuario()" style="flex:1;">💾 Salvar</button>
-                <button class="btn btn-secondary" onclick="fecharModalUsuario()" style="flex:1;">❌ Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Igreja -->
-    <div id="modal-igreja" class="modal-overlay" style="display:none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modal-igreja-titulo">➕ Nova Igreja</h3>
-                <button class="btn-close" onclick="fecharModalIgreja()">×</button>
-            </div>
-            
-            <div class="form-group">
-                <label>🏛️ Nome da Igreja</label>
-                <input type="text" id="modal-igreja-nome" placeholder="Ex: IEAD - Sede Central">
-            </div>
-            
-            <div class="form-group">
-                <label>📍 Endereço</label>
-                <input type="text" id="modal-igreja-endereco" placeholder="Rua, número">
-            </div>
-            
-            <div class="input-grid-2">
-                <div class="form-group">
-                    <label>🏙️ Cidade</label>
-                    <input type="text" id="modal-igreja-cidade" placeholder="Cidade">
-                </div>
-                <div class="form-group">
-                    <label>🗺️ UF</label>
-                    <input type="text" id="modal-igreja-uf" placeholder="SP" maxlength="2" style="text-transform: uppercase;">
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label>👤 Pastor (opcional)</label>
-                <input type="text" id="modal-igreja-pastor" placeholder="Nome do pastor">
-            </div>
-            
-            <div style="display:flex; gap:10px; margin-top:20px;">
-                <button class="btn btn-primary" onclick="salvarIgreja()" style="flex:1;">💾 Salvar</button>
-                <button class="btn btn-secondary" onclick="fecharModalIgreja()" style="flex:1;">❌ Cancelar</button>
-            </div>
         </div>
     </div>
 
@@ -1306,38 +497,7 @@
         definirMesAtual();
         carregarLicoes();
         buscarLicaoPorData(); // Busca automática ao carregar
-        inicializarTema();
-        registrarServiceWorker();
     });
-
-    // PWA - Service Worker
-    function registrarServiceWorker() {
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .then(() => console.log('✅ PWA ativo'))
-                .catch(err => console.log('Service Worker erro:', err));
-        }
-    }
-
-    // Tema Escuro/Claro
-    function inicializarTema() {
-        const temaSalvo = localStorage.getItem('tema') || 'light';
-        document.documentElement.setAttribute('data-theme', temaSalvo);
-        atualizarIconeTema(temaSalvo);
-    }
-
-    function toggleTema() {
-        const temaAtual = document.documentElement.getAttribute('data-theme');
-        const novoTema = temaAtual === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', novoTema);
-        localStorage.setItem('tema', novoTema);
-        atualizarIconeTema(novoTema);
-    }
-
-    function atualizarIconeTema(tema) {
-        const btn = document.getElementById('btn-tema');
-        if(btn) btn.innerText = tema === 'dark' ? '☀️' : '🌙';
-    }
 
     // Gerar lista de domingos
     function gerarDomingos() {
@@ -1671,248 +831,27 @@
     }
 
     function mudarTela(tela) {
-        console.log('🔄 Mudando para tela:', tela);
-        
         document.querySelectorAll('.tela').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
         
         if(tela === 'lancamento') {
             document.getElementById('tela-lancamento').classList.add('active');
             document.querySelectorAll('.nav-tab')[0].classList.add('active');
-        } else if(tela === 'dashboard') {
-            document.getElementById('tela-dashboard').classList.add('active');
-            document.querySelectorAll('.nav-tab')[1].classList.add('active');
-            gerarGraficos();
         } else if(tela === 'historico') {
             document.getElementById('tela-historico').classList.add('active');
-            document.querySelectorAll('.nav-tab')[2].classList.add('active');
+            document.querySelectorAll('.nav-tab')[1].classList.add('active');
             carregarHistorico();
         } else if(tela === 'mensal') {
             document.getElementById('tela-mensal').classList.add('active');
-            document.querySelectorAll('.nav-tab')[3].classList.add('active');
+            document.querySelectorAll('.nav-tab')[2].classList.add('active');
         } else if(tela === 'licoes') {
             document.getElementById('tela-licoes').classList.add('active');
-            document.querySelectorAll('.nav-tab')[4].classList.add('active');
+            document.querySelectorAll('.nav-tab')[3].classList.add('active');
             listarLicoes();
-        } else if(tela === 'usuarios') {
-            console.log('👥 Ativando tela de usuários...');
-            const telaUsuarios = document.getElementById('tela-usuarios');
-            if (telaUsuarios) {
-                telaUsuarios.classList.add('active');
-                telaUsuarios.style.display = 'block';
-                console.log('✅ Tela usuários ativada');
-            } else {
-                console.error('❌ Elemento #tela-usuarios não encontrado');
-            }
-            
-            const navTab = document.querySelectorAll('.nav-tab')[5];
-            if (navTab) {
-                navTab.classList.add('active');
-                console.log('✅ Tab usuários ativada');
-            }
-            
-            mudarSubTela('usuarios');
-            if (typeof listarUsuarios === 'function') {
-                listarUsuarios();
-                console.log('✅ listarUsuarios() chamada');
-            } else {
-                console.error('❌ Função listarUsuarios não encontrada');
-            }
         } else if(tela === 'relatorio') {
             document.getElementById('tela-relatorio').classList.add('active');
         }
         window.scrollTo(0, 0);
-    }
-    
-    // Mudar entre subtelas de Usuários e Igrejas
-    function mudarSubTela(subtela) {
-        console.log('🔄 Mudando para subtela:', subtela);
-        
-        document.querySelectorAll('.subtela').forEach(s => {
-            s.style.display = 'none';
-            s.classList.remove('active');
-        });
-        
-        if (subtela === 'usuarios') {
-            const subtelaUsuarios = document.getElementById('subtela-usuarios');
-            if (subtelaUsuarios) {
-                subtelaUsuarios.style.display = 'block';
-                subtelaUsuarios.classList.add('active');
-                console.log('✅ Subtela usuários ativada');
-            } else {
-                console.error('❌ Elemento #subtela-usuarios não encontrado');
-            }
-            
-            if (typeof listarUsuarios === 'function') {
-                listarUsuarios();
-            }
-        } else if (subtela === 'igrejas') {
-            const subtelaIgrejas = document.getElementById('subtela-igrejas');
-            if (subtelaIgrejas) {
-                subtelaIgrejas.style.display = 'block';
-                subtelaIgrejas.classList.add('active');
-                console.log('✅ Subtela igrejas ativada');
-            } else {
-                console.error('❌ Elemento #subtela-igrejas não encontrado');
-            }
-            
-            if (typeof listarIgrejas === 'function') {
-                listarIgrejas();
-            }
-        }
-    }
-
-    // Gerar gráficos do dashboard
-    let graficoPresenca, graficoOfertas, graficoRanking;
-
-    function gerarGraficos() {
-        const historico = JSON.parse(localStorage.getItem('historicoEBD') || '[]');
-        
-        if(historico.length === 0) {
-            const canvases = ['grafico-presenca', 'grafico-ofertas', 'grafico-ranking'];
-            canvases.forEach(id => {
-                const canvas = document.getElementById(id);
-                if(canvas) {
-                    const ctx = canvas.getContext('2d');
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.font = '14px Arial';
-                    ctx.fillStyle = '#999';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('Nenhum dado disponível', canvas.width / 2, canvas.height / 2);
-                }
-            });
-            return;
-        }
-        
-        // Dados dos últimos 12 domingos
-        const ultimos = historico.slice(-12);
-        const datas = ultimos.map(h => h.dataFormatada.substring(0, 5));
-        const presencas = ultimos.map(h => h.totais.tPres);
-        const percentuais = ultimos.map(h => h.totais.tPerc);
-        const ofertas = ultimos.map(h => h.totais.tOferta);
-        
-        // Gráfico de Presença
-        const ctxPresenca = document.getElementById('grafico-presenca').getContext('2d');
-        if(graficoPresenca) graficoPresenca.destroy();
-        
-        graficoPresenca = new Chart(ctxPresenca, {
-            type: 'line',
-            data: {
-                labels: datas,
-                datasets: [{
-                    label: 'Presentes',
-                    data: presencas,
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }, {
-                    label: '% Presença',
-                    data: percentuais,
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    tension: 0.4,
-                    fill: true,
-                    yAxisID: 'y1'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'top' },
-                    title: { display: true, text: 'Evolução de Presença' }
-                },
-                scales: {
-                    y: { beginAtZero: true, position: 'left', title: { display: true, text: 'Presentes' } },
-                    y1: { beginAtZero: true, position: 'right', title: { display: true, text: 'Percentual (%)' }, grid: { drawOnChartArea: false } }
-                }
-            }
-        });
-        
-        // Gráfico de Ofertas
-        const ctxOfertas = document.getElementById('grafico-ofertas').getContext('2d');
-        if(graficoOfertas) graficoOfertas.destroy();
-        
-        graficoOfertas = new Chart(ctxOfertas, {
-            type: 'bar',
-            data: {
-                labels: datas,
-                datasets: [{
-                    label: 'Ofertas (R$)',
-                    data: ofertas,
-                    backgroundColor: '#f59e0b',
-                    borderColor: '#d97706',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    title: { display: true, text: 'Ofertas por Domingo' }
-                },
-                scales: {
-                    y: { beginAtZero: true, ticks: { callback: value => 'R$ ' + value.toFixed(2) } }
-                }
-            }
-        });
-        
-        // Gráfico de Ranking (média dos últimos 12 domingos por grupo)
-        const rankingGrupos = {};
-        
-        grupos.forEach(grupo => {
-            if(!grupo.isSeparate) {
-                rankingGrupos[grupo.nome] = { totalPresenca: 0, count: 0 };
-            }
-        });
-        
-        ultimos.forEach(relatorio => {
-            grupos.forEach(grupo => {
-                if(!grupo.isSeparate && relatorio.dados[grupo.id]) {
-                    rankingGrupos[grupo.nome].totalPresenca += relatorio.dados[grupo.id].perc;
-                    rankingGrupos[grupo.nome].count++;
-                }
-            });
-        });
-        
-        const rankingArray = Object.entries(rankingGrupos)
-            .map(([nome, dados]) => ({
-                nome,
-                media: dados.count > 0 ? dados.totalPresenca / dados.count : 0
-            }))
-            .sort((a, b) => b.media - a.media);
-        
-        const ctxRanking = document.getElementById('grafico-ranking').getContext('2d');
-        if(graficoRanking) graficoRanking.destroy();
-        
-        graficoRanking = new Chart(ctxRanking, {
-            type: 'bar',
-            data: {
-                labels: rankingArray.map(r => r.nome),
-                datasets: [{
-                    label: '% Média de Presença',
-                    data: rankingArray.map(r => r.media),
-                    backgroundColor: [
-                        '#10b981', '#2563eb', '#f59e0b', '#8b5cf6', 
-                        '#ec4899', '#06b6d4', '#84cc16', '#f97316'
-                    ]
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    title: { display: true, text: 'Ranking Médio por Grupo' }
-                },
-                scales: {
-                    x: { beginAtZero: true, max: 100, ticks: { callback: value => value + '%' } }
-                }
-            }
-        });
     }
     
     // Gerenciamento de Lições
@@ -2249,266 +1188,7 @@
 
         document.getElementById('conteudo-mensal').innerHTML = html;
     }
-
-    // Exportar para Excel
-    function exportarParaExcel() {
-        if(!relatorioAtual) {
-            alert('Nenhum relatório para exportar!');
-            return;
-        }
-
-        const wb = XLSX.utils.book_new();
-        
-        // Aba 1: Resumo
-        const dadosResumo = [
-            ['RELATÓRIO EBD - IEAD'],
-            ['Data', relatorioAtual.dataFormatada],
-            ['Lição', relatorioAtual.numeroLicao || '-'],
-            ['Tema', relatorioAtual.temaLicao || '-'],
-            [],
-            ['TOTAIS GERAIS'],
-            ['Matriculados', relatorioAtual.totais.tMat],
-            ['Presentes', relatorioAtual.totais.tPres],
-            ['Faltantes', relatorioAtual.totais.tFalta],
-            ['Visitantes', relatorioAtual.totais.tVis],
-            ['Bíblias', relatorioAtual.totais.tBib],
-            ['Revistas', relatorioAtual.totais.tRev],
-            ['% Presença', relatorioAtual.totais.tPerc.toFixed(1) + '%'],
-            ['Total Ofertas', 'R$ ' + relatorioAtual.totais.tOferta.toFixed(2)]
-        ];
-        const wsResumo = XLSX.utils.aoa_to_sheet(dadosResumo);
-        XLSX.utils.book_append_sheet(wb, wsResumo, 'Resumo');
-        
-        // Aba 2: Detalhamento
-        const dadosDetalhes = [
-            ['Grupo', 'Matriculados', 'Presentes', 'Faltantes', 'Visitantes', 'Bíblias', 'Revistas', 'Oferta', '% Presença']
-        ];
-        
-        grupos.forEach(grupo => {
-            if(!grupo.isSeparate && relatorioAtual.dados[grupo.id]) {
-                const d = relatorioAtual.dados[grupo.id];
-                dadosDetalhes.push([
-                    grupo.nome,
-                    d.mat,
-                    d.pres,
-                    d.faltas,
-                    d.vis,
-                    d.bib,
-                    d.rev,
-                    d.oferta,
-                    d.perc.toFixed(1) + '%'
-                ]);
-            }
-        });
-        
-        const wsDetalhes = XLSX.utils.aoa_to_sheet(dadosDetalhes);
-        XLSX.utils.book_append_sheet(wb, wsDetalhes, 'Detalhamento');
-        
-        // Salvar arquivo
-        const dataArquivo = relatorioAtual.data.replace(/-/g, '');
-        XLSX.writeFile(wb, `EBD_${dataArquivo}.xlsx`);
-        
-        alert('✅ Arquivo Excel gerado!');
-    }
-
-    // Exportar todos os dados (backup)
-    function exportarDados() {
-        const confirmacao = confirm('📤 Exportar Dados\n\nEscolha:\nOK = Exportar Excel completo\nCancelar = Download JSON backup');
-        
-        if(confirmacao) {
-            exportarHistoricoCompleto();
-        } else {
-            backupJSON();
-        }
-    }
-
-    function exportarHistoricoCompleto() {
-        const historico = JSON.parse(localStorage.getItem('historicoEBD') || '[]');
-        
-        if(historico.length === 0) {
-            alert('Nenhum dado para exportar!');
-            return;
-        }
-
-        const wb = XLSX.utils.book_new();
-        
-        // Criar planilha com todos os registros
-        const dados = [
-            ['Data', 'Lição', 'Tema', 'Matriculados', 'Presentes', '% Presença', 'Visitantes', 'Faltantes', 'Bíblias', 'Revistas', 'Ofertas']
-        ];
-        
-        historico.forEach(rel => {
-            dados.push([
-                rel.dataFormatada,
-                rel.numeroLicao || '',
-                rel.temaLicao || '',
-                rel.totais.tMat,
-                rel.totais.tPres,
-                rel.totais.tPerc.toFixed(1) + '%',
-                rel.totais.tVis,
-                rel.totais.tFalta,
-                rel.totais.tBib,
-                rel.totais.tRev,
-                'R$ ' + rel.totais.tOferta.toFixed(2)
-            ]);
-        });
-        
-        const ws = XLSX.utils.aoa_to_sheet(dados);
-        XLSX.utils.book_append_sheet(wb, ws, 'Histórico Completo');
-        
-        const hoje = new Date().toISOString().split('T')[0];
-        XLSX.writeFile(wb, `EBD_HistoricoCompleto_${hoje}.xlsx`);
-        
-        alert('✅ Histórico completo exportado!');
-    }
-
-    function backupJSON() {
-        const dados = {
-            historico: JSON.parse(localStorage.getItem('historicoEBD') || '[]'),
-            licoes: JSON.parse(localStorage.getItem('licoesEBD') || '[]'),
-            versao: '2.0',
-            dataBackup: new Date().toISOString()
-        };
-        
-        const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `EBD_Backup_${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        
-        alert('✅ Backup JSON salvo!');
-    }
-
-    // Configurações
-    function mostrarConfig() {
-        alert('⚙️ Configurações\n\n🌙 Tema: Clique no ícone ao lado\n💾 Exportar: Clique no ícone de download\n📊 Dashboard: Acesse a aba Dashboard\n\nVersão 2.0 - Todas as funcionalidades ativas!');
-    }
-
-    // ========================================
-    // SWIPE PARA TROCAR ABAS (Mobile/Tablet)
-    // ========================================
-    
-    let touchStartX = 0;
-    let touchEndX = 0;
-    let touchStartY = 0;
-    let touchEndY = 0;
-    let isSwipping = false;
-    
-    const abas = ['lancamento', 'dashboard', 'historico', 'mensal', 'licoes', 'usuarios'];
-    let abaAtualIndex = 0;
-    
-    function getAbaAtualIndex() {
-        const telaAtiva = document.querySelector('.tela.active');
-        if (!telaAtiva) return 0;
-        
-        const id = telaAtiva.id.replace('tela-', '');
-        const index = abas.indexOf(id);
-        return index >= 0 ? index : 0;
-    }
-    
-    function mostrarIndicadorSwipe(direcao) {
-        const indicador = document.getElementById(`swipe-${direcao}`);
-        if (indicador) {
-            indicador.classList.add('show');
-            setTimeout(() => {
-                indicador.classList.remove('show');
-            }, 300);
-        }
-    }
-    
-    function handleSwipe() {
-        const diffX = touchEndX - touchStartX;
-        const diffY = touchEndY - touchStartY;
-        
-        // Verificar se é um swipe horizontal (não vertical)
-        if (Math.abs(diffX) > Math.abs(diffY)) {
-            // Swipe mínimo de 80px para maior precisão
-            if (Math.abs(diffX) > 80) {
-                abaAtualIndex = getAbaAtualIndex();
-                
-                if (diffX > 0) {
-                    // Swipe para direita - aba anterior
-                    if (abaAtualIndex > 0) {
-                        mostrarIndicadorSwipe('left');
-                        setTimeout(() => {
-                            mudarTela(abas[abaAtualIndex - 1]);
-                        }, 100);
-                    }
-                } else {
-                    // Swipe para esquerda - próxima aba
-                    const usuarioLogado = getUsuarioLogado();
-                    const maxIndex = usuarioLogado?.nivel === 1 ? abas.length - 1 : abas.length - 2;
-                    
-                    if (abaAtualIndex < maxIndex) {
-                        mostrarIndicadorSwipe('right');
-                        setTimeout(() => {
-                            mudarTela(abas[abaAtualIndex + 1]);
-                        }, 100);
-                    }
-                }
-            }
-        }
-        
-        isSwipping = false;
-    }
-    
-    // Adicionar listeners de touch em todas as telas
-    function inicializarSwipe() {
-        const telas = document.querySelectorAll('.tela');
-        
-        telas.forEach(tela => {
-            tela.addEventListener('touchstart', (e) => {
-                // Ignorar se tocar em input, select ou button
-                if (['INPUT', 'SELECT', 'BUTTON', 'TEXTAREA'].includes(e.target.tagName)) {
-                    return;
-                }
-                
-                isSwipping = true;
-                touchStartX = e.changedTouches[0].screenX;
-                touchStartY = e.changedTouches[0].screenY;
-            }, { passive: true });
-            
-            tela.addEventListener('touchmove', (e) => {
-                if (!isSwipping) return;
-                
-                const currentX = e.changedTouches[0].screenX;
-                const diffX = currentX - touchStartX;
-                
-                // Mostrar indicador visual durante o arraste
-                if (Math.abs(diffX) > 30) {
-                    if (diffX > 0 && getAbaAtualIndex() > 0) {
-                        document.getElementById('swipe-left').style.opacity = Math.min(Math.abs(diffX) / 100, 0.5);
-                    } else if (diffX < 0) {
-                        const usuarioLogado = getUsuarioLogado();
-                        const maxIndex = usuarioLogado?.nivel === 1 ? abas.length - 1 : abas.length - 2;
-                        if (getAbaAtualIndex() < maxIndex) {
-                            document.getElementById('swipe-right').style.opacity = Math.min(Math.abs(diffX) / 100, 0.5);
-                        }
-                    }
-                }
-            }, { passive: true });
-            
-            tela.addEventListener('touchend', (e) => {
-                if (!isSwipping) return;
-                
-                touchEndX = e.changedTouches[0].screenX;
-                touchEndY = e.changedTouches[0].screenY;
-                
-                // Resetar opacidade dos indicadores
-                document.getElementById('swipe-left').style.opacity = 0;
-                document.getElementById('swipe-right').style.opacity = 0;
-                
-                handleSwipe();
-            }, { passive: true });
-        });
-    }
-    
-    // Inicializar swipe ao carregar (removido - será chamado no window.load)
 </script>
-
-</div> <!-- Fim sistema-principal -->
 
 </body>
 </html>
