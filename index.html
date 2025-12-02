@@ -1523,15 +1523,34 @@
         }
     }
     
-    function getLicoes() {
-        const licoesLocal = localStorage.getItem('licoesEBD');
-        return licoesLocal ? JSON.parse(licoesLocal) : [];
+    async function getLicoes() {
+        const igrejaId = getIgrejaUsuarioLogado();
+        
+        if (!igrejaId) {
+            console.warn('⚠️ Igreja não identificada para buscar lições');
+            return [];
+        }
+        
+        try {
+            const sb = getSupabase();
+            const { data, error } = await sb
+                .from('licoes')
+                .select('*')
+                .eq('igreja_id', igrejaId)
+                .order('data', { ascending: true });
+            
+            if (error) throw error;
+            return data || [];
+        } catch (error) {
+            console.error('❌ Erro ao buscar lições:', error);
+            return [];
+        }
     }
     
     // Buscar lição por data selecionada
-    function buscarLicaoPorData() {
+    async function buscarLicaoPorData() {
         const dataSelecionada = document.getElementById('data-ebd').value;
-        const licoes = getLicoes();
+        const licoes = await getLicoes();
         
         const licaoEncontrada = licoes.find(l => l.data === dataSelecionada);
         
@@ -1547,13 +1566,13 @@
     }
     
     // Buscar lição por número
-    function buscarLicaoPorNumero() {
+    async function buscarLicaoPorNumero() {
         const numeroLicao = document.getElementById('numero-licao').value;
         const dataSelecionada = document.getElementById('data-ebd').value;
         
         if(!numeroLicao) return;
         
-        const licoes = getLicoes();
+        const licoes = await getLicoes();
         
         // Buscar pela data e número
         let licaoEncontrada = licoes.find(l => l.data === dataSelecionada && l.licao == numeroLicao);
@@ -2080,17 +2099,14 @@
     }
     
     // Gerenciamento de Lições
-    function listarLicoes() {
-        const licoes = getLicoes();
+    async function listarLicoes() {
+        const licoes = await getLicoes();
         const container = document.getElementById('lista-licoes');
         
         if(licoes.length === 0) {
             container.innerHTML = '<p style="text-align:center;color:#999;padding:20px;">Nenhuma lição cadastrada ainda.</p>';
             return;
         }
-        
-        // Ordenar por data
-        licoes.sort((a, b) => new Date(a.data) - new Date(b.data));
         
         let html = '<div style="display:flex;flex-direction:column;gap:10px;">';
         licoes.forEach((licao, index) => {
@@ -2114,7 +2130,7 @@
         container.innerHTML = html;
     }
     
-    function salvarLicao() {
+    async function salvarLicao() {
         const data = document.getElementById('nova-data-licao').value;
         const numero = document.getElementById('nova-numero-licao').value;
         const tema = document.getElementById('nova-tema-licao').value;
@@ -2124,28 +2140,61 @@
             return;
         }
         
-        const licoes = getLicoes();
-        
-        // Verificar se já existe
-        const index = licoes.findIndex(l => l.data === data && l.licao == numero);
-        
-        const novaLicao = { data, licao: parseInt(numero), tema };
-        
-        if(index >= 0) {
-            if(confirm('Já existe uma lição para esta data e número. Deseja substituir?')) {
-                licoes[index] = novaLicao;
-            } else {
-                return;
-            }
-        } else {
-            licoes.push(novaLicao);
+        const igrejaId = getIgrejaUsuarioLogado();
+        if (!igrejaId) {
+            alert('❌ Igreja não identificada!');
+            return;
         }
         
-        localStorage.setItem('licoesEBD', JSON.stringify(licoes));
-        
-        alert('✅ Lição salva com sucesso!');
-        limparFormLicao();
-        listarLicoes();
+        try {
+            const sb = getSupabase();
+            
+            // Verificar se já existe
+            const { data: existente, error: errBusca } = await sb
+                .from('licoes')
+                .select('id')
+                .eq('data', data)
+                .eq('igreja_id', igrejaId)
+                .limit(1);
+            
+            if (errBusca) throw errBusca;
+            
+            if (existente && existente.length > 0) {
+                if(!confirm('Já existe uma lição para esta data. Deseja substituir?')) {
+                    return;
+                }
+                
+                // Atualizar
+                const { error: errUpdate } = await sb
+                    .from('licoes')
+                    .update({
+                        licao: parseInt(numero),
+                        tema: tema
+                    })
+                    .eq('id', existente[0].id);
+                
+                if (errUpdate) throw errUpdate;
+            } else {
+                // Inserir
+                const { error: errInsert } = await sb
+                    .from('licoes')
+                    .insert([{
+                        data: data,
+                        licao: parseInt(numero),
+                        tema: tema,
+                        igreja_id: igrejaId
+                    }]);
+                
+                if (errInsert) throw errInsert;
+            }
+            
+            alert('✅ Lição salva com sucesso!');
+            limparFormLicao();
+            await listarLicoes();
+        } catch (error) {
+            console.error('❌ Erro ao salvar lição:', error);
+            alert('❌ Erro ao salvar lição. Tente novamente.');
+        }
     }
     
     function editarLicao(licao) {
@@ -2155,16 +2204,27 @@
         window.scrollTo(0, document.body.scrollHeight);
     }
     
-    function excluirLicao(data, numero) {
+    async function excluirLicao(data, numero) {
         if(!confirm('Tem certeza que deseja excluir esta lição?')) return;
         
-        const licoes = getLicoes();
-        const novasLicoes = licoes.filter(l => !(l.data === data && l.licao == numero));
+        const igrejaId = getIgrejaUsuarioLogado();
         
-        localStorage.setItem('licoesEBD', JSON.stringify(novasLicoes));
-        
-        alert('✅ Lição excluída!');
-        listarLicoes();
+        try {
+            const sb = getSupabase();
+            const { error } = await sb
+                .from('licoes')
+                .delete()
+                .eq('data', data)
+                .eq('igreja_id', igrejaId);
+            
+            if (error) throw error;
+            
+            alert('✅ Lição excluída!');
+            await listarLicoes();
+        } catch (error) {
+            console.error('❌ Erro ao excluir lição:', error);
+            alert('❌ Erro ao excluir lição. Tente novamente.');
+        }
     }
     
     function limparFormLicao() {
