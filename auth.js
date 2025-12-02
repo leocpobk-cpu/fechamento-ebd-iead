@@ -350,3 +350,218 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') redefinirSenha();
     });
 });
+
+// ========================================
+// GERENCIAMENTO DE USUÁRIOS (apenas Admin)
+// ========================================
+
+let usuarioEditando = null;
+
+// Listar usuários
+function listarUsuarios() {
+    const usuarios = getUsuarios();
+    const container = document.getElementById('lista-usuarios');
+    
+    if (!container) return;
+    
+    if (usuarios.length === 0) {
+        container.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">Nenhum usuário cadastrado.</p>';
+        return;
+    }
+    
+    const niveis = {
+        1: { texto: 'Administrador', classe: 'badge-admin', icone: '👑' },
+        2: { texto: 'Diretoria EBD', classe: 'badge-diretoria', icone: '📋' },
+        3: { texto: 'Auxiliar', classe: 'badge-auxiliar', icone: '👁️' }
+    };
+    
+    container.innerHTML = usuarios.map(u => `
+        <div class="user-card">
+            <div class="user-info-card">
+                <div class="user-name">${u.nome}</div>
+                <div class="user-details">
+                    <span>👤 ${u.usuario}</span>
+                    <span>📧 ${u.email}</span>
+                    <span>📱 ${u.celular}</span>
+                    <span class="user-badge ${niveis[u.nivel].classe}">
+                        ${niveis[u.nivel].icone} ${niveis[u.nivel].texto}
+                    </span>
+                    ${!u.ativo ? '<span class="user-badge" style="background:#fee2e2;color:#991b1b;">🚫 Inativo</span>' : ''}
+                </div>
+            </div>
+            <div class="user-actions">
+                <button class="btn-icon" onclick="editarUsuario(${u.id})" title="Editar">✏️</button>
+                <button class="btn-icon warning" onclick="resetarSenhaUsuario(${u.id})" title="Resetar Senha">🔑</button>
+                <button class="btn-icon ${u.ativo ? 'danger' : ''}" onclick="toggleAtivoUsuario(${u.id})" title="${u.ativo ? 'Desativar' : 'Ativar'}">
+                    ${u.ativo ? '🚫' : '✅'}
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Abrir modal para novo usuário
+function abrirModalUsuario() {
+    usuarioEditando = null;
+    document.getElementById('modal-usuario-titulo').textContent = '➕ Novo Usuário';
+    document.getElementById('modal-nome').value = '';
+    document.getElementById('modal-usuario').value = '';
+    document.getElementById('modal-email').value = '';
+    document.getElementById('modal-celular').value = '';
+    document.getElementById('modal-nivel').value = '3';
+    document.getElementById('modal-senha').value = '';
+    document.getElementById('campo-senha').style.display = 'block';
+    document.getElementById('modal-usuario').style.display = 'flex';
+}
+
+// Editar usuário
+function editarUsuario(id) {
+    const usuarios = getUsuarios();
+    const usuario = usuarios.find(u => u.id === id);
+    
+    if (!usuario) {
+        alert('Usuário não encontrado!');
+        return;
+    }
+    
+    usuarioEditando = id;
+    document.getElementById('modal-usuario-titulo').textContent = '✏️ Editar Usuário';
+    document.getElementById('modal-nome').value = usuario.nome;
+    document.getElementById('modal-usuario').value = usuario.usuario;
+    document.getElementById('modal-email').value = usuario.email;
+    document.getElementById('modal-celular').value = usuario.celular;
+    document.getElementById('modal-nivel').value = usuario.nivel;
+    document.getElementById('modal-senha').value = '';
+    document.getElementById('campo-senha').style.display = 'none';
+    document.getElementById('modal-usuario').style.display = 'flex';
+}
+
+// Salvar usuário (criar ou editar)
+function salvarUsuario() {
+    const nome = document.getElementById('modal-nome').value.trim();
+    const usuario = document.getElementById('modal-usuario').value.trim();
+    const email = document.getElementById('modal-email').value.trim();
+    const celular = document.getElementById('modal-celular').value.trim();
+    const nivel = parseInt(document.getElementById('modal-nivel').value);
+    const senha = document.getElementById('modal-senha').value;
+    
+    // Validações
+    if (!nome || !usuario || !email || !celular) {
+        alert('❌ Preencha todos os campos obrigatórios!');
+        return;
+    }
+    
+    if (!usuarioEditando && (!senha || senha.length < 6)) {
+        alert('❌ A senha deve ter pelo menos 6 caracteres!');
+        return;
+    }
+    
+    const usuarios = getUsuarios();
+    
+    if (usuarioEditando) {
+        // Editar usuário existente
+        const index = usuarios.findIndex(u => u.id === usuarioEditando);
+        
+        if (index !== -1) {
+            // Verificar se usuário já existe (exceto o próprio)
+            const usuarioExiste = usuarios.find(u => 
+                u.usuario.toLowerCase() === usuario.toLowerCase() && 
+                u.id !== usuarioEditando
+            );
+            
+            if (usuarioExiste) {
+                alert('❌ Nome de usuário já existe!');
+                return;
+            }
+            
+            usuarios[index] = {
+                ...usuarios[index],
+                nome,
+                usuario,
+                email,
+                celular,
+                nivel
+            };
+            
+            salvarUsuarios(usuarios);
+            alert('✅ Usuário atualizado com sucesso!');
+        }
+    } else {
+        // Criar novo usuário
+        const usuarioExiste = usuarios.find(u => u.usuario.toLowerCase() === usuario.toLowerCase());
+        
+        if (usuarioExiste) {
+            alert('❌ Nome de usuário já existe!');
+            return;
+        }
+        
+        const novoId = usuarios.length > 0 ? Math.max(...usuarios.map(u => u.id)) + 1 : 1;
+        
+        const novoUsuario = {
+            id: novoId,
+            usuario,
+            senha,
+            nome,
+            email,
+            celular,
+            nivel,
+            ativo: true
+        };
+        
+        usuarios.push(novoUsuario);
+        salvarUsuarios(usuarios);
+        alert('✅ Usuário criado com sucesso!');
+    }
+    
+    fecharModalUsuario();
+    listarUsuarios();
+}
+
+// Fechar modal
+function fecharModalUsuario() {
+    document.getElementById('modal-usuario').style.display = 'none';
+    usuarioEditando = null;
+}
+
+// Resetar senha do usuário
+function resetarSenhaUsuario(id) {
+    const novaSenha = prompt('🔑 Digite a nova senha (mínimo 6 caracteres):');
+    
+    if (!novaSenha) return;
+    
+    if (novaSenha.length < 6) {
+        alert('❌ A senha deve ter pelo menos 6 caracteres!');
+        return;
+    }
+    
+    const usuarios = getUsuarios();
+    const index = usuarios.findIndex(u => u.id === id);
+    
+    if (index !== -1) {
+        usuarios[index].senha = novaSenha;
+        salvarUsuarios(usuarios);
+        alert('✅ Senha resetada com sucesso!');
+    }
+}
+
+// Ativar/Desativar usuário
+function toggleAtivoUsuario(id) {
+    const usuarioLogado = getUsuarioLogado();
+    
+    if (usuarioLogado && usuarioLogado.id === id) {
+        alert('❌ Você não pode desativar seu próprio usuário!');
+        return;
+    }
+    
+    const usuarios = getUsuarios();
+    const index = usuarios.findIndex(u => u.id === id);
+    
+    if (index !== -1) {
+        usuarios[index].ativo = !usuarios[index].ativo;
+        salvarUsuarios(usuarios);
+        
+        const acao = usuarios[index].ativo ? 'ativado' : 'desativado';
+        alert(`✅ Usuário ${acao} com sucesso!`);
+        listarUsuarios();
+    }
+}

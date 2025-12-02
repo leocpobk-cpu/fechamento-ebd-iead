@@ -280,6 +280,166 @@
             color: #065f46;
             border: 1px solid #a7f3d0;
         }
+        
+        /* Gerenciamento de Usuários */
+        .user-list {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .user-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+        
+        .user-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .user-info-card {
+            flex: 1;
+        }
+        
+        .user-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+        
+        .user-details {
+            font-size: 0.85rem;
+            color: var(--secondary);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .user-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-admin {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .badge-diretoria {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .badge-auxiliar {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .user-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-icon {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        
+        .btn-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .btn-icon.danger {
+            background: var(--danger);
+        }
+        
+        .btn-icon.warning {
+            background: var(--warning);
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.2s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .modal-header h3 {
+            font-size: 1.3rem;
+            color: var(--text);
+        }
+        
+        .btn-close {
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--secondary);
+            line-height: 1;
+        }
+        
+        .btn-close:hover {
+            color: var(--danger);
+        }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         
@@ -345,7 +505,7 @@
         /* Navigation Tabs */
         .nav-tabs {
             display: flex;
-            background: white;
+            background: var(--card-bg);
             border-bottom: 2px solid var(--border);
             position: sticky;
             top: 68px;
@@ -359,11 +519,12 @@
             cursor: pointer;
             border-bottom: 3px solid transparent;
             transition: all 0.2s;
+            color: var(--text);
         }
         .nav-tab.active {
             color: var(--primary);
             border-bottom-color: var(--primary);
-            background: #f0f9ff;
+            background: rgba(37, 99, 235, 0.1);
         }
 
         .container { max-width: 700px; margin: 0 auto; padding: 15px; }
@@ -414,18 +575,19 @@
         .form-group.full { grid-column: span 3; }
         .form-group.span-2 { grid-column: span 2; }
         
-        label { font-size: 0.7rem; font-weight: 600; color: #4b5563; margin-bottom: 4px; text-transform: uppercase; }
+        label { font-size: 0.7rem; font-weight: 600; color: var(--text); margin-bottom: 4px; text-transform: uppercase; opacity: 0.8; }
         
-        input[type="number"], input[type="text"], select {
+        input[type="number"], input[type="text"], select, textarea {
             width: 100%;
             padding: 10px;
             border: 1px solid var(--border);
             border-radius: 8px;
             font-size: 1rem;
-            background: #f9fafb;
+            background: var(--card-bg);
+            color: var(--text);
         }
 
-        input:focus, select:focus { outline: none; border-color: var(--primary); background: #fff; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
 
         .auto-calc {
             font-size: 0.85rem;
@@ -760,7 +922,19 @@
         </div>
     </div>
 
-    <!-- TELA 5: RELATÓRIO -->
+    <!-- TELA 6: GERENCIAMENTO DE USUÁRIOS (apenas Admin) -->
+    <div id="tela-usuarios" class="tela container" style="display:none;">
+        <div class="card">
+            <h2 style="margin-bottom: 15px;">👥 Gerenciamento de Usuários</h2>
+            <button class="btn btn-primary" onclick="abrirModalUsuario()">➕ Novo Usuário</button>
+        </div>
+        
+        <div id="lista-usuarios" class="user-list">
+            <!-- Lista será preenchida dinamicamente -->
+        </div>
+    </div>
+
+    <!-- TELA 7: RELATÓRIO -->
     <div id="tela-relatorio" class="tela container">
         <div class="report-header">
             <h2>Relatório Geral EBD</h2>
@@ -868,6 +1042,55 @@
             <button class="btn btn-secondary" onclick="window.print()">🖨️ SALVAR PDF / IMPRIMIR</button>
             <button class="btn btn-warning" onclick="salvarHistorico()">💾 SALVAR NO HISTÓRICO</button>
             <button class="btn" style="background: #6b7280; color: white;" onclick="voltarParaEdicao()">✏️ VOLTAR E EDITAR</button>
+        </div>
+    </div>
+
+    <!-- Modal de Usuário -->
+    <div id="modal-usuario" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-usuario-titulo">➕ Novo Usuário</h3>
+                <button class="btn-close" onclick="fecharModalUsuario()">×</button>
+            </div>
+            
+            <div class="form-group">
+                <label>👤 Nome Completo</label>
+                <input type="text" id="modal-nome" placeholder="Digite o nome completo">
+            </div>
+            
+            <div class="form-group">
+                <label>🔑 Nome de Usuário</label>
+                <input type="text" id="modal-usuario" placeholder="Digite o usuário (login)">
+            </div>
+            
+            <div class="form-group">
+                <label>📧 Email</label>
+                <input type="email" id="modal-email" placeholder="email@exemplo.com">
+            </div>
+            
+            <div class="form-group">
+                <label>📱 Celular</label>
+                <input type="text" id="modal-celular" placeholder="(00) 00000-0000">
+            </div>
+            
+            <div class="form-group">
+                <label>🎯 Nível de Acesso</label>
+                <select id="modal-nivel">
+                    <option value="1">👑 Administrador - Acesso Total</option>
+                    <option value="2">📋 Diretoria EBD - Lançamento e Visualização</option>
+                    <option value="3">👁️ Auxiliar - Apenas Visualização</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="campo-senha">
+                <label>🔐 Senha</label>
+                <input type="password" id="modal-senha" placeholder="Digite a senha (mínimo 6 caracteres)">
+            </div>
+            
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn btn-primary" onclick="salvarUsuario()" style="flex:1;">💾 Salvar</button>
+                <button class="btn btn-secondary" onclick="fecharModalUsuario()" style="flex:1;">❌ Cancelar</button>
+            </div>
         </div>
     </div>
 
@@ -1280,6 +1503,10 @@
             document.getElementById('tela-licoes').classList.add('active');
             document.querySelectorAll('.nav-tab')[4].classList.add('active');
             listarLicoes();
+        } else if(tela === 'usuarios') {
+            document.getElementById('tela-usuarios').classList.add('active');
+            document.querySelectorAll('.nav-tab')[5].classList.add('active');
+            listarUsuarios();
         } else if(tela === 'relatorio') {
             document.getElementById('tela-relatorio').classList.add('active');
         }
