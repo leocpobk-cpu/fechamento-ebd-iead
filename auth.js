@@ -147,13 +147,23 @@ function getIgrejaUsuarioLogado() {
 }
 
 // Obter todos os usuários
-function getUsuarios() {
-    return JSON.parse(localStorage.getItem('usuariosEBD') || '[]');
+async function getUsuarios() {
+    const sb = getSupabase();
+    const { data, error } = await sb
+        .from('usuarios')
+        .select('*')
+        .order('nome');
+    
+    if (error) {
+        console.error('❌ Erro ao buscar usuários:', error);
+        return [];
+    }
+    return data || [];
 }
 
-// Salvar usuários
+// Salvar usuários (DEPRECATED - Supabase salva automaticamente)
 function salvarUsuarios(usuarios) {
-    localStorage.setItem('usuariosEBD', JSON.stringify(usuarios));
+    console.warn('⚠️ salvarUsuarios() está deprecated. Use operações diretas no Supabase.');
 }
 
 // Obter usuário logado
@@ -162,7 +172,7 @@ function getUsuarioLogado() {
 }
 
 // Fazer login
-function fazerLogin() {
+async function fazerLogin() {
     const usuario = document.getElementById('input-usuario').value.trim();
     const senha = document.getElementById('input-senha').value;
     const btnLogin = document.querySelector('.btn-login');
@@ -180,25 +190,26 @@ function fazerLogin() {
         btnLogin.disabled = true;
     }
     
-    // Delay pequeno para melhor UX em mobile
-    setTimeout(() => {
-        const usuarios = getUsuarios();
-        console.log('👥 Total de usuários:', usuarios.length);
-        console.log('🔍 Procurando por:', usuario);
+    try {
+        // Buscar usuário no Supabase
+        const sb = getSupabase();
+        const { data: usuarios, error } = await sb
+            .from('usuarios')
+            .select('*')
+            .eq('usuario', usuario.toLowerCase())
+            .eq('senha', senha)
+            .eq('ativo', true)
+            .limit(1);
         
-        const usuarioEncontrado = usuarios.find(u => {
-            const match = u.usuario.toLowerCase() === usuario.toLowerCase() && 
-                         u.senha === senha &&
-                         u.ativo;
-            console.log(`Verificando ${u.usuario}: usuario=${u.usuario.toLowerCase() === usuario.toLowerCase()}, senha=${u.senha === senha}, ativo=${u.ativo}`);
-            return match;
-        });
+        if (error) throw error;
+        
+        const usuarioEncontrado = usuarios?.[0];
         
         if (usuarioEncontrado) {
             console.log('✅ Usuário encontrado:', usuarioEncontrado.usuario);
             
             // Verificar se é primeiro acesso
-            if (usuarioEncontrado.primeiroAcesso) {
+            if (usuarioEncontrado.primeiro_acesso) {
                 console.log('🆕 Primeiro acesso detectado');
                 // Salvar dados temporários incluindo o nível
                 sessionStorage.setItem('usuarioPrimeiroAcesso', JSON.stringify({
@@ -228,7 +239,7 @@ function fazerLogin() {
                 usuario: usuarioEncontrado.usuario,
                 nome: usuarioEncontrado.nome,
                 nivel: usuarioEncontrado.nivel,
-                igrejaId: usuarioEncontrado.igrejaId,
+                igrejaId: usuarioEncontrado.igreja_id,
                 loginEm: new Date().toISOString()
             };
             sessionStorage.setItem('usuarioLogado', JSON.stringify(sessao));
@@ -291,7 +302,17 @@ function fazerLogin() {
                 );
             }
         }
-    }, 300);
+    } catch (error) {
+        console.error('❌ Erro ao fazer login:', error);
+        
+        // Restaurar botão
+        if (btnLogin) {
+            btnLogin.textContent = 'ENTRAR';
+            btnLogin.disabled = false;
+        }
+        
+        mostrarAlertaLogin('Erro ao tentar fazer login. Tente novamente.', 'error');
+    }
 }
 
 // Fazer logout
@@ -769,11 +790,11 @@ async function carregarSelectIgrejas() {
 }
 
 // Listar usuários
-function listarUsuarios() {
+async function listarUsuarios() {
     console.log('👥 Iniciando listagem de usuários...');
     
-    const usuarios = getUsuarios();
-    const igrejas = getIgrejas();
+    const usuarios = await getUsuarios();
+    const igrejas = await getIgrejas();
     const container = document.getElementById('lista-usuarios');
     
     console.log('📊 Total de usuários:', usuarios.length);
@@ -798,7 +819,7 @@ function listarUsuarios() {
     };
     
     container.innerHTML = usuarios.map(u => {
-        const igreja = u.igrejaId ? igrejas.find(i => i.id === u.igrejaId) : null;
+        const igreja = u.igreja_id ? igrejas.find(i => i.id === u.igreja_id) : null;
         const igrejaTexto = u.nivel === 1 ? 'Todas as Igrejas' : (igreja ? igreja.nome : 'Sem igreja');
         
         return `
@@ -856,10 +877,23 @@ function abrirModalUsuario() {
 }
 
 // Editar usuário
-function editarUsuario(id) {
+async function editarUsuario(id) {
     console.log('✏️ Editando usuário ID:', id);
-    const usuarios = getUsuarios();
-    const usuario = usuarios.find(u => u.id === id);
+    
+    const sb = getSupabase();
+    const { data: usuarios, error } = await sb
+        .from('usuarios')
+        .select('*')
+        .eq('id', id)
+        .limit(1);
+    
+    if (error) {
+        console.error('❌ Erro ao buscar usuário:', error);
+        alert('Erro ao carregar usuário!');
+        return;
+    }
+    
+    const usuario = usuarios?.[0];
     
     if (!usuario) {
         alert('Usuário não encontrado!');
@@ -879,19 +913,13 @@ function editarUsuario(id) {
     document.getElementById('campo-senha').style.display = 'none';
     
     // Carregar igrejas e selecionar a do usuário
-    carregarSelectIgrejas();
+    await carregarSelectIgrejas();
     if (usuario.nivel === 1) {
         document.getElementById('campo-igreja').style.display = 'none';
     } else {
         document.getElementById('campo-igreja').style.display = 'block';
-        document.getElementById('modal-select-igreja').value = usuario.igrejaId || '';
+        document.getElementById('modal-select-igreja').value = usuario.igreja_id || '';
     }
-    document.getElementById('modal-input-usuario').value = usuario.usuario;
-    document.getElementById('modal-email').value = usuario.email;
-    document.getElementById('modal-celular').value = usuario.celular;
-    document.getElementById('modal-nivel').value = usuario.nivel;
-    document.getElementById('modal-senha').value = '';
-    document.getElementById('campo-senha').style.display = 'none';
     
     const modal = document.getElementById('modal-usuario');
     if (modal) {
@@ -903,7 +931,7 @@ function editarUsuario(id) {
 }
 
 // Salvar usuário (criar ou editar)
-function salvarUsuario() {
+async function salvarUsuario() {
     console.log('🔧 Iniciando salvarUsuario...', {editando: usuarioEditando});
     
     const nome = document.getElementById('modal-nome').value.trim();
@@ -935,76 +963,89 @@ function salvarUsuario() {
         return;
     }
     
-    const usuarios = getUsuarios();
-    console.log('👥 Usuários atuais:', usuarios.length);
+    const sb = getSupabase();
     
-    if (usuarioEditando) {
-        // Editar usuário existente
-        const index = usuarios.findIndex(u => u.id === usuarioEditando);
-        console.log('✏️ Editando usuário ID:', usuarioEditando, 'Index:', index);
-        
-        if (index !== -1) {
-            // Verificar se usuário já existe (exceto o próprio)
-            const usuarioExiste = usuarios.find(u => 
-                u.usuario.toLowerCase() === usuario.toLowerCase() && 
-                u.id !== usuarioEditando
-            );
+    try {
+        if (usuarioEditando) {
+            // Editar usuário existente
+            console.log('✏️ Editando usuário ID:', usuarioEditando);
             
-            if (usuarioExiste) {
+            // Verificar se usuário já existe (exceto o próprio)
+            const { data: duplicados, error: errDuplicado } = await sb
+                .from('usuarios')
+                .select('id')
+                .eq('usuario', usuario.toLowerCase())
+                .neq('id', usuarioEditando);
+            
+            if (errDuplicado) throw errDuplicado;
+            
+            if (duplicados && duplicados.length > 0) {
                 alert('❌ Nome de usuário já existe!');
                 console.error('❌ Usuário duplicado');
                 return;
             }
             
-            usuarios[index] = {
-                ...usuarios[index],
-                nome,
-                usuario,
-                email,
-                celular,
-                nivel,
-                igrejaId
-            };
+            const { error } = await sb
+                .from('usuarios')
+                .update({
+                    nome,
+                    usuario: usuario.toLowerCase(),
+                    email,
+                    celular,
+                    nivel,
+                    igreja_id: igrejaId
+                })
+                .eq('id', usuarioEditando);
             
-            console.log('💾 Salvando usuário editado:', usuarios[index]);
-            salvarUsuarios(usuarios);
-            alert('✅ Usuário atualizado com sucesso!');
+            if (error) throw error;
+            
             console.log('✅ Usuário atualizado');
+            alert('✅ Usuário atualizado com sucesso!');
+        } else {
+            // Criar novo usuário
+            console.log('➕ Criando novo usuário');
+            
+            // Verificar se usuário já existe
+            const { data: duplicados, error: errDuplicado } = await sb
+                .from('usuarios')
+                .select('id')
+                .eq('usuario', usuario.toLowerCase());
+            
+            if (errDuplicado) throw errDuplicado;
+            
+            if (duplicados && duplicados.length > 0) {
+                alert('❌ Nome de usuário já existe!');
+                console.error('❌ Usuário duplicado');
+                return;
+            }
+            
+            const { error } = await sb
+                .from('usuarios')
+                .insert([{
+                    usuario: usuario.toLowerCase(),
+                    senha,
+                    nome,
+                    email,
+                    celular,
+                    nivel,
+                    igreja_id: igrejaId,
+                    ativo: true,
+                    primeiro_acesso: true
+                }]);
+            
+            if (error) throw error;
+            
+            console.log('✅ Novo usuário criado');
+            alert('✅ Usuário criado com sucesso!');
         }
-    } else {
-        // Criar novo usuário
-        const usuarioExiste = usuarios.find(u => u.usuario.toLowerCase() === usuario.toLowerCase());
         
-        if (usuarioExiste) {
-            alert('❌ Nome de usuário já existe!');
-            console.error('❌ Usuário duplicado');
-            return;
-        }
-        
-        const novoId = usuarios.length > 0 ? Math.max(...usuarios.map(u => u.id)) + 1 : 1;
-        
-        const novoUsuario = {
-            id: novoId,
-            usuario,
-            senha,
-            nome,
-            email,
-            celular,
-            nivel,
-            igrejaId,
-            ativo: true
-        };
-        
-        console.log('➕ Criando novo usuário:', novoUsuario);
-        usuarios.push(novoUsuario);
-        salvarUsuarios(usuarios);
-        alert('✅ Usuário criado com sucesso!');
-        console.log('✅ Novo usuário criado com ID:', novoId);
+        fecharModalUsuario();
+        await listarUsuarios();
+        console.log('🔄 Lista de usuários atualizada');
+    } catch (error) {
+        console.error('❌ Erro ao salvar usuário:', error);
+        alert('❌ Erro ao salvar usuário. Tente novamente.');
     }
-    
-    fecharModalUsuario();
-    listarUsuarios();
-    console.log('🔄 Lista de usuários atualizada');
 }
 
 // Fechar modal
@@ -1014,7 +1055,7 @@ function fecharModalUsuario() {
 }
 
 // Resetar senha do usuário
-function resetarSenhaUsuario(id) {
+async function resetarSenhaUsuario(id) {
     const novaSenha = prompt('🔑 Digite a nova senha (mínimo 6 caracteres):');
     
     if (!novaSenha) return;
@@ -1024,18 +1065,27 @@ function resetarSenhaUsuario(id) {
         return;
     }
     
-    const usuarios = getUsuarios();
-    const index = usuarios.findIndex(u => u.id === id);
-    
-    if (index !== -1) {
-        usuarios[index].senha = novaSenha;
-        salvarUsuarios(usuarios);
-        alert('✅ Senha resetada com sucesso!');
+    try {
+        const sb = getSupabase();
+        const { error } = await sb
+            .from('usuarios')
+            .update({
+                senha: novaSenha,
+                primeiro_acesso: true
+            })
+            .eq('id', id);
+        
+        if (error) throw error;
+        
+        alert('✅ Senha resetada com sucesso! Usuário precisará redefinir no próximo login.');
+    } catch (error) {
+        console.error('❌ Erro ao resetar senha:', error);
+        alert('❌ Erro ao resetar senha. Tente novamente.');
     }
 }
 
 // Ativar/Desativar usuário
-function toggleAtivoUsuario(id) {
+async function toggleAtivoUsuario(id) {
     const usuarioLogado = getUsuarioLogado();
     
     if (usuarioLogado && usuarioLogado.id === id) {
@@ -1043,16 +1093,39 @@ function toggleAtivoUsuario(id) {
         return;
     }
     
-    const usuarios = getUsuarios();
-    const index = usuarios.findIndex(u => u.id === id);
-    
-    if (index !== -1) {
-        usuarios[index].ativo = !usuarios[index].ativo;
-        salvarUsuarios(usuarios);
+    try {
+        const sb = getSupabase();
         
-        const acao = usuarios[index].ativo ? 'ativado' : 'desativado';
+        // Buscar estado atual
+        const { data: usuarios, error: errBusca } = await sb
+            .from('usuarios')
+            .select('ativo')
+            .eq('id', id)
+            .limit(1);
+        
+        if (errBusca) throw errBusca;
+        
+        if (!usuarios || usuarios.length === 0) {
+            alert('❌ Usuário não encontrado!');
+            return;
+        }
+        
+        const novoStatus = !usuarios[0].ativo;
+        
+        // Atualizar status
+        const { error } = await sb
+            .from('usuarios')
+            .update({ ativo: novoStatus })
+            .eq('id', id);
+        
+        if (error) throw error;
+        
+        const acao = novoStatus ? 'ativado' : 'desativado';
         alert(`✅ Usuário ${acao} com sucesso!`);
-        listarUsuarios();
+        await listarUsuarios();
+    } catch (error) {
+        console.error('❌ Erro ao alterar status do usuário:', error);
+        alert('❌ Erro ao alterar status. Tente novamente.');
     }
 }
 
