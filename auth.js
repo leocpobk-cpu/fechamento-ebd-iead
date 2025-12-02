@@ -1405,7 +1405,7 @@ async function toggleAtivoIgreja(id) {
 // ========================================
 
 // Abrir modal de convite
-function abrirModalConvite() {
+async function abrirModalConvite() {
     console.log('📱 Abrindo modal de convite...');
     
     // Limpar campos
@@ -1413,9 +1413,10 @@ function abrirModalConvite() {
     document.getElementById('convite-nivel').value = '2';
     document.getElementById('convite-validade').value = '72';
     
-    // Carregar igrejas
+    // Carregar igrejas de forma assíncrona
     const selectIgreja = document.getElementById('convite-igreja');
-    const igrejas = getIgrejas().filter(i => i.ativo);
+    const todasIgrejas = await getIgrejas();
+    const igrejas = todasIgrejas.filter(i => i.ativo);
     selectIgreja.innerHTML = '<option value="">Selecione uma igreja</option>' +
         igrejas.map(i => `<option value="${i.id}">${i.nome}</option>`).join('');
     
