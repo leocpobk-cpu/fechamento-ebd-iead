@@ -882,6 +882,16 @@
                     </p>
                 </div>
                 
+                <div class="form-group" id="campo-igreja-primeiro-acesso" style="display:none;">
+                    <label>🏛️ Selecione sua Igreja</label>
+                    <select id="select-igreja-primeiro-acesso" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem;">
+                        <option value="">Carregando...</option>
+                    </select>
+                    <small style="color: #6b7280; font-size: 0.75rem; display: block; margin-top: 4px;">
+                        ⚠️ Esta escolha só poderá ser alterada pelo Administrador
+                    </small>
+                </div>
+                
                 <div class="form-group">
                     <label>🔑 Nova Senha</label>
                     <input type="password" id="input-nova-senha-primeiro" placeholder="Digite sua nova senha (mínimo 6 caracteres)">
@@ -918,7 +928,11 @@
             <div class="user-info" id="info-usuario">
                 <span id="nome-usuario"></span>
                 <span class="user-role" id="role-usuario"></span>
+                <span id="igreja-usuario" style="font-size: 0.75rem; color: #6b7280;"></span>
             </div>
+            <select id="select-igreja-admin" class="icon-btn" style="display:none; padding: 8px 12px; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.85rem; min-width: 180px; cursor: pointer;" onchange="trocarIgrejaAdmin()" title="Visualizar dados de outra igreja">
+                <option value="">Todas as Igrejas</option>
+            </select>
             <button class="icon-btn" id="btn-usuarios" onclick="mudarTela('usuarios')" title="Gerenciar Usuários" style="display:none;">👥</button>
             <button class="icon-btn" onclick="toggleTema()" title="Alternar tema" id="btn-tema">🌙</button>
             <button class="icon-btn" onclick="exportarDados()" title="Exportar dados">💾</button>

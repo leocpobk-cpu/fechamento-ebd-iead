@@ -10,10 +10,37 @@ const igrejaspadrao = [
     {
         id: 1,
         nome: 'IEAD - Sede',
-        endereco: 'Rua Principal, 100',
-        cidade: 'São Paulo',
-        uf: 'SP',
+        endereco: 'Rua Central, 100',
+        cidade: 'Cidade',
+        uf: 'UF',
         pastor: 'Pastor Titular',
+        ativo: true
+    },
+    {
+        id: 2,
+        nome: 'IEAD - Coophmil',
+        endereco: 'Av. Coophmil, 200',
+        cidade: 'Cidade',
+        uf: 'UF',
+        pastor: 'Pastor Local',
+        ativo: true
+    },
+    {
+        id: 3,
+        nome: 'IEAD - Cidade Alta',
+        endereco: 'Rua Cidade Alta, 300',
+        cidade: 'Cidade',
+        uf: 'UF',
+        pastor: 'Pastor Local',
+        ativo: true
+    },
+    {
+        id: 4,
+        nome: 'IEAD - Temp (Solicitar Cadastro)',
+        endereco: 'Endereço Temporário',
+        cidade: 'Cidade',
+        uf: 'UF',
+        pastor: 'A definir',
         ativo: true
     }
 ];
@@ -40,7 +67,7 @@ const usuariosPadrao = [
         email: 'diretoria@iead.com',
         celular: '(11) 98888-8888',
         nivel: 2, // Diretoria - lançamento e visualização
-        igrejaId: 1, // Pertence à igreja 1
+        igrejaId: null, // Será definida no primeiro acesso
         ativo: true,
         primeiroAcesso: true
     },
@@ -52,7 +79,7 @@ const usuariosPadrao = [
         email: 'auxiliar@iead.com',
         celular: '(11) 97777-7777',
         nivel: 3, // Auxiliar - apenas visualização
-        igrejaId: 1, // Pertence à igreja 1
+        igrejaId: null, // Será definida no primeiro acesso
         ativo: true,
         primeiroAcesso: true
     }
@@ -87,10 +114,14 @@ function getIgrejaUsuarioLogado() {
     const usuario = getUsuarioLogado();
     if (!usuario) return null;
     
-    // Admin vê todas
-    if (usuario.nivel === 1) return null;
+    // Admin pode escolher qual igreja visualizar
+    if (usuario.nivel === 1) {
+        const igrejaVisualizacao = sessionStorage.getItem('igrejaVisualizacaoAdmin');
+        return igrejaVisualizacao ? parseInt(igrejaVisualizacao) : null;
+    }
     
     // Outros usuários veem apenas sua igreja
+    return usuario.igrejaId;
     return usuario.igrejaId;
 }
 
@@ -148,11 +179,12 @@ function fazerLogin() {
             // Verificar se é primeiro acesso
             if (usuarioEncontrado.primeiroAcesso) {
                 console.log('🆕 Primeiro acesso detectado');
-                // Salvar dados temporários
+                // Salvar dados temporários incluindo o nível
                 sessionStorage.setItem('usuarioPrimeiroAcesso', JSON.stringify({
                     id: usuarioEncontrado.id,
                     usuario: usuarioEncontrado.usuario,
-                    nome: usuarioEncontrado.nome
+                    nome: usuarioEncontrado.nome,
+                    nivel: usuarioEncontrado.nivel
                 }));
                 
                 // Restaurar botão
@@ -260,6 +292,70 @@ function atualizarHeaderUsuario(usuario) {
     
     document.getElementById('nome-usuario').textContent = usuario.nome;
     document.getElementById('role-usuario').textContent = niveis[usuario.nivel];
+    
+    // Mostrar igreja do usuário (exceto Admin)
+    const igrejaSpan = document.getElementById('igreja-usuario');
+    if (igrejaSpan) {
+        if (usuario.nivel === 1) {
+            igrejaSpan.textContent = '';
+        } else if (usuario.igrejaId) {
+            const igrejas = getIgrejas();
+            const igreja = igrejas.find(i => i.id === usuario.igrejaId);
+            if (igreja) {
+                igrejaSpan.textContent = `🏛️ ${igreja.nome}`;
+            }
+        }
+    }
+    
+    // Carregar seletor de igreja para Admin
+    if (usuario.nivel === 1) {
+        carregarSeletorIgrejaAdmin();
+    }
+}
+
+// Carregar seletor de igreja para Admin visualizar dados
+function carregarSeletorIgrejaAdmin() {
+    const select = document.getElementById('select-igreja-admin');
+    if (!select) return;
+    
+    const igrejas = getIgrejas().filter(i => i.ativo);
+    select.innerHTML = '<option value="">Todas as Igrejas</option>' +
+        igrejas.map(i => `<option value="${i.id}">${i.nome}</option>`).join('');
+    
+    select.style.display = 'block';
+    
+    // Restaurar seleção anterior se existir
+    const igrejaVisualizacao = sessionStorage.getItem('igrejaVisualizacaoAdmin');
+    if (igrejaVisualizacao) {
+        select.value = igrejaVisualizacao;
+    }
+}
+
+// Trocar igreja sendo visualizada pelo Admin
+function trocarIgrejaAdmin() {
+    const select = document.getElementById('select-igreja-admin');
+    if (!select) return;
+    
+    const igrejaId = select.value;
+    
+    if (igrejaId) {
+        sessionStorage.setItem('igrejaVisualizacaoAdmin', igrejaId);
+        const igrejas = getIgrejas();
+        const igreja = igrejas.find(i => i.id == igrejaId);
+        alert(`📊 Visualizando dados de: ${igreja ? igreja.nome : 'Igreja não encontrada'}\n\nOs lançamentos, histórico e relatórios agora mostrarão apenas os dados desta igreja.`);
+    } else {
+        sessionStorage.removeItem('igrejaVisualizacaoAdmin');
+        alert('📊 Visualizando dados de: Todas as Igrejas\n\nOs lançamentos, histórico e relatórios agora mostrarão dados de todas as igrejas.');
+    }
+    
+    // Recarregar tela atual para atualizar dados
+    const telaAtiva = document.querySelector('.tela.active');
+    if (telaAtiva) {
+        const telaId = telaAtiva.id.replace('tela-', '');
+        if (typeof window[`carregar${telaId.charAt(0).toUpperCase() + telaId.slice(1)}`] === 'function') {
+            window[`carregar${telaId.charAt(0).toUpperCase() + telaId.slice(1)}`]();
+        }
+    }
 }
 
 // Aplicar permissões baseadas no nível
@@ -333,6 +429,23 @@ function mostrarTelaPrimeiroAcesso() {
     const usuario = JSON.parse(sessionStorage.getItem('usuarioPrimeiroAcesso'));
     if (usuario) {
         document.getElementById('nome-usuario-primeiro-acesso').textContent = usuario.nome;
+        
+        // Carregar igrejas no select (exceto para Admin)
+        if (usuario.nivel !== 1) {
+            const selectIgreja = document.getElementById('select-igreja-primeiro-acesso');
+            const campoIgreja = document.getElementById('campo-igreja-primeiro-acesso');
+            
+            if (selectIgreja && campoIgreja) {
+                const igrejas = getIgrejas().filter(i => i.ativo);
+                selectIgreja.innerHTML = '<option value="">Selecione sua igreja</option>' +
+                    igrejas.map(i => `<option value="${i.id}">${i.nome}</option>`).join('');
+                campoIgreja.style.display = 'block';
+            }
+        } else {
+            // Admin não precisa selecionar igreja
+            const campoIgreja = document.getElementById('campo-igreja-primeiro-acesso');
+            if (campoIgreja) campoIgreja.style.display = 'none';
+        }
     }
 }
 
@@ -340,6 +453,25 @@ function mostrarTelaPrimeiroAcesso() {
 function trocarSenhaPrimeiroAcesso() {
     const novaSenha = document.getElementById('input-nova-senha-primeiro').value;
     const confirmaSenha = document.getElementById('input-confirma-senha-primeiro').value;
+    const usuarioTemp = JSON.parse(sessionStorage.getItem('usuarioPrimeiroAcesso'));
+    
+    if (!usuarioTemp) {
+        mostrarAlertaLogin('Sessão expirada. Faça login novamente.', 'error');
+        voltarLogin();
+        return;
+    }
+    
+    // Verificar igreja para não-admins
+    let igrejaId = null;
+    if (usuarioTemp.nivel !== 1) {
+        const selectIgreja = document.getElementById('select-igreja-primeiro-acesso');
+        igrejaId = selectIgreja ? parseInt(selectIgreja.value) : null;
+        
+        if (!igrejaId) {
+            mostrarAlertaLogin('Por favor, selecione sua igreja!', 'error');
+            return;
+        }
+    }
     
     if (!novaSenha || !confirmaSenha) {
         mostrarAlertaLogin('Preencha todos os campos!', 'error');
@@ -356,20 +488,19 @@ function trocarSenhaPrimeiroAcesso() {
         return;
     }
     
-    const usuarioTemp = JSON.parse(sessionStorage.getItem('usuarioPrimeiroAcesso'));
-    if (!usuarioTemp) {
-        mostrarAlertaLogin('Sessão expirada. Faça login novamente.', 'error');
-        voltarLogin();
-        return;
-    }
-    
-    // Atualizar senha do usuário
+    // Atualizar senha e igreja do usuário
     const usuarios = getUsuarios();
     const index = usuarios.findIndex(u => u.id === usuarioTemp.id);
     
     if (index !== -1) {
         usuarios[index].senha = novaSenha;
         usuarios[index].primeiroAcesso = false;
+        
+        // Salvar igreja se não for Admin
+        if (usuarioTemp.nivel !== 1 && igrejaId) {
+            usuarios[index].igrejaId = igrejaId;
+        }
+        
         salvarUsuarios(usuarios);
         
         mostrarAlertaLogin('✅ Senha alterada com sucesso! Faça login com a nova senha.', 'success');
@@ -596,6 +727,7 @@ window.enviarRecuperacao = enviarRecuperacao;
 window.redefinirSenha = redefinirSenha;
 window.trocarSenhaPrimeiroAcesso = trocarSenhaPrimeiroAcesso;
 window.mudarTelaLogin = mudarTelaLogin;
+window.trocarIgrejaAdmin = trocarIgrejaAdmin;
 
 // ========================================
 // GERENCIAMENTO DE USUÁRIOS (apenas Admin)
