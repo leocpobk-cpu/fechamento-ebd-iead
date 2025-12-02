@@ -240,50 +240,6 @@ function fazerLogin() {
         }
     }, 300);
 }
-                setTimeout(() => inicializarSwipe(), 100);
-            }
-            
-            mostrarAlertaLogin('Login realizado com sucesso!', 'success');
-        } else {
-            // Incrementar tentativas
-            tentativasLogin++;
-            
-            // Restaurar botão
-            if (btnLogin) {
-                btnLogin.textContent = 'ENTRAR';
-                btnLogin.disabled = false;
-            }
-            
-            // Verificar se atingiu o máximo de tentativas
-            if (tentativasLogin >= MAX_TENTATIVAS) {
-                const desejaRecuperar = confirm(
-                    `Você errou a senha ${MAX_TENTATIVAS} vezes.\n\nDeseja redefinir sua senha?`
-                );
-                
-                if (desejaRecuperar) {
-                    // Resetar contador e ir para recuperação
-                    tentativasLogin = 0;
-                    mudarTelaLogin('recuperacao');
-                    // Pré-preencher o usuário
-                    const inputRecupUsuario = document.getElementById('input-recup-usuario');
-                    if (inputRecupUsuario) {
-                        inputRecupUsuario.value = usuario;
-                    }
-                } else {
-                    // Resetar contador para nova tentativa
-                    tentativasLogin = 0;
-                }
-            } else {
-                // Mostrar tentativas restantes
-                const restantes = MAX_TENTATIVAS - tentativasLogin;
-                mostrarAlertaLogin(
-                    `Usuário ou senha inválidos!\nTentativa ${tentativasLogin} de ${MAX_TENTATIVAS} (${restantes} restante${restantes !== 1 ? 's' : ''})`, 
-                    'error'
-                );
-            }
-        }
-    }, 300);
-}
 
 // Fazer logout
 function fazerLogout() {
