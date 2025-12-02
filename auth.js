@@ -442,11 +442,14 @@ function aplicarPermissoes(nivel) {
         // Admin: acesso total
         console.log('👑 Aplicando permissões de Admin...');
         
-        // Mostrar aba de Usuários/Igrejas
+        // Mostrar aba de Usuários/Igrejas com força
         const abaUsuarios = document.getElementById('aba-usuarios');
         if (abaUsuarios) {
-            abaUsuarios.style.display = 'block';
+            // Remover qualquer estilo inline e forçar exibição
+            abaUsuarios.removeAttribute('style');
+            abaUsuarios.style.setProperty('display', 'flex', 'important');
             console.log('✅ Aba de usuários/igrejas exibida');
+            console.log('🔍 Display atual:', window.getComputedStyle(abaUsuarios).display);
         } else {
             console.error('❌ Elemento #aba-usuarios não encontrado');
         }

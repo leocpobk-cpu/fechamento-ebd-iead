@@ -587,6 +587,11 @@
             border-bottom-color: var(--primary);
             background: rgba(37, 99, 235, 0.1);
         }
+        
+        /* Esconder aba de usuários por padrão - será mostrada via JS para admin */
+        #aba-usuarios {
+            display: none;
+        }
 
         .container { max-width: 700px; margin: 0 auto; padding: 15px; }
 
@@ -1015,7 +1020,7 @@
         <div class="nav-tab" onclick="mudarTela('historico')">📋 Histórico</div>
         <div class="nav-tab" onclick="mudarTela('mensal')">📅 Mensal</div>
         <div class="nav-tab" onclick="mudarTela('licoes')">📚 Lições</div>
-        <div class="nav-tab" id="aba-usuarios" onclick="mudarTela('usuarios')" style="display:none;">👥 Usuário/Igrejas</div>
+        <div class="nav-tab" id="aba-usuarios" onclick="mudarTela('usuarios')">👥 Usuário/Igrejas</div>
     </div>
 
     <!-- TELA 1: LANÇAMENTO -->
