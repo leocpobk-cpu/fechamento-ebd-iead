@@ -265,7 +265,7 @@ function fazerLogin() {
                 // Mostrar tentativas restantes
                 const restantes = MAX_TENTATIVAS - tentativasLogin;
                 mostrarAlertaLogin(
-                    `Usuário ou senha inválidos!\nTentativa ${tentativasLogin} de ${MAX_TENTATIVAS} (${restantes} restante${restantes !== 1 ? 's' : ''})\n\n💡 Dica: Senha padrão do admin é "admin123"`, 
+                    `Usuário ou senha inválidos!\nTentativa ${tentativasLogin} de ${MAX_TENTATIVAS} (${restantes} restante${restantes !== 1 ? 's' : ''})`, 
                     'error'
                 );
             }
@@ -683,6 +683,7 @@ document.addEventListener('DOMContentLoaded', () => {
     inicializarIgrejas();
     inicializarUsuarios();
     verificarAutenticacao();
+    verificarConviteNaURL(); // Verificar se há convite na URL
     
     console.log('✅ Sistema inicializado');
     console.log('📝 Funções disponíveis:', {
@@ -1232,6 +1233,290 @@ function toggleAtivoIgreja(id) {
     }
 }
 
+// ========================================
+// SISTEMA DE CONVITE VIA WHATSAPP
+// ========================================
+
+// Abrir modal de convite
+function abrirModalConvite() {
+    console.log('📱 Abrindo modal de convite...');
+    
+    // Limpar campos
+    document.getElementById('convite-nome').value = '';
+    document.getElementById('convite-nivel').value = '2';
+    document.getElementById('convite-validade').value = '72';
+    
+    // Carregar igrejas
+    const selectIgreja = document.getElementById('convite-igreja');
+    const igrejas = getIgrejas().filter(i => i.ativo);
+    selectIgreja.innerHTML = '<option value="">Selecione uma igreja</option>' +
+        igrejas.map(i => `<option value="${i.id}">${i.nome}</option>`).join('');
+    
+    const modal = document.getElementById('modal-convite');
+    if (modal) {
+        modal.style.display = 'flex';
+        console.log('✅ Modal de convite exibido');
+    }
+}
+
+// Fechar modal de convite
+function fecharModalConvite() {
+    document.getElementById('modal-convite').style.display = 'none';
+}
+
+// Gerar link de convite
+function gerarLinkConvite() {
+    const nome = document.getElementById('convite-nome').value.trim();
+    const nivel = document.getElementById('convite-nivel').value;
+    const igrejaId = document.getElementById('convite-igreja').value;
+    const validade = document.getElementById('convite-validade').value;
+    
+    if (!igrejaId) {
+        alert('⚠️ Por favor, selecione uma igreja!');
+        return;
+    }
+    
+    // Criar token de convite
+    const convite = {
+        id: Date.now().toString(),
+        nivel: parseInt(nivel),
+        igrejaId: parseInt(igrejaId),
+        criadoEm: new Date().toISOString(),
+        expiraEm: new Date(Date.now() + (parseInt(validade) * 60 * 60 * 1000)).toISOString(),
+        usado: false,
+        criadoPor: getUsuarioLogado().id
+    };
+    
+    // Salvar convite
+    const convites = JSON.parse(localStorage.getItem('convitesEBD') || '[]');
+    convites.push(convite);
+    localStorage.setItem('convitesEBD', JSON.stringify(convites));
+    
+    // Obter nome da igreja
+    const igrejas = getIgrejas();
+    const igreja = igrejas.find(i => i.id == igrejaId);
+    const nomeIgreja = igreja ? igreja.nome : '';
+    
+    // Criar mensagem WhatsApp
+    const baseUrl = window.location.origin + window.location.pathname;
+    const linkConvite = `${baseUrl}?convite=${convite.id}`;
+    
+    const nivelTexto = nivel == '2' ? 'Editor (Diretoria EBD)' : 'Visualizador (Auxiliar)';
+    
+    let mensagem = `🎉 *Convite - Sistema EBD IEAD*\n\n`;
+    if (nome) {
+        mensagem += `Olá *${nome}*! `;
+    }
+    mensagem += `Você foi convidado(a) para fazer parte da equipe da *${nomeIgreja}*!\n\n`;
+    mensagem += `📋 *Nível de Acesso:* ${nivelTexto}\n`;
+    mensagem += `⏰ *Validade:* ${validade} horas\n\n`;
+    mensagem += `👉 *Clique no link abaixo para criar sua conta:*\n`;
+    mensagem += `${linkConvite}\n\n`;
+    mensagem += `_Este link expira em ${validade}h ou após ser usado._`;
+    
+    // Abrir WhatsApp
+    const urlWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensagem)}`;
+    window.open(urlWhatsApp, '_blank');
+    
+    alert('✅ Link de convite gerado!\n\nO WhatsApp será aberto para você enviar o convite.');
+    fecharModalConvite();
+}
+
+// Verificar se há convite na URL
+function verificarConviteNaURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const conviteId = urlParams.get('convite');
+    
+    if (conviteId) {
+        console.log('🎁 Convite detectado na URL:', conviteId);
+        processarConvite(conviteId);
+    }
+}
+
+// Processar convite
+function processarConvite(conviteId) {
+    const convites = JSON.parse(localStorage.getItem('convitesEBD') || '[]');
+    const convite = convites.find(c => c.id === conviteId);
+    
+    if (!convite) {
+        alert('❌ Convite inválido ou não encontrado!');
+        return;
+    }
+    
+    if (convite.usado) {
+        alert('❌ Este convite já foi utilizado!');
+        return;
+    }
+    
+    const agora = new Date();
+    const expira = new Date(convite.expiraEm);
+    
+    if (agora > expira) {
+        alert('❌ Este convite expirou!');
+        return;
+    }
+    
+    // Salvar dados do convite para uso no cadastro
+    sessionStorage.setItem('conviteAtivo', JSON.stringify(convite));
+    
+    // Mostrar tela de cadastro via convite
+    mostrarTelaCadastroConvite(convite);
+}
+
+// Mostrar tela de cadastro via convite
+function mostrarTelaCadastroConvite(convite) {
+    // Obter dados da igreja
+    const igrejas = getIgrejas();
+    const igreja = igrejas.find(i => i.id === convite.igrejaId);
+    const nivelTexto = convite.nivel === 2 ? 'Diretoria EBD (Editor)' : 'Auxiliar (Visualizador)';
+    
+    document.getElementById('form-login').style.display = 'none';
+    
+    // Criar formulário de cadastro se não existir
+    let formCadastro = document.getElementById('form-cadastro-convite');
+    if (!formCadastro) {
+        formCadastro = document.createElement('div');
+        formCadastro.id = 'form-cadastro-convite';
+        formCadastro.className = 'login-form';
+        formCadastro.innerHTML = `
+            <div style="text-align: center; margin-bottom: 20px; padding: 15px; background: #d1fae5; border-radius: 8px; border-left: 4px solid #10b981;">
+                <div style="font-size: 2rem; margin-bottom: 10px;">🎉</div>
+                <h3 style="margin: 0 0 8px 0; color: #065f46; font-size: 1.1rem;">Bem-vindo(a)!</h3>
+                <p style="margin: 0; color: #047857; font-size: 0.9rem;">
+                    Você foi convidado para: <strong>${igreja ? igreja.nome : ''}</strong><br>
+                    <span style="font-size: 0.8rem;">Nível de acesso: ${nivelTexto}</span>
+                </p>
+            </div>
+            
+            <div class="form-group">
+                <label>👤 Nome Completo</label>
+                <input type="text" id="cadastro-nome" placeholder="Digite seu nome completo">
+            </div>
+            
+            <div class="form-group">
+                <label>🔑 Nome de Usuário</label>
+                <input type="text" id="cadastro-usuario" placeholder="Escolha um nome de usuário">
+            </div>
+            
+            <div class="form-group">
+                <label>📧 Email</label>
+                <input type="email" id="cadastro-email" placeholder="seu@email.com">
+            </div>
+            
+            <div class="form-group">
+                <label>📱 Celular</label>
+                <input type="tel" id="cadastro-celular" placeholder="(00) 00000-0000">
+            </div>
+            
+            <div class="form-group">
+                <label>🔒 Senha</label>
+                <input type="password" id="cadastro-senha" placeholder="Mínimo 6 caracteres">
+            </div>
+            
+            <div class="form-group">
+                <label>🔒 Confirmar Senha</label>
+                <input type="password" id="cadastro-confirma" placeholder="Digite a senha novamente">
+            </div>
+            
+            <button onclick="finalizarCadastroConvite()" class="btn-login">✅ CRIAR MINHA CONTA</button>
+            <button onclick="cancelarCadastroConvite()" class="btn-link">Cancelar</button>
+        `;
+        document.querySelector('.login-container').appendChild(formCadastro);
+    }
+    
+    formCadastro.style.display = 'block';
+}
+
+// Finalizar cadastro via convite
+function finalizarCadastroConvite() {
+    const nome = document.getElementById('cadastro-nome').value.trim();
+    const usuario = document.getElementById('cadastro-usuario').value.trim();
+    const email = document.getElementById('cadastro-email').value.trim();
+    const celular = document.getElementById('cadastro-celular').value.trim();
+    const senha = document.getElementById('cadastro-senha').value;
+    const confirma = document.getElementById('cadastro-confirma').value;
+    
+    if (!nome || !usuario || !email || !celular || !senha || !confirma) {
+        alert('⚠️ Por favor, preencha todos os campos!');
+        return;
+    }
+    
+    if (senha.length < 6) {
+        alert('⚠️ A senha deve ter pelo menos 6 caracteres!');
+        return;
+    }
+    
+    if (senha !== confirma) {
+        alert('⚠️ As senhas não coincidem!');
+        return;
+    }
+    
+    // Verificar se usuário já existe
+    const usuarios = getUsuarios();
+    if (usuarios.find(u => u.usuario.toLowerCase() === usuario.toLowerCase())) {
+        alert('⚠️ Este nome de usuário já está em uso!');
+        return;
+    }
+    
+    // Obter dados do convite
+    const convite = JSON.parse(sessionStorage.getItem('conviteAtivo'));
+    if (!convite) {
+        alert('❌ Erro: Convite não encontrado!');
+        return;
+    }
+    
+    // Criar novo usuário
+    const novoId = usuarios.length > 0 ? Math.max(...usuarios.map(u => u.id)) + 1 : 1;
+    const novoUsuario = {
+        id: novoId,
+        usuario,
+        senha,
+        nome,
+        email,
+        celular,
+        nivel: convite.nivel,
+        igrejaId: convite.igrejaId,
+        ativo: true,
+        primeiroAcesso: false,
+        criadoViaConvite: true,
+        criadoEm: new Date().toISOString()
+    };
+    
+    usuarios.push(novoUsuario);
+    salvarUsuarios(usuarios);
+    
+    // Marcar convite como usado
+    const convites = JSON.parse(localStorage.getItem('convitesEBD') || '[]');
+    const index = convites.findIndex(c => c.id === convite.id);
+    if (index !== -1) {
+        convites[index].usado = true;
+        convites[index].usadoEm = new Date().toISOString();
+        convites[index].usuarioCriadoId = novoId;
+        localStorage.setItem('convitesEBD', JSON.stringify(convites));
+    }
+    
+    // Limpar convite da sessão
+    sessionStorage.removeItem('conviteAtivo');
+    
+    // Limpar URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+    
+    alert('✅ Conta criada com sucesso!\n\nFaça login com suas credenciais.');
+    
+    // Voltar para tela de login
+    cancelarCadastroConvite();
+}
+
+// Cancelar cadastro via convite
+function cancelarCadastroConvite() {
+    document.getElementById('form-cadastro-convite').style.display = 'none';
+    document.getElementById('form-login').style.display = 'block';
+    sessionStorage.removeItem('conviteAtivo');
+    
+    // Limpar URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+}
+
 // Expor funções de usuários e igrejas globalmente
 window.listarUsuarios = listarUsuarios;
 window.abrirModalUsuario = abrirModalUsuario;
@@ -1246,4 +1531,10 @@ window.editarIgreja = editarIgreja;
 window.salvarIgreja = salvarIgreja;
 window.fecharModalIgreja = fecharModalIgreja;
 window.toggleAtivoIgreja = toggleAtivoIgreja;
+window.abrirModalConvite = abrirModalConvite;
+window.fecharModalConvite = fecharModalConvite;
+window.gerarLinkConvite = gerarLinkConvite;
+window.finalizarCadastroConvite = finalizarCadastroConvite;
+window.cancelarCadastroConvite = cancelarCadastroConvite;
+
 
