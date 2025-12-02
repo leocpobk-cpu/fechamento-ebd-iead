@@ -1287,20 +1287,29 @@ function gerarLinkConvite() {
         criadoPor: getUsuarioLogado().id
     };
     
-    // Salvar convite
-    const convites = JSON.parse(localStorage.getItem('convitesEBD') || '[]');
-    convites.push(convite);
-    localStorage.setItem('convitesEBD', JSON.stringify(convites));
-    
     // Obter nome da igreja
     const igrejas = getIgrejas();
     const igreja = igrejas.find(i => i.id == igrejaId);
     const nomeIgreja = igreja ? igreja.nome : '';
     
-    // Criar mensagem WhatsApp
-    const baseUrl = window.location.origin + window.location.pathname;
-    const linkConvite = `${baseUrl}?convite=${convite.id}`;
+    // Codificar dados do convite na URL (funciona entre dispositivos)
+    const dadosConvite = btoa(JSON.stringify({
+        id: convite.id,
+        igrejaId: convite.igrejaId,
+        igrejaName: nomeIgreja,
+        nivel: convite.nivel,
+        expiraEm: convite.expiraEm
+    }));
     
+    const baseUrl = window.location.origin + window.location.pathname;
+    const linkConvite = `${baseUrl}?convite=${dadosConvite}`;
+    
+    // Salvar convite localmente apenas para histórico
+    const convites = JSON.parse(localStorage.getItem('convitesEBD') || '[]');
+    convites.push(convite);
+    localStorage.setItem('convitesEBD', JSON.stringify(convites));
+    
+    // Criar mensagem WhatsApp
     const nivelTexto = nivel == '2' ? 'Editor (Diretoria EBD)' : 'Visualizador (Auxiliar)';
     
     let mensagem = `🎉 *Convite - Sistema EBD IEAD*\n\n`;
@@ -1335,40 +1344,43 @@ function verificarConviteNaURL() {
 
 // Processar convite
 function processarConvite(conviteId) {
-    const convites = JSON.parse(localStorage.getItem('convitesEBD') || '[]');
-    const convite = convites.find(c => c.id === conviteId);
-    
-    if (!convite) {
-        alert('❌ Convite inválido ou não encontrado!');
-        return;
+    try {
+        // Decodificar dados do convite da URL
+        const dadosConvite = JSON.parse(atob(conviteId));
+        
+        // Verificar validade
+        const agora = new Date();
+        const expira = new Date(dadosConvite.expiraEm);
+        
+        if (agora > expira) {
+            alert('❌ Este convite expirou!');
+            return;
+        }
+        
+        // Verificar se já foi usado (pelo ID único)
+        const convitesUsados = JSON.parse(localStorage.getItem('convitesUsadosEBD') || '[]');
+        if (convitesUsados.includes(dadosConvite.id)) {
+            alert('❌ Este convite já foi utilizado!');
+            return;
+        }
+        
+        // Salvar dados do convite para uso no cadastro
+        sessionStorage.setItem('conviteAtivo', JSON.stringify(dadosConvite));
+        
+        // Mostrar tela de cadastro via convite
+        mostrarTelaCadastroConvite(dadosConvite);
+        
+    } catch (error) {
+        console.error('Erro ao processar convite:', error);
+        alert('❌ Convite inválido ou corrompido!');
     }
-    
-    if (convite.usado) {
-        alert('❌ Este convite já foi utilizado!');
-        return;
-    }
-    
-    const agora = new Date();
-    const expira = new Date(convite.expiraEm);
-    
-    if (agora > expira) {
-        alert('❌ Este convite expirou!');
-        return;
-    }
-    
-    // Salvar dados do convite para uso no cadastro
-    sessionStorage.setItem('conviteAtivo', JSON.stringify(convite));
-    
-    // Mostrar tela de cadastro via convite
-    mostrarTelaCadastroConvite(convite);
 }
 
 // Mostrar tela de cadastro via convite
 function mostrarTelaCadastroConvite(convite) {
-    // Obter dados da igreja
-    const igrejas = getIgrejas();
-    const igreja = igrejas.find(i => i.id === convite.igrejaId);
-    const nivelTexto = convite.nivel === 2 ? 'Diretoria EBD (Editor)' : 'Auxiliar (Visualizador)';
+    // Usar nome da igreja do convite (já vem nos dados)
+    const nomeIgreja = convite.igrejaName || convite.igrejaId;
+    const nivelTexto = convite.nivel == 2 ? 'Diretoria EBD (Editor)' : 'Auxiliar (Visualizador)';
     
     document.getElementById('form-login').style.display = 'none';
     
@@ -1383,7 +1395,7 @@ function mostrarTelaCadastroConvite(convite) {
                 <div style="font-size: 2rem; margin-bottom: 10px;">🎉</div>
                 <h3 style="margin: 0 0 8px 0; color: #065f46; font-size: 1.1rem;">Bem-vindo(a)!</h3>
                 <p style="margin: 0; color: #047857; font-size: 0.9rem;">
-                    Você foi convidado para: <strong>${igreja ? igreja.nome : ''}</strong><br>
+                    Você foi convidado para: <strong>${nomeIgreja}</strong><br>
                     <span style="font-size: 0.8rem;">Nível de acesso: ${nivelTexto}</span>
                 </p>
             </div>
@@ -1485,7 +1497,12 @@ function finalizarCadastroConvite() {
     usuarios.push(novoUsuario);
     salvarUsuarios(usuarios);
     
-    // Marcar convite como usado
+    // Marcar convite como usado globalmente
+    const convitesUsados = JSON.parse(localStorage.getItem('convitesUsadosEBD') || '[]');
+    convitesUsados.push(convite.id);
+    localStorage.setItem('convitesUsadosEBD', JSON.stringify(convitesUsados));
+    
+    // Atualizar histórico local se existir
     const convites = JSON.parse(localStorage.getItem('convitesEBD') || '[]');
     const index = convites.findIndex(c => c.id === convite.id);
     if (index !== -1) {
