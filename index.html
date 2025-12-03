@@ -1533,22 +1533,16 @@
     
     // Carregar lições (do arquivo ou localStorage)
     async function carregarLicoes() {
-        // Verificar se as lições do arquivo já foram importadas
+        // Verificar se as lições do arquivo já foram importadas (globalmente)
         const importado = localStorage.getItem('licoesImportadasSupabase');
         
         if (!importado && typeof licoesEBD !== 'undefined') {
-            console.log('📚 Importando lições iniciais para o Supabase...');
-            
-            const igrejaId = getIgrejaUsuarioLogado();
-            if (!igrejaId) {
-                console.warn('⚠️ Aguardando login para importar lições');
-                return;
-            }
+            console.log('📚 Importando lições iniciais para o Supabase (globais)...');
             
             try {
                 const sb = getSupabase();
                 
-                // Inserir lições para esta igreja
+                // Inserir lições GLOBAIS (sem igreja_id - mesmas para todas)
                 for (const licao of licoesEBD) {
                     const { error } = await sb
                         .from('licoes')
@@ -1556,7 +1550,7 @@
                             data: licao.data,
                             licao: licao.licao,
                             tema: licao.tema,
-                            igreja_id: igrejaId
+                            igreja_id: null  // NULL = global para todas igrejas
                         }])
                         .select();
                     
@@ -1566,8 +1560,8 @@
                     }
                 }
                 
-                // Marcar como importado para esta igreja
-                localStorage.setItem('licoesImportadasSupabase', igrejaId);
+                // Marcar como importado (globalmente, sem ID específico)
+                localStorage.setItem('licoesImportadasSupabase', 'global');
                 console.log('✅ Lições importadas com sucesso!');
             } catch (error) {
                 console.error('❌ Erro ao importar lições:', error);
@@ -1576,19 +1570,13 @@
     }
     
     async function getLicoes() {
-        const igrejaId = getIgrejaUsuarioLogado();
-        
-        if (!igrejaId) {
-            console.warn('⚠️ Igreja não identificada para buscar lições');
-            return [];
-        }
-        
+        // Lições são GLOBAIS - mesmas para todas as igrejas
         try {
             const sb = getSupabase();
             const { data, error } = await sb
                 .from('licoes')
                 .select('*')
-                .eq('igreja_id', igrejaId)
+                .is('igreja_id', null)  // Buscar apenas lições globais
                 .order('data', { ascending: true });
             
             if (error) throw error;
@@ -2192,21 +2180,15 @@
             return;
         }
         
-        const igrejaId = getIgrejaUsuarioLogado();
-        if (!igrejaId) {
-            alert('❌ Igreja não identificada!');
-            return;
-        }
-        
         try {
             const sb = getSupabase();
             
-            // Verificar se já existe
+            // Verificar se já existe (lições globais, sem igreja_id)
             const { data: existente, error: errBusca } = await sb
                 .from('licoes')
                 .select('id')
                 .eq('data', data)
-                .eq('igreja_id', igrejaId)
+                .is('igreja_id', null)  // Lições globais
                 .limit(1);
             
             if (errBusca) throw errBusca;
@@ -2227,25 +2209,25 @@
                 
                 if (errUpdate) throw errUpdate;
             } else {
-                // Inserir
+                // Inserir LIÇÃO GLOBAL (sem igreja_id)
                 const { error: errInsert } = await sb
                     .from('licoes')
                     .insert([{
                         data: data,
                         licao: parseInt(numero),
                         tema: tema,
-                        igreja_id: igrejaId
+                        igreja_id: null  // NULL = global para todas igrejas
                     }]);
                 
                 if (errInsert) throw errInsert;
             }
             
-            alert('✅ Lição salva com sucesso!');
+            alert('✅ Lição salva com sucesso! (Disponível para todas as igrejas)');
             limparFormLicao();
             await listarLicoes();
         } catch (error) {
             console.error('❌ Erro ao salvar lição:', error);
-            alert('❌ Erro ao salvar lição. Tente novamente.');
+            alert('❌ Erro ao salvar lição: ' + (error.message || 'Tente novamente.'));
         }
     }
     
