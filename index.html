@@ -1153,11 +1153,27 @@
                 <button class="btn btn-primary" onclick="console.log('Botão clicado'); abrirModalUsuario()">➕ Novo Usuário</button>
                 <button class="btn btn-warning" onclick="console.log('Botão convite clicado'); abrirModalConvite()">📱 Gerar Link de Convite</button>
                 <button class="btn" style="background: #10b981; color: white;" onclick="console.log('Botão igrejas clicado'); mudarSubTela('igrejas')">🏛️ Gerenciar Igrejas</button>
+                <button class="btn" style="background: #ef4444; color: white;" onclick="console.log('Botão lixeira clicado'); mudarSubTela('lixeira')">🗑️ Lixeira</button>
             </div>
         </div>
         
         <div id="subtela-usuarios" class="subtela active">
             <div id="lista-usuarios" class="user-list">
+                <!-- Lista será preenchida dinamicamente -->
+            </div>
+        </div>
+        
+        <div id="subtela-lixeira" class="subtela" style="display: none;">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3>🗑️ Lixeira - Fechamentos Excluídos</h3>
+                    <button class="btn btn-secondary" onclick="console.log('Voltar usuários'); mudarSubTela('usuarios')">👥 Voltar para Usuários</button>
+                </div>
+                <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 15px;">
+                    Fechamentos excluídos ficam aqui por 30 dias. Você pode restaurá-los ou excluir permanentemente.
+                </p>
+            </div>
+            <div id="lista-lixeira" class="user-list">
                 <!-- Lista será preenchida dinamicamente -->
             </div>
         </div>
@@ -1969,6 +1985,19 @@
             if (typeof listarUsuarios === 'function') {
                 listarUsuarios();
             }
+        } else if (subtela === 'lixeira') {
+            const subtelaLixeira = document.getElementById('subtela-lixeira');
+            if (subtelaLixeira) {
+                subtelaLixeira.style.display = 'block';
+                subtelaLixeira.classList.add('active');
+                console.log('✅ Subtela lixeira ativada');
+            } else {
+                console.error('❌ Elemento #subtela-lixeira não encontrado');
+            }
+            
+            if (typeof carregarLixeira === 'function') {
+                carregarLixeira();
+            }
         } else if (subtela === 'igrejas') {
             const subtelaIgrejas = document.getElementById('subtela-igrejas');
             if (subtelaIgrejas) {
@@ -2409,7 +2438,7 @@
         try {
             const sb = getSupabase();
             
-            // Buscar lançamentos com grupos e ofertas
+            // Buscar lançamentos com grupos e ofertas (APENAS NÃO EXCLUÍDOS)
             const { data: lancamentos, error } = await sb
                 .from('lancamentos')
                 .select(`
@@ -2420,6 +2449,7 @@
                     ofertas(valor)
                 `)
                 .eq('igreja_id', igrejaId)
+                .is('deleted_at', null)  // Apenas não excluídos
                 .order('data', { ascending: false });
             
             if (error) throw error;
@@ -2601,12 +2631,151 @@
     }
 
     async function excluirHistorico(lancamentoId) {
-        if(!confirm('Tem certeza que deseja excluir este relatório?')) return;
+        if(!confirm('Tem certeza que deseja excluir este relatório? (Admins podem restaurar da lixeira)')) return;
+        
+        try {
+            const sb = getSupabase();
+            const usuarioLogado = getUsuarioLogado();
+            
+            // Soft delete - marcar como excluído ao invés de deletar
+            const { error } = await sb
+                .from('lancamentos')
+                .update({
+                    deleted_at: new Date().toISOString(),
+                    deleted_by: usuarioLogado.id
+                })
+                .eq('id', lancamentoId);
+            
+            if (error) throw error;
+            
+            alert('✅ Relatório movido para lixeira!');
+            await carregarHistorico();
+        } catch (error) {
+            console.error('❌ Erro ao excluir histórico:', error);
+            alert('❌ Erro ao excluir relatório. Tente novamente.');
+        }
+    }
+
+    // Carregar lixeira (apenas para admins)
+    async function carregarLixeira() {
+        const container = document.getElementById('lista-lixeira');
+        
+        try {
+            const sb = getSupabase();
+            const usuarioLogado = getUsuarioLogado();
+            
+            // Buscar todos lançamentos excluídos (admin vê de todas igrejas)
+            const { data: lancamentos, error } = await sb
+                .from('lancamentos')
+                .select(`
+                    id,
+                    data,
+                    licao,
+                    igreja_id,
+                    deleted_at,
+                    deleted_by,
+                    grupos_presenca(grupo_id, presente, ausente, visita),
+                    ofertas(valor)
+                `)
+                .not('deleted_at', 'is', null)
+                .order('deleted_at', { ascending: false });
+            
+            if (error) throw error;
+            
+            if (!lancamentos || lancamentos.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:#999;margin-top:50px;">🎉 Lixeira vazia!</p>';
+                return;
+            }
+
+            // Buscar igrejas para mostrar nome
+            const igrejas = await getIgrejas();
+            
+            let html = '';
+            lancamentos.forEach(lanc => {
+                const dataFormatada = new Date(lanc.data + 'T00:00:00').toLocaleDateString('pt-BR');
+                const deletadoEm = new Date(lanc.deleted_at).toLocaleDateString('pt-BR') + ' ' + new Date(lanc.deleted_at).toLocaleTimeString('pt-BR');
+                const igreja = igrejas.find(i => i.id === lanc.igreja_id);
+                const nomeIgreja = igreja ? igreja.nome : 'Igreja não identificada';
+                
+                // Calcular dias na lixeira
+                const diasNaLixeira = Math.floor((new Date() - new Date(lanc.deleted_at)) / (1000 * 60 * 60 * 24));
+                
+                // Calcular totais
+                let tPres = 0, tMat = 0, tVis = 0;
+                lanc.grupos_presenca?.forEach(g => {
+                    tPres += g.presente || 0;
+                    tMat += (g.presente || 0) + (g.ausente || 0);
+                    tVis += g.visita || 0;
+                });
+                
+                const tOferta = lanc.ofertas?.reduce((sum, o) => sum + parseFloat(o.valor || 0), 0) || 0;
+                
+                html += `
+                <div class="user-card" style="border-left: 4px solid #ef4444;">
+                    <div class="user-info-card">
+                        <div class="user-name" style="color: #ef4444;">
+                            🗑️ ${dataFormatada} - ${nomeIgreja}
+                            ${lanc.licao ? `<span style="color: #6b7280; font-size: 0.85rem;">(Lição ${lanc.licao})</span>` : ''}
+                        </div>
+                        <div style="font-size: 0.85rem; color: #6b7280; margin-top: 4px;">
+                            👥 ${tPres} presentes | 🆕 ${tVis} visitantes | 💰 R$ ${tOferta.toFixed(2)}
+                        </div>
+                        <div style="font-size: 0.75rem; color: #ef4444; margin-top: 4px;">
+                            Excluído há ${diasNaLixeira} dia(s) - ${deletadoEm}
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-success btn-small" onclick="restaurarLancamento(${lanc.id})" title="Restaurar">
+                            ♻️ Restaurar
+                        </button>
+                        <button class="btn btn-danger btn-small" onclick="excluirPermanentemente(${lanc.id})" title="Excluir permanentemente">
+                            🗑️ Excluir
+                        </button>
+                    </div>
+                </div>`;
+            });
+            
+            container.innerHTML = html;
+        } catch (error) {
+            console.error('❌ Erro ao carregar lixeira:', error);
+            container.innerHTML = '<p style="text-align:center;color:#ef4444;margin-top:50px;">Erro ao carregar lixeira.</p>';
+        }
+    }
+
+    // Restaurar lançamento da lixeira
+    async function restaurarLancamento(lancamentoId) {
+        if(!confirm('Deseja restaurar este fechamento?')) return;
         
         try {
             const sb = getSupabase();
             
-            // Deletar lançamento (CASCADE deleta grupos e ofertas automaticamente)
+            // Limpar deleted_at e deleted_by
+            const { error } = await sb
+                .from('lancamentos')
+                .update({
+                    deleted_at: null,
+                    deleted_by: null
+                })
+                .eq('id', lancamentoId);
+            
+            if (error) throw error;
+            
+            alert('✅ Fechamento restaurado com sucesso!');
+            await carregarLixeira();
+        } catch (error) {
+            console.error('❌ Erro ao restaurar:', error);
+            alert('❌ Erro ao restaurar. Tente novamente.');
+        }
+    }
+
+    // Excluir permanentemente da lixeira
+    async function excluirPermanentemente(lancamentoId) {
+        if(!confirm('⚠️ ATENÇÃO: Isso excluirá o fechamento PERMANENTEMENTE!\n\nEsta ação não pode ser desfeita. Deseja continuar?')) return;
+        
+        try {
+            const sb = getSupabase();
+            
+            // Deletar permanentemente (CASCADE deleta grupos e ofertas)
             const { error } = await sb
                 .from('lancamentos')
                 .delete()
@@ -2614,11 +2783,11 @@
             
             if (error) throw error;
             
-            alert('✅ Relatório excluído com sucesso!');
-            await carregarHistorico();
+            alert('✅ Fechamento excluído permanentemente.');
+            await carregarLixeira();
         } catch (error) {
-            console.error('❌ Erro ao excluir histórico:', error);
-            alert('❌ Erro ao excluir relatório. Tente novamente.');
+            console.error('❌ Erro ao excluir permanentemente:', error);
+            alert('❌ Erro ao excluir. Tente novamente.');
         }
     }
 
