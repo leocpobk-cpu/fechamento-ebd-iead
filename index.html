@@ -1147,17 +1147,17 @@
 
     <!-- TELA 6: GERENCIAMENTO DE USUÁRIOS (apenas Admin) -->
     <div id="tela-usuarios" class="tela container">
-        <div class="card">
-            <h2 style="margin-bottom: 15px;">👥 Gerenciamento de Usuários</h2>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button class="btn btn-primary" onclick="console.log('Botão clicado'); abrirModalUsuario()">➕ Novo Usuário</button>
-                <button class="btn btn-warning" onclick="console.log('Botão convite clicado'); abrirModalConvite()">📱 Gerar Link de Convite</button>
-                <button class="btn" style="background: #10b981; color: white;" onclick="console.log('Botão igrejas clicado'); mudarSubTela('igrejas')">🏛️ Gerenciar Igrejas</button>
-                <button class="btn" style="background: #ef4444; color: white;" onclick="console.log('Botão lixeira clicado'); mudarSubTela('lixeira')">🗑️ Lixeira</button>
-            </div>
-        </div>
-        
         <div id="subtela-usuarios" class="subtela active">
+            <div class="card">
+                <h2 style="margin-bottom: 15px;">👥 Gerenciamento de Usuários</h2>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="console.log('Botão clicado'); abrirModalUsuario()">➕ Novo Usuário</button>
+                    <button class="btn btn-warning" onclick="console.log('Botão convite clicado'); abrirModalConvite()">📱 Gerar Link de Convite</button>
+                    <button class="btn" style="background: #10b981; color: white;" onclick="console.log('Botão igrejas clicado'); mudarSubTela('igrejas')">🏛️ Gerenciar Igrejas</button>
+                    <button class="btn" style="background: #ef4444; color: white;" onclick="console.log('Botão lixeira clicado'); mudarSubTela('lixeira')">🗑️ Lixeira</button>
+                </div>
+            </div>
+            
             <div id="lista-usuarios" class="user-list">
                 <!-- Lista será preenchida dinamicamente -->
             </div>
