@@ -1592,7 +1592,7 @@ async function processarConvite(conviteId) {
 function mostrarTelaCadastroConvite(convite) {
     // Usar nome da igreja do convite (já vem nos dados)
     const nomeIgreja = convite.igrejaName || convite.igrejaId;
-    const nivelTexto = convite.nivel == 2 ? 'Diretoria EBD (Editor)' : 'Auxiliar (Visualizador)';
+    const nivelTexto = convite.nivel == 2 ? 'Diretoria EBD' : 'Auxiliar';
     
     document.getElementById('form-login').style.display = 'none';
     
@@ -1602,53 +1602,60 @@ function mostrarTelaCadastroConvite(convite) {
         formCadastro = document.createElement('div');
         formCadastro.id = 'form-cadastro-convite';
         formCadastro.className = 'login-form';
+        formCadastro.style.maxHeight = '85vh';
+        formCadastro.style.overflowY = 'auto';
         formCadastro.innerHTML = `
-            <div style="text-align: center; margin-bottom: 20px; padding: 15px; background: #d1fae5; border-radius: 8px; border-left: 4px solid #10b981;">
-                <div style="font-size: 2rem; margin-bottom: 10px;">🎉</div>
-                <h3 style="margin: 0 0 8px 0; color: #065f46; font-size: 1.1rem;">Bem-vindo(a)!</h3>
-                <p style="margin: 0; color: #047857; font-size: 0.9rem;">
-                    Você foi convidado para: <strong>${nomeIgreja}</strong><br>
-                    <span style="font-size: 0.8rem;">Nível de acesso: ${nivelTexto}</span>
+            <div style="text-align: center; margin-bottom: 15px; padding: 12px; background: #d1fae5; border-radius: 8px; border-left: 4px solid #10b981;">
+                <div style="font-size: 1.5rem; margin-bottom: 5px;">🎉</div>
+                <h3 style="margin: 0 0 5px 0; color: #065f46; font-size: 1rem;">Bem-vindo(a)!</h3>
+                <p style="margin: 0; color: #047857; font-size: 0.8rem;">
+                    <strong>${nomeIgreja}</strong> · ${nivelTexto}
                 </p>
             </div>
             
-            <div class="form-group">
-                <label>👤 Nome Completo</label>
-                <input type="text" id="cadastro-nome" placeholder="Digite seu nome completo">
+            <div class="form-group" style="margin-bottom: 10px;">
+                <label style="font-size: 0.9rem;">👤 Nome Completo</label>
+                <input type="text" id="cadastro-nome" placeholder="Seu nome completo" style="padding: 10px;">
             </div>
             
-            <div class="form-group">
-                <label>🔑 Nome de Usuário</label>
-                <input type="text" id="cadastro-usuario" placeholder="Escolha um nome de usuário">
+            <div class="form-group" style="margin-bottom: 10px;">
+                <label style="font-size: 0.9rem;">🔑 Usuário</label>
+                <input type="text" id="cadastro-usuario" placeholder="Nome de usuário" style="padding: 10px;">
             </div>
             
-            <div class="form-group">
-                <label>📧 Email</label>
-                <input type="email" id="cadastro-email" placeholder="seu@email.com">
+            <div class="form-group" style="margin-bottom: 10px;">
+                <label style="font-size: 0.9rem;">📧 Email</label>
+                <input type="email" id="cadastro-email" placeholder="seu@email.com" style="padding: 10px;">
             </div>
             
-            <div class="form-group">
-                <label>📱 Celular</label>
-                <input type="tel" id="cadastro-celular" placeholder="(00) 00000-0000">
+            <div class="form-group" style="margin-bottom: 10px;">
+                <label style="font-size: 0.9rem;">📱 Celular</label>
+                <input type="tel" id="cadastro-celular" placeholder="(00) 00000-0000" style="padding: 10px;">
             </div>
             
-            <div class="form-group">
-                <label>🔒 Senha</label>
-                <input type="password" id="cadastro-senha" placeholder="Mínimo 6 caracteres">
+            <div class="form-group" style="margin-bottom: 10px;">
+                <label style="font-size: 0.9rem;">🔒 Senha</label>
+                <input type="password" id="cadastro-senha" placeholder="Mínimo 6 caracteres" style="padding: 10px;">
             </div>
             
-            <div class="form-group">
-                <label>🔒 Confirmar Senha</label>
-                <input type="password" id="cadastro-confirma" placeholder="Digite a senha novamente">
+            <div class="form-group" style="margin-bottom: 10px;">
+                <label style="font-size: 0.9rem;">🔒 Confirmar Senha</label>
+                <input type="password" id="cadastro-confirma" placeholder="Digite novamente" style="padding: 10px;">
             </div>
             
-            <button onclick="finalizarCadastroConvite()" class="btn-login">✅ CRIAR MINHA CONTA</button>
-            <button onclick="cancelarCadastroConvite()" class="btn-link">Cancelar</button>
+            <button onclick="finalizarCadastroConvite()" class="btn-login" style="padding: 12px; margin-top: 10px;">✅ CRIAR CONTA</button>
+            <button onclick="cancelarCadastroConvite()" class="btn-link" style="padding: 8px; font-size: 0.9rem;">Cancelar</button>
         `;
         document.querySelector('.login-container').appendChild(formCadastro);
     }
     
     formCadastro.style.display = 'block';
+    
+    // Scroll para o topo do formulário
+    setTimeout(() => {
+        formCadastro.scrollTop = 0;
+        window.scrollTo(0, 0);
+    }, 100);
 }
 
 // Finalizar cadastro via convite
