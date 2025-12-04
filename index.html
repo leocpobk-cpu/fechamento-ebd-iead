@@ -1311,7 +1311,6 @@
             <button class="btn btn-success" onclick="enviarWhatsapp()">📱 COPIAR P/ WHATSAPP</button>
             <button class="btn" style="background: #10b981; color: white;" onclick="exportarParaExcel()">📊 EXPORTAR EXCEL</button>
             <button class="btn btn-secondary" onclick="window.print()">🖨️ SALVAR PDF / IMPRIMIR</button>
-            <button class="btn btn-warning" onclick="salvarHistorico()">💾 SALVAR NO HISTÓRICO</button>
             <button class="btn" style="background: #6b7280; color: white;" onclick="voltarParaEdicao()">✏️ VOLTAR E EDITAR</button>
         </div>
     </div>
@@ -1877,6 +1876,18 @@
             dados: dadosRelatorio
         };
 
+        // Salvar automaticamente no histórico
+        const salvou = await salvarHistorico();
+        
+        if (salvou) {
+            // Mostrar mensagem de sucesso temporária
+            const mensagem = document.createElement('div');
+            mensagem.style.cssText = 'position:fixed;top:20px;right:20px;background:#10b981;color:white;padding:15px 20px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.2);z-index:10000;font-weight:600;';
+            mensagem.innerHTML = '✅ Salvo automaticamente no histórico!';
+            document.body.appendChild(mensagem);
+            setTimeout(() => mensagem.remove(), 3000);
+        }
+
         mudarTela('relatorio');
     }
 
@@ -2423,12 +2434,12 @@
                 if (errOfertas) throw errOfertas;
             }
             
-            alert('✅ Relatório salvo no histórico!');
-            await carregarHistorico();
-            mudarTela('historico');
+            // Retorna true para indicar sucesso (usado no salvamento automático)
+            return true;
         } catch (error) {
             console.error('❌ Erro ao salvar histórico:', error);
             alert('❌ Erro ao salvar relatório. Tente novamente.');
+            return false;
         }
     }
 
