@@ -326,9 +326,12 @@ async function fazerLogin() {
 // Fazer logout
 function fazerLogout() {
     if (confirm('Deseja realmente sair do sistema?')) {
-        sessionStorage.removeItem('usuarioLogado');
-        sessionStorage.removeItem('codigoRecuperacao');
-        location.reload();
+        // Limpar todos os dados da sessão
+        sessionStorage.clear();
+        localStorage.clear();
+        
+        // Forçar reload sem cache (hard reload)
+        window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
     }
 }
 

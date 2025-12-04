@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#2563eb">
     <meta name="description" content="Sistema completo de gestão da Escola Bíblica Dominical">
+    
+    <!-- Evitar cache excessivo -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
     <title>Gestão EBD - IEAD</title>
@@ -3162,6 +3168,16 @@
     // Inicialização do sistema
     window.addEventListener('DOMContentLoaded', function() {
         console.log('🚀 Sistema EBD IEAD carregado');
+        
+        // Verificar se há usuário logado
+        const usuarioLogado = sessionStorage.getItem('usuarioLogado');
+        
+        // Se não há usuário logado e há parâmetro de tempo na URL (veio de logout)
+        const urlParams = new URLSearchParams(window.location.search);
+        if (!usuarioLogado && urlParams.has('t')) {
+            // Limpar URL removendo parâmetro de tempo
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
         
         // Verificar se há convite na URL
         if (typeof verificarConviteNaURL === 'function') {
