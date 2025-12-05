@@ -1480,14 +1480,10 @@
 
     let relatorioAtual = null;
 
-    // Inicialização
+    // Inicialização - apenas funções que NÃO dependem de login
     window.addEventListener('load', () => {
-        gerarDomingos();
-        gerarFormulario();
-        carregarHistorico();
+        // gerarDomingos, gerarFormulario e buscarLicaoPorData agora são chamados após login
         definirMesAtual();
-        carregarLicoes();
-        buscarLicaoPorData(); // Busca automática ao carregar
         inicializarTema();
         registrarServiceWorker();
     });

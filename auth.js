@@ -259,15 +259,28 @@ async function fazerLogin() {
                 aplicarPermissoes(sessao.nivel);
             }, 100);
             
+            // Inicializar componentes do sistema
+            if (typeof gerarDomingos === 'function') {
+                setTimeout(() => gerarDomingos(), 100);
+            }
+            if (typeof gerarFormulario === 'function') {
+                setTimeout(() => gerarFormulario(), 150);
+            }
+            if (typeof buscarLicaoPorData === 'function') {
+                setTimeout(() => buscarLicaoPorData(), 200);
+            }
+            
             // Carregar lições iniciais (se for admin ou primeira vez)
-        if (typeof carregarLicoes === 'function') {
-            setTimeout(() => carregarLicoes(), 500);
-        }
-        
-        // Swipe desabilitado - estava atrapalhando a leitura
-        // if (window.innerWidth <= 768 && typeof inicializarSwipe === 'function') {
-        //     setTimeout(() => inicializarSwipe(), 100);
-        // }            mostrarAlertaLogin('Login realizado com sucesso!', 'success');
+            if (typeof carregarLicoes === 'function') {
+                setTimeout(() => carregarLicoes(), 500);
+            }
+            
+            // Swipe desabilitado - estava atrapalhando a leitura
+            // if (window.innerWidth <= 768 && typeof inicializarSwipe === 'function') {
+            //     setTimeout(() => inicializarSwipe(), 100);
+            // }
+            
+            mostrarAlertaLogin('Login realizado com sucesso!', 'success');
         } else {
             console.error('❌ Usuário não encontrado ou credenciais inválidas');
             
@@ -757,10 +770,24 @@ function verificarAutenticacao() {
         atualizarHeaderUsuario(usuarioLogado);
         aplicarPermissoes(usuarioLogado.nivel);
         
-        // Inicializar swipe em dispositivos móveis
-        if (window.innerWidth <= 768 && typeof inicializarSwipe === 'function') {
-            setTimeout(() => inicializarSwipe(), 100);
+        // Inicializar componentes do sistema
+        if (typeof gerarDomingos === 'function') {
+            setTimeout(() => gerarDomingos(), 100);
         }
+        if (typeof gerarFormulario === 'function') {
+            setTimeout(() => gerarFormulario(), 150);
+        }
+        if (typeof buscarLicaoPorData === 'function') {
+            setTimeout(() => buscarLicaoPorData(), 200);
+        }
+        if (typeof carregarLicoes === 'function') {
+            setTimeout(() => carregarLicoes(), 500);
+        }
+        
+        // Swipe desabilitado - estava atrapalhando a leitura
+        // if (window.innerWidth <= 768 && typeof inicializarSwipe === 'function') {
+        //     setTimeout(() => inicializarSwipe(), 100);
+        // }
     } else {
         document.getElementById('tela-login').style.display = 'flex';
         document.getElementById('sistema-principal').style.display = 'none';
