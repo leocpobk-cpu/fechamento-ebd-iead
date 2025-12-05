@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Real-Time - EBD IEAD</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .panel {
+            background: #252526;
+            border: 1px solid #3e3e42;
+            border-radius: 8px;
+            padding: 20px;
+            height: 90vh;
+            overflow-y: auto;
+        }
+        h1 {
+            color: #4ec9b0;
+            margin-bottom: 20px;
+            font-size: 18px;
+            border-bottom: 2px solid #4ec9b0;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #569cd6;
+            font-size: 16px;
+            margin: 20px 0 10px 0;
+        }
+        .log-item {
+            background: #1e1e1e;
+            border-left: 3px solid #007acc;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+        }
+        .log-item.success {
+            border-left-color: #4ec9b0;
+        }
+        .log-item.error {
+            border-left-color: #f48771;
+        }
+        .log-item.warning {
+            border-left-color: #dcdcaa;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status-badge.online { background: #4ec9b0; color: #000; }
+        .status-badge.offline { background: #f48771; color: #fff; }
+        .status-badge.loading { background: #dcdcaa; color: #000; }
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #1177bb;
+        }
+        button.danger {
+            background: #f48771;
+        }
+        button.success {
+            background: #4ec9b0;
+        }
+        .controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #1e1e1e;
+            border-radius: 4px;
+        }
+        .info-box {
+            background: #2d2d30;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .info-box code {
+            color: #ce9178;
+        }
+        pre {
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .timestamp {
+            color: #858585;
+            font-size: 11px;
+        }
+        iframe {
+            width: 100%;
+            height: calc(90vh - 60px);
+            border: 1px solid #3e3e42;
+            border-radius: 4px;
+            background: white;
+        }
+        .fullwidth {
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="panel">
+            <h1>🔍 Debug Console - Tempo Real</h1>
+            
+            <div class="controls">
+                <button onclick="testarConexao()" class="success">🔌 Testar Conexão</button>
+                <button onclick="verificarUsuarioAdmin()">👤 Verificar Admin</button>
+                <button onclick="verificarElementosDOM()">🔍 Verificar DOM</button>
+                <button onclick="simularLogin()">🔐 Simular Login</button>
+                <button onclick="limparLogs()" class="danger">🗑️ Limpar Logs</button>
+            </div>
+
+            <div id="status-bar" class="info-box">
+                <strong>Status:</strong> <span class="status-badge loading">Inicializando...</span>
+            </div>
+
+            <h2>📊 Estado do Sistema</h2>
+            <div id="system-state"></div>
+
+            <h2>📝 Logs em Tempo Real</h2>
+            <div id="logs"></div>
+        </div>
+
+        <div class="panel fullwidth">
+            <h1>🖥️ Sistema EBD (Iframe)</h1>
+            <iframe id="app-frame" src="http://localhost:8000/index.html"></iframe>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script>
+        let logs = [];
+        
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('pt-BR');
+            logs.push({ timestamp, message, type });
+            
+            const logsDiv = document.getElementById('logs');
+            const logItem = document.createElement('div');
+            logItem.className = `log-item ${type}`;
+            logItem.innerHTML = `
+                <span class="timestamp">[${timestamp}]</span> ${message}
+            `;
+            logsDiv.insertBefore(logItem, logsDiv.firstChild);
+            
+            // Limitar a 50 logs
+            if (logsDiv.children.length > 50) {
+                logsDiv.removeChild(logsDiv.lastChild);
+            }
+        }
+
+        function limparLogs() {
+            logs = [];
+            document.getElementById('logs').innerHTML = '';
+            addLog('Logs limpos', 'success');
+        }
+
+        function updateStatus(message, type = 'loading') {
+            document.getElementById('status-bar').innerHTML = `
+                <strong>Status:</strong> <span class="status-badge ${type}">${message}</span>
+            `;
+        }
+
+        function updateSystemState(data) {
+            const stateDiv = document.getElementById('system-state');
+            stateDiv.innerHTML = `
+                <div class="info-box">
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+        }
+
+        async function testarConexao() {
+            addLog('🔌 Testando conexão com Supabase...', 'info');
+            try {
+                const sb = getSupabase();
+                const { data, error } = await sb.from('usuarios').select('count').limit(1);
+                
+                if (error) throw error;
+                
+                addLog('✅ Conexão com Supabase OK!', 'success');
+                updateStatus('Online', 'online');
+                return true;
+            } catch (error) {
+                addLog(`❌ Erro de conexão: ${error.message}`, 'error');
+                updateStatus('Offline', 'offline');
+                return false;
+            }
+        }
+
+        async function verificarUsuarioAdmin() {
+            addLog('👤 Verificando usuário admin no Supabase...', 'info');
+            
+            try {
+                const sb = getSupabase();
+                const { data, error } = await sb
+                    .from('usuarios')
+                    .select('*')
+                    .eq('usuario', 'admin');
+                
+                if (error) throw error;
+                
+                if (data && data.length > 0) {
+                    const admin = data[0];
+                    addLog(`✅ Admin encontrado! ID: ${admin.id}, Nível: ${admin.nivel}, Ativo: ${admin.ativo}`, 'success');
+                    addLog(`📧 Email: ${admin.email} | Senha: ${admin.senha}`, 'info');
+                    
+                    updateSystemState({
+                        admin_existe: true,
+                        id: admin.id,
+                        usuario: admin.usuario,
+                        senha: admin.senha,
+                        nivel: admin.nivel,
+                        ativo: admin.ativo,
+                        primeiro_acesso: admin.primeiro_acesso
+                    });
+                    
+                    // Testar login
+                    await testarLogin('admin', admin.senha);
+                } else {
+                    addLog('❌ Admin NÃO encontrado! Clique em "Inserir Admin"', 'error');
+                    updateSystemState({ admin_existe: false });
+                }
+            } catch (error) {
+                addLog(`❌ Erro ao verificar admin: ${error.message}`, 'error');
+            }
+        }
+
+        async function testarLogin(usuario, senha) {
+            addLog(`🔐 Testando login com ${usuario}/${senha}...`, 'info');
+            
+            try {
+                const sb = getSupabase();
+                const { data, error } = await sb
+                    .from('usuarios')
+                    .select('*')
+                    .eq('usuario', usuario)
+                    .eq('senha', senha)
+                    .eq('ativo', true)
+                    .limit(1);
+                
+                if (error) throw error;
+                
+                if (data && data.length > 0) {
+                    addLog('✅ LOGIN SUCESSO! Credenciais válidas', 'success');
+                    return true;
+                } else {
+                    addLog('❌ LOGIN FALHOU! Credenciais inválidas', 'error');
+                    return false;
+                }
+            } catch (error) {
+                addLog(`❌ Erro no teste de login: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function verificarElementosDOM() {
+            addLog('🔍 Verificando elementos do DOM no iframe...', 'info');
+            
+            try {
+                const iframe = document.getElementById('app-frame');
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                
+                const elementos = {
+                    'tela-login': iframeDoc.getElementById('tela-login'),
+                    'sistema-principal': iframeDoc.getElementById('sistema-principal'),
+                    'aba-usuarios': iframeDoc.getElementById('aba-usuarios')
+                };
+                
+                let resultado = {};
+                for (let [key, el] of Object.entries(elementos)) {
+                    if (el) {
+                        const display = window.getComputedStyle(el).display;
+                        resultado[key] = {
+                            existe: true,
+                            display: display,
+                            visivel: display !== 'none'
+                        };
+                        addLog(`✅ #${key}: display=${display}`, el.style.display === 'none' ? 'warning' : 'success');
+                    } else {
+                        resultado[key] = { existe: false };
+                        addLog(`❌ #${key}: NÃO ENCONTRADO`, 'error');
+                    }
+                }
+                
+                updateSystemState(resultado);
+                
+                // Verificar usuário logado
+                const sessao = iframe.contentWindow.sessionStorage.getItem('usuarioLogado');
+                if (sessao) {
+                    const usuario = JSON.parse(sessao);
+                    addLog(`👤 Usuário logado: ${usuario.nome} (Nível ${usuario.nivel})`, 'success');
+                    resultado.usuario_logado = usuario;
+                } else {
+                    addLog('⚠️ Nenhum usuário logado', 'warning');
+                    resultado.usuario_logado = null;
+                }
+                
+                updateSystemState(resultado);
+            } catch (error) {
+                addLog(`❌ Erro ao verificar DOM: ${error.message}`, 'error');
+            }
+        }
+
+        async function simularLogin() {
+            addLog('🔐 Simulando login no iframe...', 'info');
+            
+            try {
+                const iframe = document.getElementById('app-frame');
+                const iframeWindow = iframe.contentWindow;
+                
+                // Executar login no iframe
+                if (typeof iframeWindow.fazerLogin === 'function') {
+                    const iframeDoc = iframe.contentDocument || iframeWindow.document;
+                    
+                    // Preencher campos
+                    const inputUsuario = iframeDoc.getElementById('input-usuario');
+                    const inputSenha = iframeDoc.getElementById('input-senha');
+                    
+                    if (inputUsuario && inputSenha) {
+                        inputUsuario.value = 'admin';
+                        inputSenha.value = 'admin123';
+                        
+                        addLog('✏️ Campos preenchidos com admin/admin123', 'info');
+                        
+                        // Executar login
+                        await iframeWindow.fazerLogin();
+                        
+                        addLog('✅ Login executado! Verificando em 2 segundos...', 'success');
+                        
+                        setTimeout(() => {
+                            verificarElementosDOM();
+                        }, 2000);
+                    } else {
+                        addLog('❌ Campos de login não encontrados', 'error');
+                    }
+                } else {
+                    addLog('❌ Função fazerLogin não encontrada no iframe', 'error');
+                }
+            } catch (error) {
+                addLog(`❌ Erro ao simular login: ${error.message}`, 'error');
+            }
+        }
+
+        // Monitorar iframe
+        let monitorInterval;
+        function iniciarMonitoramento() {
+            monitorInterval = setInterval(() => {
+                const iframe = document.getElementById('app-frame');
+                try {
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                    const abaUsuarios = iframeDoc.getElementById('aba-usuarios');
+                    
+                    if (abaUsuarios) {
+                        const display = window.getComputedStyle(abaUsuarios).display;
+                        if (display !== 'none') {
+                            addLog('🎉 ABA USUÁRIOS ESTÁ VISÍVEL!', 'success');
+                            clearInterval(monitorInterval);
+                        }
+                    }
+                } catch (e) {
+                    // Ignore cross-origin errors
+                }
+            }, 2000);
+        }
+
+        // Inicialização
+        window.onload = async function() {
+            addLog('🚀 Debug Console inicializado', 'success');
+            updateStatus('Pronto', 'online');
+            
+            // Testar conexão automaticamente
+            await testarConexao();
+            
+            // Verificar admin
+            await verificarUsuarioAdmin();
+            
+            // Iniciar monitoramento
+            iniciarMonitoramento();
+            
+            addLog('💡 Use os botões acima para testar o sistema', 'info');
+        };
+    </script>
+</body>
+</html>

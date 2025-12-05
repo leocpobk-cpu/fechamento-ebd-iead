@@ -89,19 +89,7 @@ const usuariosPadrao = [
     }
 ];
 
-// Inicializar igrejas no localStorage
-function inicializarIgrejas() {
-    if (!localStorage.getItem('igrejasEBD')) {
-        localStorage.setItem('igrejasEBD', JSON.stringify(igrejaspadrao));
-    }
-}
-
-// Inicializar usuários no localStorage
-function inicializarUsuarios() {
-    if (!localStorage.getItem('usuariosEBD')) {
-        localStorage.setItem('usuariosEBD', JSON.stringify(usuariosPadrao));
-    }
-}
+// Funções de inicialização removidas - sistema 100% Supabase
 
 // Obter todas as igrejas
 // Buscar igrejas do Supabase
@@ -259,26 +247,10 @@ async function fazerLogin() {
                 aplicarPermissoes(sessao.nivel);
             }, 100);
             
-            // Inicializar componentes do sistema
-            if (typeof gerarDomingos === 'function') {
-                setTimeout(() => gerarDomingos(), 100);
-            }
-            if (typeof gerarFormulario === 'function') {
-                setTimeout(() => gerarFormulario(), 150);
-            }
-            if (typeof buscarLicaoPorData === 'function') {
-                setTimeout(() => buscarLicaoPorData(), 200);
-            }
-            
-            // Carregar lições iniciais (se for admin ou primeira vez)
-            if (typeof carregarLicoes === 'function') {
-                setTimeout(() => carregarLicoes(), 500);
-            }
-            
-            // Swipe desabilitado - estava atrapalhando a leitura
-            // if (window.innerWidth <= 768 && typeof inicializarSwipe === 'function') {
-            //     setTimeout(() => inicializarSwipe(), 100);
-            // }
+            // Inicializar sistema em uma única chamada otimizada
+            setTimeout(() => {
+                inicializarSistemaAposLogin();
+            }, 150);
             
             mostrarAlertaLogin('Login realizado com sucesso!', 'success');
         } else {
@@ -770,24 +742,10 @@ function verificarAutenticacao() {
         atualizarHeaderUsuario(usuarioLogado);
         aplicarPermissoes(usuarioLogado.nivel);
         
-        // Inicializar componentes do sistema
-        if (typeof gerarDomingos === 'function') {
-            setTimeout(() => gerarDomingos(), 100);
-        }
-        if (typeof gerarFormulario === 'function') {
-            setTimeout(() => gerarFormulario(), 150);
-        }
-        if (typeof buscarLicaoPorData === 'function') {
-            setTimeout(() => buscarLicaoPorData(), 200);
-        }
-        if (typeof carregarLicoes === 'function') {
-            setTimeout(() => carregarLicoes(), 500);
-        }
-        
-        // Swipe desabilitado - estava atrapalhando a leitura
-        // if (window.innerWidth <= 768 && typeof inicializarSwipe === 'function') {
-        //     setTimeout(() => inicializarSwipe(), 100);
-        // }
+        // Inicializar sistema em uma única chamada otimizada
+        setTimeout(() => {
+            inicializarSistemaAposLogin();
+        }, 150);
     } else {
         document.getElementById('tela-login').style.display = 'flex';
         document.getElementById('sistema-principal').style.display = 'none';
@@ -1810,6 +1768,43 @@ window.fecharModalConvite = fecharModalConvite;
 window.gerarLinkConvite = gerarLinkConvite;
 window.finalizarCadastroConvite = finalizarCadastroConvite;
 window.cancelarCadastroConvite = cancelarCadastroConvite;
+
+// Função otimizada para inicializar sistema após login
+function inicializarSistemaAposLogin() {
+    console.log('🔧 Inicializando componentes do sistema...');
+    
+    try {
+        // 1. Gerar lista de domingos
+        if (typeof gerarDomingos === 'function') {
+            gerarDomingos();
+            console.log('✅ Domingos gerados');
+        }
+        
+        // 2. Gerar formulário de grupos
+        if (typeof gerarFormulario === 'function') {
+            gerarFormulario();
+            console.log('✅ Formulário gerado');
+        }
+        
+        // 3. Buscar lição automaticamente
+        if (typeof buscarLicaoPorData === 'function') {
+            setTimeout(() => buscarLicaoPorData(), 100);
+            console.log('✅ Busca de lição iniciada');
+        }
+        
+        // 4. Carregar lições (assíncrono, não bloqueia)
+        if (typeof carregarLicoes === 'function') {
+            setTimeout(() => carregarLicoes(), 300);
+            console.log('✅ Carregamento de lições iniciado');
+        }
+        
+        console.log('✅ Sistema inicializado com sucesso');
+    } catch (error) {
+        console.error('❌ Erro ao inicializar sistema:', error);
+    }
+}
+
+window.inicializarSistemaAposLogin = inicializarSistemaAposLogin;
 
 console.log('✅ auth.js carregado - Funções exportadas:', {
     abrirModalUsuario: typeof window.abrirModalUsuario,

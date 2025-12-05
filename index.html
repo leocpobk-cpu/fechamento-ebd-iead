@@ -15,6 +15,21 @@
     <link rel="icon" type="image/svg+xml" href="icon.svg">
     <title>Gestão EBD - IEAD</title>
     
+    <!-- Versão do sistema -->
+    <script>
+        const VERSAO_SISTEMA = '3.1.0-20251205'; // Atualizar a cada deploy
+        const versaoArmazenada = sessionStorage.getItem('versaoSistema');
+        
+        if (versaoArmazenada && versaoArmazenada !== VERSAO_SISTEMA) {
+            console.log('🔄 Nova versão detectada. Limpando cache...');
+            sessionStorage.clear();
+            localStorage.removeItem('licoesImportadasSupabase');
+            location.reload(true);
+        } else {
+            sessionStorage.setItem('versaoSistema', VERSAO_SISTEMA);
+        }
+    </script>
+    
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
@@ -999,7 +1014,12 @@
             
             <!-- Versão do Sistema -->
             <div style="text-align: center; padding: 15px; color: #6b7280; font-size: 0.75rem; border-top: 1px solid #e5e7eb;">
-                📦 Versão 3.1.0 | Build c63105c<br>
+                <span id="versao-footer">📦 Versão 3.1.0 | Build 20251205</span><br>
+                <script>
+                    if (typeof VERSAO_SISTEMA !== 'undefined') {
+                        document.getElementById('versao-footer').innerHTML = '📦 ' + VERSAO_SISTEMA + '<br>';
+                    }
+                </script>
                 <span style="font-size: 0.7rem;">Atualizado em 02/12/2025</span>
             </div>
         </div>
@@ -1479,13 +1499,17 @@
     ];
 
     let relatorioAtual = null;
+    let sistemaPronto = false;
 
     // Inicialização - apenas funções que NÃO dependem de login
     window.addEventListener('load', () => {
+        console.log('🚀 Iniciando sistema EBD IEAD v' + VERSAO_SISTEMA);
         // gerarDomingos, gerarFormulario e buscarLicaoPorData agora são chamados após login
         definirMesAtual();
         inicializarTema();
         registrarServiceWorker();
+        sistemaPronto = true;
+        console.log('✅ Sistema pronto');
     });
 
     // PWA - Service Worker
@@ -3182,13 +3206,51 @@
         }
     }
 
-    function exportarHistoricoCompleto() {
-        const historico = JSON.parse(localStorage.getItem('historicoEBD') || '[]');
-        
-        if(historico.length === 0) {
-            alert('Nenhum dado para exportar!');
+    async function exportarHistoricoCompleto() {
+        const igrejaId = getIgrejaUsuarioLogado();
+        if (!igrejaId) {
+            alert('Igreja não identificada!');
             return;
         }
+        
+        try {
+            const sb = getSupabase();
+            const { data: lancamentos, error } = await sb
+                .from('lancamentos')
+                .select('*, grupos_presenca(*), ofertas(*)')
+                .eq('igreja_id', igrejaId)
+                .is('deleted_at', null)
+                .order('data', { ascending: true });
+            
+            if (error) throw error;
+            
+            if(!lancamentos || lancamentos.length === 0) {
+                alert('Nenhum dado para exportar!');
+                return;
+            }
+            
+            // Converter para formato do historico
+            const historico = lancamentos.map(lanc => {
+                const totais = {
+                    tPres: lanc.grupos_presenca.reduce((sum, g) => sum + (g.presente || 0), 0),
+                    tOferta: lanc.ofertas.reduce((sum, o) => sum + (o.valor || 0), 0),
+                    tMat: 0,
+                    tVis: lanc.grupos_presenca.reduce((sum, g) => sum + (g.visita || 0), 0),
+                    tFalta: lanc.grupos_presenca.reduce((sum, g) => sum + (g.ausente || 0), 0),
+                    tBib: 0,
+                    tRev: 0
+                };
+                totais.tMat = totais.tPres + totais.tFalta;
+                totais.tPerc = totais.tMat > 0 ? (totais.tPres / totais.tMat) * 100 : 0;
+                
+                return {
+                    data: lanc.data,
+                    dataFormatada: new Date(lanc.data + 'T12:00:00').toLocaleDateString('pt-BR'),
+                    numeroLicao: lanc.licao,
+                    temaLicao: '',
+                    totais: totais
+                };
+            });
 
         const wb = XLSX.utils.book_new();
         
@@ -3220,15 +3282,52 @@
         XLSX.writeFile(wb, `EBD_HistoricoCompleto_${hoje}.xlsx`);
         
         alert('✅ Histórico completo exportado!');
+        } catch (error) {
+            console.error('Erro ao exportar:', error);
+            alert('Erro ao exportar histórico. Verifique o console.');
+        }
     }
 
-    function backupJSON() {
-        const dados = {
-            historico: JSON.parse(localStorage.getItem('historicoEBD') || '[]'),
-            licoes: JSON.parse(localStorage.getItem('licoesEBD') || '[]'),
-            versao: '2.0',
-            dataBackup: new Date().toISOString()
-        };
+    async function backupJSON() {
+        const igrejaId = getIgrejaUsuarioLogado();
+        if (!igrejaId) {
+            alert('Igreja não identificada!');
+            return;
+        }
+        
+        try {
+            const sb = getSupabase();
+            
+            // Buscar histórico
+            const { data: lancamentos, error: errLanc } = await sb
+                .from('lancamentos')
+                .select('*, grupos_presenca(*), ofertas(*)')
+                .eq('igreja_id', igrejaId)
+                .is('deleted_at', null)
+                .order('data', { ascending: true });
+            
+            if (errLanc) throw errLanc;
+            
+            // Buscar lições
+            const { data: licoes, error: errLic } = await sb
+                .from('licoes')
+                .select('*')
+                .is('igreja_id', null)
+                .order('data', { ascending: true });
+            
+            if (errLic) throw errLic;
+            
+            const dados = {
+                historico: lancamentos || [],
+                licoes: licoes || [],
+                versao: '3.0-Supabase',
+                dataBackup: new Date().toISOString()
+            };
+        } catch (error) {
+            console.error('Erro ao gerar backup:', error);
+            alert('Erro ao gerar backup. Verifique o console.');
+            return;
+        }
         
         const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
