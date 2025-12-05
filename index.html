@@ -17,13 +17,14 @@
     
     <!-- Versão do sistema -->
     <script>
-        const VERSAO_SISTEMA = '3.1.4-20251205'; // Atualizar a cada deploy
+        const VERSAO_SISTEMA = '3.1.5-20251205'; // Atualizar a cada deploy
+        const BUILD_TIMESTAMP = '20251205-174500'; // Timestamp para forçar reload
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada && versaoArmazenada !== VERSAO_SISTEMA) {
             console.log('🔄 Nova versão detectada. Limpando cache...');
             sessionStorage.clear();
-            localStorage.removeItem('licoesImportadasSupabase');
+            localStorage.clear();
             location.reload(true);
         } else {
             sessionStorage.setItem('versaoSistema', VERSAO_SISTEMA);
@@ -32,10 +33,10 @@
     
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js"></script>
+    <script src="supabase-config.js?v=20251205-174500"></script>
     
-    <script src="licoes.js"></script>
-    <script src="auth.js"></script>
+    <script src="licoes.js?v=20251205-174500"></script>
+    <script src="auth.js?v=20251205-174500"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
