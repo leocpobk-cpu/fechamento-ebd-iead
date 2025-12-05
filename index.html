@@ -15,28 +15,23 @@
     <link rel="icon" type="image/svg+xml" href="icon.svg">
     <title>Gestão EBD - IEAD</title>
     
-    <!-- Versão do sistema -->
     <script>
-        const VERSAO_SISTEMA = '3.1.5-20251205'; // Atualizar a cada deploy
-        const BUILD_TIMESTAMP = '20251205-174500'; // Timestamp para forçar reload
+        const VERSAO_SISTEMA = '3.1.6-20251205';
+        const BUILD_TIMESTAMP = '20251205-180000';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
-        if (versaoArmazenada && versaoArmazenada !== VERSAO_SISTEMA) {
-            console.log('🔄 Nova versão detectada. Limpando cache...');
+        if (versaoArmazenada !== VERSAO_SISTEMA) {
             sessionStorage.clear();
             localStorage.clear();
             location.reload(true);
-        } else {
-            sessionStorage.setItem('versaoSistema', VERSAO_SISTEMA);
         }
+        sessionStorage.setItem('versaoSistema', VERSAO_SISTEMA);
     </script>
     
-    <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20251205-174500"></script>
-    
-    <script src="licoes.js?v=20251205-174500"></script>
-    <script src="auth.js?v=20251205-174500"></script>
+    <script src="supabase-config.js?v=20251205-180000"></script>
+    <script src="licoes.js?v=20251205-180000"></script>
+    <script src="auth.js?v=20251205-180000"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -1178,10 +1173,10 @@
             <div class="card">
                 <h2 style="margin-bottom: 15px;">👥 Gerenciamento de Usuários</h2>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn btn-primary" onclick="console.log('Botão clicado'); abrirModalUsuario()">➕ Novo Usuário</button>
-                    <button class="btn btn-warning" onclick="console.log('Botão convite clicado'); abrirModalConvite()">📱 Gerar Link de Convite</button>
-                    <button class="btn" style="background: #10b981; color: white;" onclick="console.log('Botão igrejas clicado'); mudarSubTela('igrejas')">🏛️ Gerenciar Igrejas</button>
-                    <button class="btn" style="background: #ef4444; color: white;" onclick="console.log('Botão lixeira clicado'); mudarSubTela('lixeira')">🗑️ Lixeira</button>
+                    <button class="btn btn-primary" onclick="abrirModalUsuario()">➕ Novo Usuário</button>
+                    <button class="btn btn-warning" onclick="abrirModalConvite()">📱 Gerar Link de Convite</button>
+                    <button class="btn" style="background: #10b981; color: white;" onclick="mudarSubTela('igrejas')">🏛️ Gerenciar Igrejas</button>
+                    <button class="btn" style="background: #ef4444; color: white;" onclick="mudarSubTela('lixeira')">🗑️ Lixeira</button>
                 </div>
             </div>
             
@@ -1194,7 +1189,7 @@
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h3>🗑️ Lixeira - Fechamentos Excluídos</h3>
-                    <button class="btn btn-secondary" onclick="console.log('Voltar usuários'); mudarSubTela('usuarios')">👥 Voltar para Usuários</button>
+                    <button class="btn btn-secondary" onclick="mudarSubTela('usuarios')">👥 Voltar para Usuários</button>
                 </div>
                 <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 15px;">
                     Fechamentos excluídos ficam aqui por 30 dias. Você pode restaurá-los ou excluir permanentemente.
@@ -1210,8 +1205,8 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h3>🏛️ Igrejas Cadastradas</h3>
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-primary" onclick="console.log('Nova Igreja clicado'); abrirModalIgreja()">➕ Nova Igreja</button>
-                        <button class="btn btn-secondary" onclick="console.log('Voltar usuários'); mudarSubTela('usuarios')">👥 Voltar para Usuários</button>
+                        <button class="btn btn-primary" onclick="abrirModalIgreja()">➕ Nova Igreja</button>
+                        <button class="btn btn-secondary" onclick="mudarSubTela('usuarios')">👥 Voltar para Usuários</button>
                     </div>
                 </div>
             </div>
