@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.2.2';
-        const BUILD_TIMESTAMP = '20251205191500';
+        const VERSAO_SISTEMA = '3.2.3';
+        const BUILD_TIMESTAMP = '20251205193000';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -33,9 +33,9 @@
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20251205191500"></script>
-    <script src="licoes.js?v=20251205191500"></script>
-    <script src="auth.js?v=20251205191500"></script>
+    <script src="supabase-config.js?v=20251205193000"></script>
+    <script src="licoes.js?v=20251205193000"></script>
+    <script src="auth.js?v=20251205193000"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -1992,28 +1992,19 @@
             document.querySelectorAll('.nav-tab')[4].classList.add('active');
             listarLicoes();
         } else if(tela === 'usuarios') {
-            console.log('👥 Ativando tela de usuários...');
             const telaUsuarios = document.getElementById('tela-usuarios');
             if (telaUsuarios) {
                 telaUsuarios.classList.add('active');
-                telaUsuarios.style.display = 'block';
-                console.log('✅ Tela usuários ativada');
-            } else {
-                console.error('❌ Elemento #tela-usuarios não encontrado');
             }
             
             const navTab = document.querySelectorAll('.nav-tab')[5];
             if (navTab) {
                 navTab.classList.add('active');
-                console.log('✅ Tab usuários ativada');
             }
             
             mudarSubTela('usuarios');
             if (typeof listarUsuarios === 'function') {
                 listarUsuarios();
-                console.log('✅ listarUsuarios() chamada');
-            } else {
-                console.error('❌ Função listarUsuarios não encontrada');
             }
         } else if(tela === 'relatorio') {
             document.getElementById('tela-relatorio').classList.add('active');
