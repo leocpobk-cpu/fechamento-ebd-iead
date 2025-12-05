@@ -260,16 +260,14 @@ async function fazerLogin() {
             }, 100);
             
             // Carregar lições iniciais (se for admin ou primeira vez)
-            if (typeof carregarLicoes === 'function') {
-                setTimeout(() => carregarLicoes(), 500);
-            }
-            
-            // Inicializar swipe em dispositivos móveis
-            if (window.innerWidth <= 768 && typeof inicializarSwipe === 'function') {
-                setTimeout(() => inicializarSwipe(), 100);
-            }
-            
-            mostrarAlertaLogin('Login realizado com sucesso!', 'success');
+        if (typeof carregarLicoes === 'function') {
+            setTimeout(() => carregarLicoes(), 500);
+        }
+        
+        // Swipe desabilitado - estava atrapalhando a leitura
+        // if (window.innerWidth <= 768 && typeof inicializarSwipe === 'function') {
+        //     setTimeout(() => inicializarSwipe(), 100);
+        // }            mostrarAlertaLogin('Login realizado com sucesso!', 'success');
         } else {
             console.error('❌ Usuário não encontrado ou credenciais inválidas');
             

@@ -2034,24 +2034,80 @@
     // Gerar gráficos do dashboard
     let graficoPresenca, graficoOfertas, graficoRanking;
 
-    function gerarGraficos() {
-        const historico = JSON.parse(localStorage.getItem('historicoEBD') || '[]');
-        
-        if(historico.length === 0) {
-            const canvases = ['grafico-presenca', 'grafico-ofertas', 'grafico-ranking'];
-            canvases.forEach(id => {
-                const canvas = document.getElementById(id);
-                if(canvas) {
-                    const ctx = canvas.getContext('2d');
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.font = '14px Arial';
-                    ctx.fillStyle = '#999';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('Nenhum dado disponível', canvas.width / 2, canvas.height / 2);
-                }
-            });
+    async function gerarGraficos() {
+        const igrejaId = getIgrejaUsuarioLogado();
+        if (!igrejaId) {
+            console.error('Igreja não identificada');
             return;
         }
+
+        try {
+            const sb = getSupabase();
+            const { data: lancamentos, error } = await sb
+                .from('lancamentos')
+                .select('*, grupos_presenca(*), ofertas(*)')
+                .eq('igreja_id', igrejaId)
+                .is('deleted_at', null)
+                .order('data', { ascending: true });
+            
+            if (error) throw error;
+            
+            if(!lancamentos || lancamentos.length === 0) {
+                const canvases = ['grafico-presenca', 'grafico-ofertas', 'grafico-ranking'];
+                canvases.forEach(id => {
+                    const canvas = document.getElementById(id);
+                    if(canvas) {
+                        const ctx = canvas.getContext('2d');
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.font = '14px Arial';
+                        ctx.fillStyle = '#999';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('Nenhum dado disponível', canvas.width / 2, canvas.height / 2);
+                    }
+                });
+                return;
+            }
+            
+            // Converter para formato do historico
+            const historico = lancamentos.map(lanc => {
+                const totais = {
+                    tPres: lanc.grupos_presenca.reduce((sum, g) => sum + (g.presente || 0), 0),
+                    tPerc: 0,
+                    tOferta: lanc.ofertas.reduce((sum, o) => sum + (o.valor || 0), 0),
+                    tMat: 0,
+                    tVis: lanc.grupos_presenca.reduce((sum, g) => sum + (g.visita || 0), 0),
+                    tFalta: lanc.grupos_presenca.reduce((sum, g) => sum + (g.ausente || 0), 0),
+                    tBib: 0,
+                    tRev: 0
+                };
+                
+                // Calcular percentual
+                totais.tMat = totais.tPres + totais.tFalta;
+                totais.tPerc = totais.tMat > 0 ? (totais.tPres / totais.tMat) * 100 : 0;
+                
+                return {
+                    data: lanc.data,
+                    dataFormatada: new Date(lanc.data + 'T12:00:00').toLocaleDateString('pt-BR'),
+                    totais: totais,
+                    dados: {}
+                };
+            });
+            
+            if(historico.length === 0) {
+                const canvases = ['grafico-presenca', 'grafico-ofertas', 'grafico-ranking'];
+                canvases.forEach(id => {
+                    const canvas = document.getElementById(id);
+                    if(canvas) {
+                        const ctx = canvas.getContext('2d');
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.font = '14px Arial';
+                        ctx.fillStyle = '#999';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('Nenhum dado disponível', canvas.width / 2, canvas.height / 2);
+                    }
+                });
+                return;
+            }
         
         // Dados dos últimos 12 domingos
         const ultimos = historico.slice(-12);
@@ -2815,7 +2871,7 @@
         document.getElementById('mes-ano').value = mesAno;
     }
 
-    function gerarResumoMensal() {
+    async function gerarResumoMensal() {
         const mesAno = document.getElementById('mes-ano').value;
         if(!mesAno) {
             alert('Selecione um mês/ano');
@@ -2823,19 +2879,71 @@
         }
 
         const [ano, mes] = mesAno.split('-');
-        const historico = JSON.parse(localStorage.getItem('historicoEBD') || '[]');
+        const igrejaId = getIgrejaUsuarioLogado();
         
-        const relatoriosMes = historico.filter(rel => {
-            const dataRel = new Date(rel.data);
-            return dataRel.getFullYear() == ano && (dataRel.getMonth() + 1) == mes;
-        });
-
-        if(relatoriosMes.length === 0) {
-            document.getElementById('conteudo-mensal').innerHTML = '<p style="text-align:center;color:#999;margin-top:30px;">Nenhum relatório encontrado para este mês.</p>';
+        if (!igrejaId) {
+            document.getElementById('conteudo-mensal').innerHTML = '<p style="text-align:center;color:#999;margin-top:30px;">Igreja não identificada.</p>';
             return;
         }
+        
+        try {
+            const sb = getSupabase();
+            const { data: lancamentos, error } = await sb
+                .from('lancamentos')
+                .select('*, grupos_presenca(*), ofertas(*)')
+                .eq('igreja_id', igrejaId)
+                .is('deleted_at', null)
+                .gte('data', `${ano}-${mes.padStart(2, '0')}-01`)
+                .lt('data', `${ano}-${(parseInt(mes) + 1).toString().padStart(2, '0')}-01`)
+                .order('data', { ascending: true });
+            
+            if (error) throw error;
+            
+            if(!lancamentos || lancamentos.length === 0) {
+                document.getElementById('conteudo-mensal').innerHTML = '<p style="text-align:center;color:#999;margin-top:30px;">Nenhum relatório encontrado para este mês.</p>';
+                return;
+            }
+            
+            // Converter para formato do historico
+            const relatoriosMes = lancamentos.map(lanc => {
+                const totais = {
+                    tPres: lanc.grupos_presenca.reduce((sum, g) => sum + (g.presente || 0), 0),
+                    tOferta: lanc.ofertas.reduce((sum, o) => sum + (o.valor || 0), 0),
+                    tMat: 0,
+                    tVis: lanc.grupos_presenca.reduce((sum, g) => sum + (g.visita || 0), 0),
+                    tFalta: lanc.grupos_presenca.reduce((sum, g) => sum + (g.ausente || 0), 0),
+                    tBib: 0,
+                    tRev: 0
+                };
+                totais.tMat = totais.tPres + totais.tFalta;
+                
+                return {
+                    id: lanc.id,
+                    data: lanc.data,
+                    dataFormatada: new Date(lanc.data + 'T12:00:00').toLocaleDateString('pt-BR'),
+                    totais: totais
+                };
+            });
 
-        // Calcular totais do mês
+        // Criar lista de fechamentos com checkboxes
+        let listaHtml = '<div style="margin: 20px 0;"><h4>Selecione os fechamentos para incluir no resumo:</h4>';
+        listaHtml += '<div style="margin: 10px 0;"><label style="cursor:pointer;"><input type="checkbox" id="selecionar-todos" onchange="toggleTodosFechamentos()" checked> <strong>Selecionar Todos</strong></label></div>';
+        listaHtml += '<div style="display:flex;flex-direction:column;gap:8px;">';
+        
+        relatoriosMes.forEach((rel, index) => {
+            listaHtml += `
+            <label style="cursor:pointer;padding:10px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:6px;display:flex;align-items:center;gap:10px;">
+                <input type="checkbox" class="checkbox-fechamento" data-index="${index}" onchange="calcularTotaisSelecionados()" checked>
+                <div>
+                    <strong>${rel.dataFormatada}</strong>
+                    <span style="color:#666;font-size:0.9rem;"> | ${rel.totais.tPres} presentes | ${formatarMoeda(rel.totais.tOferta)}</span>
+                </div>
+            </label>`;
+        });
+        
+        listaHtml += '</div></div>';
+        
+        // Calcular totais iniciais (todos selecionados)
         let totalOferta = 0, totalPres = 0, totalMat = 0, totalVis = 0;
         let totalBib = 0, totalRev = 0, totalFalta = 0;
 
@@ -2852,10 +2960,14 @@
 
         const mediaPresenca = totalMat > 0 ? (totalPres / totalMat) * 100 : 0;
         const nomeMes = new Date(ano, mes - 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+        
+        // Armazenar dados para recálculo
+        window.relatoriosMesAtual = relatoriosMes;
 
-        let html = `
+        let html = listaHtml + `
         <div class="card" style="margin-top: 20px;">
             <h3 style="margin-bottom: 15px;">📊 Resumo de ${nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1)}</h3>
+            <div id="totais-container">
             
             <div class="summary-cards" style="margin-top: 15px;">
                 <div class="sum-card">
@@ -2866,6 +2978,7 @@
                     <div class="sum-lbl">MÉDIA DE PRESENÇA</div>
                     <div class="sum-val">${mediaPresenca.toFixed(1)}%</div>
                 </div>
+            </div>
             </div>
 
             <div class="details-grid" style="margin-top: 15px;">
@@ -2915,6 +3028,90 @@
         </div>`;
 
         document.getElementById('conteudo-mensal').innerHTML = html;
+        } catch (error) {
+            console.error('❌ Erro ao gerar resumo mensal:', error);
+            document.getElementById('conteudo-mensal').innerHTML = '<p style="text-align:center;color:#999;margin-top:30px;">Erro ao carregar dados.</p>';
+        }
+    }
+    
+    // Funções auxiliares para seleção múltipla no mensal
+    function toggleTodosFechamentos() {
+        const todos = document.getElementById('selecionar-todos').checked;
+        const checkboxes = document.querySelectorAll('.checkbox-fechamento');
+        checkboxes.forEach(cb => cb.checked = todos);
+        calcularTotaisSelecionados();
+    }
+    
+    function calcularTotaisSelecionados() {
+        const checkboxes = document.querySelectorAll('.checkbox-fechamento');
+        const relatorios = window.relatoriosMesAtual || [];
+        
+        let totalOferta = 0, totalPres = 0, totalMat = 0, totalVis = 0;
+        let totalBib = 0, totalRev = 0, totalFalta = 0;
+        let domingosCount = 0;
+        
+        checkboxes.forEach(cb => {
+            if (cb.checked) {
+                const index = parseInt(cb.dataset.index);
+                const rel = relatorios[index];
+                if (rel) {
+                    const t = rel.totais;
+                    totalOferta += t.tOferta;
+                    totalPres += t.tPres;
+                    totalMat += t.tMat;
+                    totalVis += t.tVis;
+                    totalBib += t.tBib;
+                    totalRev += t.tRev;
+                    totalFalta += t.tFalta;
+                    domingosCount++;
+                }
+            }
+        });
+        
+        const mediaPresenca = totalMat > 0 ? (totalPres / totalMat) * 100 : 0;
+        
+        // Atualizar totais na tela
+        const container = document.getElementById('totais-container');
+        if (container) {
+            container.innerHTML = `
+            <div class="summary-cards" style="margin-top: 15px;">
+                <div class="sum-card">
+                    <div class="sum-lbl">TOTAL DE OFERTAS</div>
+                    <div class="sum-val">${formatarMoeda(totalOferta)}</div>
+                </div>
+                <div class="sum-card">
+                    <div class="sum-lbl">MÉDIA DE PRESENÇA</div>
+                    <div class="sum-val">${mediaPresenca.toFixed(1)}%</div>
+                </div>
+            </div>
+            
+            <div class="details-grid" style="margin-top: 15px;">
+                <div class="detail-item" style="background: #e0f2fe; color: #0369a1;">
+                    <div class="d-val">${domingosCount}</div>
+                    <div class="d-lbl">Domingos</div>
+                </div>
+                <div class="detail-item" style="background: #dcfce7; color: #15803d;">
+                    <div class="d-val">${totalPres}</div>
+                    <div class="d-lbl">Total Presentes</div>
+                </div>
+                <div class="detail-item" style="background: #fef3c7; color: #92400e;">
+                    <div class="d-val">${totalVis}</div>
+                    <div class="d-lbl">Visitantes</div>
+                </div>
+                <div class="detail-item" style="background: #fee2e2; color: #991b1b;">
+                    <div class="d-val">${totalFalta}</div>
+                    <div class="d-lbl">Faltas</div>
+                </div>
+                <div class="detail-item" style="background: #e0e7ff; color: #3730a3;">
+                    <div class="d-val">${totalBib}</div>
+                    <div class="d-lbl">Bíblias</div>
+                </div>
+                <div class="detail-item" style="background: #fce7f3; color: #831843;">
+                    <div class="d-val">${totalRev}</div>
+                    <div class="d-lbl">Revistas</div>
+                </div>
+            </div>`;
+        }
     }
 
     // Exportar para Excel
