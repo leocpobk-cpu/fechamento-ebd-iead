@@ -17,7 +17,7 @@
     
     <!-- Versão do sistema -->
     <script>
-        const VERSAO_SISTEMA = '3.1.0-20251205'; // Atualizar a cada deploy
+        const VERSAO_SISTEMA = '3.1.1-20251205'; // Atualizar a cada deploy
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada && versaoArmazenada !== VERSAO_SISTEMA) {
@@ -1544,12 +1544,22 @@
     // Gerar lista de domingos
     function gerarDomingos() {
         const select = document.getElementById('data-ebd');
+        if (!select) {
+            console.error('❌ Select data-ebd não encontrado');
+            return;
+        }
+        
+        // Limpar select antes de preencher (evitar duplicação)
+        select.innerHTML = '';
+        
         const hoje = new Date();
         
         let dataRef = new Date(hoje);
         while(dataRef.getDay() !== 0) {
             dataRef.setDate(dataRef.getDate() - 1);
         }
+        
+        console.log('📅 Gerando lista de domingos...');
         
         for(let i = -4; i <= 3; i++) {
             const domingo = new Date(dataRef);
@@ -1567,6 +1577,8 @@
             
             select.appendChild(option);
         }
+        
+        console.log('✅ Domingos gerados:', select.options.length, 'opções');
         
         // Adicionar evento de mudança para buscar lição automaticamente
         select.addEventListener('change', buscarLicaoPorData);
@@ -1679,6 +1691,15 @@
     // Gerar formulário
     function gerarFormulario() {
         const container = document.getElementById('grupos-container');
+        if (!container) {
+            console.error('❌ Container grupos-container não encontrado');
+            return;
+        }
+        
+        // Limpar container antes de gerar (evitar duplicação)
+        container.innerHTML = '';
+        
+        console.log('📝 Gerando formulário para', grupos.length, 'grupos');
         
         grupos.forEach(grupo => {
             const specialClass = grupo.isSeparate ? 'special-group' : '';
@@ -1733,6 +1754,8 @@
             </div>`;
             container.innerHTML += html;
         });
+        
+        console.log('✅ Formulário gerado com sucesso');
     }
 
     // Calcular faltantes e percentual automaticamente
