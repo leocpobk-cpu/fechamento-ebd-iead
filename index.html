@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.2.1';
-        const BUILD_TIMESTAMP = '20251205190000';
+        const VERSAO_SISTEMA = '3.2.2';
+        const BUILD_TIMESTAMP = '20251205191500';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -33,9 +33,9 @@
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20251205190000"></script>
-    <script src="licoes.js?v=20251205190000"></script>
-    <script src="auth.js?v=20251205190000"></script>
+    <script src="supabase-config.js?v=20251205191500"></script>
+    <script src="licoes.js?v=20251205191500"></script>
+    <script src="auth.js?v=20251205191500"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -3311,8 +3311,6 @@
         } catch (error) {
             console.error('Erro ao exportar:', error);
             alert('Erro ao exportar histórico. Verifique o console.');
-        }
-    }
         }
     }
 
