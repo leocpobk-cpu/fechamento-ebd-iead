@@ -17,7 +17,7 @@
     
     <!-- Versão do sistema -->
     <script>
-        const VERSAO_SISTEMA = '3.1.3-20251205'; // Atualizar a cada deploy
+        const VERSAO_SISTEMA = '3.1.4-20251205'; // Atualizar a cada deploy
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada && versaoArmazenada !== VERSAO_SISTEMA) {
@@ -3305,9 +3305,12 @@
         XLSX.writeFile(wb, `EBD_HistoricoCompleto_${hoje}.xlsx`);
         
         alert('✅ Histórico completo exportado!');
+        
         } catch (error) {
             console.error('Erro ao exportar:', error);
             alert('Erro ao exportar histórico. Verifique o console.');
+        }
+    }
         }
     }
 
