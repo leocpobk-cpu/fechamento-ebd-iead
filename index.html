@@ -15,22 +15,27 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.1.9';
-        const BUILD_TIMESTAMP = '20251205184500';
+        const VERSAO_SISTEMA = '3.2.0';
+        const BUILD_TIMESTAMP = '20251205185500';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
+            console.log('🔄 Nova versão detectada:', VERSAO_SISTEMA);
             sessionStorage.clear();
             localStorage.clear();
-            location.reload(true);
+            
+            // Força reload sem cache
+            if (performance.navigation.type !== 1) {
+                window.location.href = window.location.href.split('?')[0] + '?v=' + BUILD_TIMESTAMP;
+            }
         }
         sessionStorage.setItem('versaoSistema', VERSAO_SISTEMA);
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20251205184500"></script>
-    <script src="licoes.js?v=20251205184500"></script>
-    <script src="auth.js?v=20251205184500"></script>
+    <script src="supabase-config.js?v=20251205185500"></script>
+    <script src="licoes.js?v=20251205185500"></script>
+    <script src="auth.js?v=20251205185500"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
