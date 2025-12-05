@@ -274,9 +274,9 @@ async function fazerLogin() {
                 if (desejaRecuperar) {
                     // Resetar contador e ir para recuperação
                     tentativasLogin = 0;
-                    mudarTelaLogin('recuperacao');
+                    mostrarRecuperacao();
                     // Pré-preencher o usuário
-                    const inputRecupUsuario = document.getElementById('input-recup-usuario');
+                    const inputRecupUsuario = document.getElementById('input-usuario-recuperacao');
                     if (inputRecupUsuario) {
                         inputRecupUsuario.value = usuario;
                     }
@@ -756,8 +756,6 @@ function verificarAutenticacao() {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 DOM Carregado - Inicializando sistema...');
     
-    inicializarIgrejas();
-    inicializarUsuarios();
     verificarAutenticacao();
     verificarConviteNaURL(); // Verificar se há convite na URL
     
@@ -803,7 +801,6 @@ window.voltarLogin = voltarLogin;
 window.enviarRecuperacao = enviarRecuperacao;
 window.redefinirSenha = redefinirSenha;
 window.trocarSenhaPrimeiroAcesso = trocarSenhaPrimeiroAcesso;
-window.mudarTelaLogin = mudarTelaLogin;
 window.trocarIgrejaAdmin = trocarIgrejaAdmin;
 
 // ========================================

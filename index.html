@@ -17,7 +17,7 @@
     
     <!-- Versão do sistema -->
     <script>
-        const VERSAO_SISTEMA = '3.1.2-20251205'; // Atualizar a cada deploy
+        const VERSAO_SISTEMA = '3.1.3-20251205'; // Atualizar a cada deploy
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada && versaoArmazenada !== VERSAO_SISTEMA) {
@@ -3518,6 +3518,7 @@
     window.limparFormLicao = limparFormLicao;
     window.editarLicao = editarLicao;
     window.excluirLicao = excluirLicao;
+    window.toggleTema = toggleTema;
     window.trocarTema = trocarTema;
     window.carregarLixeira = carregarLixeira;
     window.restaurarLancamento = restaurarLancamento;
