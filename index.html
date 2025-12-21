@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.3.5';
-        const BUILD_TIMESTAMP = '20251221143000';
+        const VERSAO_SISTEMA = '3.3.6';
+        const BUILD_TIMESTAMP = '20251221144500';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -33,9 +33,9 @@
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20251221143000"></script>
-    <script src="licoes.js?v=20251221143000"></script>
-    <script src="auth.js?v=20251221143000"></script>
+    <script src="supabase-config.js?v=20251221144500"></script>
+    <script src="licoes.js?v=20251221144500"></script>
+    <script src="auth.js?v=20251221144500"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -2581,7 +2581,7 @@
         try {
             const sb = getSupabase();
             
-            // Buscar lançamentos com grupos e ofertas (APENAS NÃO EXCLUÍDOS)
+            // Buscar lançamentos com grupos e ofertas
             const { data: lancamentos, error } = await sb
                 .from('lancamentos')
                 .select(`
@@ -2592,7 +2592,6 @@
                     ofertas(valor, observacao)
                 `)
                 .eq('igreja_id', igrejaId)
-                .is('deleted_at', null)
                 .order('data', { ascending: false });
             
             if (error) throw error;
@@ -2785,24 +2784,22 @@
     }
 
     async function excluirHistorico(lancamentoId) {
-        if(!confirm('Tem certeza que deseja excluir este relatório? (Admins podem restaurar da lixeira)')) return;
+        if(!confirm('⚠️ ATENÇÃO: Esta exclusão é DEFINITIVA e não poderá ser desfeita!\n\nTem certeza que deseja excluir permanentemente este relatório?')) return;
         
         try {
             const sb = getSupabase();
-            const usuarioLogado = getUsuarioLogado();
             
-            // Soft delete - marcar como excluído ao invés de deletar
+            // Exclusão definitiva - DELETE CASCADE irá remover automaticamente:
+            // - grupos_presenca (ON DELETE CASCADE)
+            // - ofertas (ON DELETE CASCADE)
             const { error } = await sb
                 .from('lancamentos')
-                .update({
-                    deleted_at: new Date().toISOString(),
-                    deleted_by: usuarioLogado.id
-                })
+                .delete()
                 .eq('id', lancamentoId);
             
             if (error) throw error;
             
-            alert('✅ Relatório movido para lixeira!');
+            alert('✅ Relatório excluído permanentemente!');
             await carregarHistorico();
         } catch (error) {
             console.error('❌ Erro ao excluir histórico:', error);
