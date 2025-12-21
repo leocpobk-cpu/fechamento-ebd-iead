@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.3.0';
-        const BUILD_TIMESTAMP = '20251221120000';
+        const VERSAO_SISTEMA = '3.3.1';
+        const BUILD_TIMESTAMP = '20251221123000';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -33,9 +33,9 @@
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20251221120000"></script>
-    <script src="licoes.js?v=20251221120000"></script>
-    <script src="auth.js?v=20251221120000"></script>
+    <script src="supabase-config.js?v=20251221123000"></script>
+    <script src="licoes.js?v=20251221123000"></script>
+    <script src="auth.js?v=20251221123000"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -2482,6 +2482,8 @@
                     .from('lancamentos')
                     .update({
                         licao: relatorioAtual.numeroLicao || null,
+                        tema: relatorioAtual.temaLicao || null,
+                        professor: relatorioAtual.professorPrincipal || null,
                         updated_at: new Date().toISOString()
                     })
                     .eq('id', lancamentoId);
@@ -2494,6 +2496,8 @@
                     .insert([{
                         data: relatorioAtual.data,
                         licao: relatorioAtual.numeroLicao || null,
+                        tema: relatorioAtual.temaLicao || null,
+                        professor: relatorioAtual.professorPrincipal || null,
                         igreja_id: igrejaId
                     }])
                     .select();
@@ -2552,7 +2556,8 @@
             return true;
         } catch (error) {
             console.error('❌ Erro ao salvar histórico:', error);
-            alert('❌ Erro ao salvar relatório. Tente novamente.');
+            const mensagem = error.message || error.hint || 'Erro desconhecido';
+            alert('❌ Erro ao salvar relatório:\n' + mensagem);
             return false;
         }
     }
