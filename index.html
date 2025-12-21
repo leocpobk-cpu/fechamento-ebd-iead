@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.3.1';
-        const BUILD_TIMESTAMP = '20251221123000';
+        const VERSAO_SISTEMA = '3.3.2';
+        const BUILD_TIMESTAMP = '20251221130000';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -33,9 +33,9 @@
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20251221123000"></script>
-    <script src="licoes.js?v=20251221123000"></script>
-    <script src="auth.js?v=20251221123000"></script>
+    <script src="supabase-config.js?v=20251221130000"></script>
+    <script src="licoes.js?v=20251221130000"></script>
+    <script src="auth.js?v=20251221130000"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -2537,9 +2537,9 @@
                 if (d && d.oferta > 0) {
                     ofertasData.push({
                         lancamento_id: lancamentoId,
-                        tipo: grupo.id,
+                        tipo: 'geral',
                         valor: d.oferta,
-                        observacao: grupo.nome
+                        observacao: `${grupo.id}|${grupo.nome}`
                     });
                 }
             });
@@ -2684,8 +2684,10 @@
                 const mat = pres + aus;
                 const perc = mat > 0 ? (pres / mat) * 100 : 0;
                 
-                // Buscar oferta deste grupo
-                const ofertaGrupo = lanc.ofertas?.find(o => o.tipo === g.grupo_id);
+                // Buscar oferta deste grupo pela observacao (formato: "grupo_id|nome")
+                const ofertaGrupo = lanc.ofertas?.find(o => 
+                    o.observacao && o.observacao.startsWith(g.grupo_id + '|')
+                );
                 const oferta = ofertaGrupo ? parseFloat(ofertaGrupo.valor || 0) : 0;
                 
                 relatorioAtual.dados[g.grupo_id] = {
