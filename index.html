@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.3.2';
-        const BUILD_TIMESTAMP = '20251221130000';
+        const VERSAO_SISTEMA = '3.3.3';
+        const BUILD_TIMESTAMP = '20251221133000';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -33,9 +33,9 @@
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20251221130000"></script>
-    <script src="licoes.js?v=20251221130000"></script>
-    <script src="auth.js?v=20251221130000"></script>
+    <script src="supabase-config.js?v=20251221133000"></script>
+    <script src="licoes.js?v=20251221133000"></script>
+    <script src="auth.js?v=20251221133000"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -1286,7 +1286,9 @@
                             <th>Classe</th>
                             <th>Mat</th>
                             <th>Pres</th>
+                            <th>% Pres</th>
                             <th>Falta</th>
+                            <th>% Falta</th>
                             <th>Visit</th>
                             <th>Bíb</th>
                             <th>Rev</th>
@@ -1307,7 +1309,9 @@
                             <th>Classe</th>
                             <th>Mat</th>
                             <th>Pres</th>
+                            <th>% Pres</th>
                             <th>Falta</th>
+                            <th>% Falta</th>
                             <th>Bíb</th>
                             <th>Rev</th>
                             <th>Oferta</th>
@@ -1819,16 +1823,19 @@
 
             let faltas = mat - pres;
             if(faltas < 0) faltas = 0;
-            const perc = mat > 0 ? (pres / mat) * 100 : 0;
+            const percPres = mat > 0 ? (pres / mat) * 100 : 0;
+            const percFalta = mat > 0 ? (faltas / mat) * 100 : 0;
 
-            dadosRelatorio[grupo.id] = { mat, pres, vis, bib, rev, oferta, faltas, perc };
+            dadosRelatorio[grupo.id] = { mat, pres, vis, bib, rev, oferta, faltas, perc: percPres };
 
             const tr = `
             <tr>
                 <td><strong>${grupo.nome}</strong><br><span style="font-size:0.7em;color:#666">${grupo.sub}</span></td>
                 <td>${mat}</td>
-                <td>${pres} <span style="font-size:0.7em;color:blue">(${perc.toFixed(0)}%)</span></td>
+                <td>${pres}</td>
+                <td style="color:blue;font-weight:bold">${percPres.toFixed(1)}%</td>
                 <td style="color:red;font-weight:bold">${faltas}</td>
+                <td style="color:red;font-weight:bold">${percFalta.toFixed(1)}%</td>
                 <td>${vis || '-'}</td>
                 <td>${bib}</td>
                 <td>${rev}</td>
@@ -1842,7 +1849,7 @@
                 tBib += bib; tRev += rev; tOferta += oferta;
                 htmlGeral += tr;
                 
-                if(mat > 0) dadosPresenca.push({ nome: grupo.nome, percentual: perc, presentes: pres, matriculados: mat });
+                if(mat > 0) dadosPresenca.push({ nome: grupo.nome, percentual: percPres, presentes: pres, matriculados: mat });
                 if(oferta > 0) dadosOfertas.push({ nome: grupo.nome, oferta: oferta });
 
                 zapText += `*${grupo.nome}*\n`;
@@ -2740,12 +2747,16 @@
                 const d = relatorioAtual.dados[grupo.id];
                 if(!d) return;
                 
+                const percFalta = d.mat > 0 ? (d.faltas / d.mat) * 100 : 0;
+                
                 const tr = `
                 <tr>
                     <td><strong>${grupo.nome}</strong><br><span style=\"font-size:0.7em;color:#666\">${grupo.sub}</span></td>
                     <td>${d.mat}</td>
-                    <td>${d.pres} <span style=\"font-size:0.7em;color:blue\">(${d.perc.toFixed(0)}%)</span></td>
+                    <td>${d.pres}</td>
+                    <td style=\"color:blue;font-weight:bold\">${d.perc.toFixed(1)}%</td>
                     <td style=\"color:red;font-weight:bold\">${d.faltas}</td>
+                    <td style=\"color:red;font-weight:bold\">${percFalta.toFixed(1)}%</td>
                     <td>${d.vis || '-'}</td>
                     <td>${d.bib}</td>
                     <td>${d.rev}</td>
