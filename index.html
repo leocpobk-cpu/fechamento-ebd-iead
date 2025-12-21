@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.2.3';
-        const BUILD_TIMESTAMP = '20251205193000';
+        const VERSAO_SISTEMA = '3.3.0';
+        const BUILD_TIMESTAMP = '20251221120000';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -33,9 +33,9 @@
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20251205193000"></script>
-    <script src="licoes.js?v=20251205193000"></script>
-    <script src="auth.js?v=20251205193000"></script>
+    <script src="supabase-config.js?v=20251221120000"></script>
+    <script src="licoes.js?v=20251221120000"></script>
+    <script src="auth.js?v=20251221120000"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -1089,6 +1089,11 @@
                         💡 <span id="licao-hint">Selecione um domingo ou digite o número da lição para buscar automaticamente</span>
                     </small>
                 </div>
+                
+                <div class="form-group" style="margin-top: 10px;">
+                    <label>👨‍🏫 Nome do Professor Principal</label>
+                    <input type="text" id="professor-principal" placeholder="Digite o nome do professor">
+                </div>
             </div>
 
             <div id="grupos-container"></div>
@@ -1486,8 +1491,8 @@
 <script>
     // Configuração dos Grupos
     const grupos = [
-        { id: 'jardim', nome: 'Jardim de Deus', sub: 'Crianças', isSeparate: false },
         { id: 'pedacinho', nome: 'Pedacinho do Céu', sub: 'Crianças', isSeparate: false },
+        { id: 'jardim', nome: 'Jardim de Deus', sub: 'Crianças', isSeparate: false },
         { id: 'adolescentes', nome: 'Manancial', sub: 'Adolescentes', isSeparate: false },
         { id: 'jovens', nome: 'Embaixadores', sub: 'Jovens', isSeparate: false },
         { id: 'novos', nome: 'Discipulado', sub: 'Novos Convertidos', isSeparate: false },
@@ -1722,8 +1727,16 @@
                         <input type="number" id="pres-${grupo.id}" placeholder="0" oninput="calcularAutomatico('${grupo.id}')">
                     </div>
                     <div class="form-group">
+                        <label>% Pres</label>
+                        <div id="perc-pres-${grupo.id}" class="auto-calc">0%</div>
+                    </div>
+                    <div class="form-group">
                         <label>Faltantes</label>
                         <div id="falta-${grupo.id}" class="auto-calc">0</div>
+                    </div>
+                    <div class="form-group">
+                        <label>% Falta</label>
+                        <div id="perc-falta-${grupo.id}" class="auto-calc">0%</div>
                     </div>
                 </div>
 
@@ -1743,10 +1756,7 @@
                 </div>
 
                 <div class="form-group" style="margin-top: 10px;">
-                    <div style="display:flex; justify-content:space-between;">
-                        <label>Oferta (R$)</label>
-                        <span id="perc-${grupo.id}" class="percent-display">0% presença</span>
-                    </div>
+                    <label>Oferta (R$)</label>
                     <input type="number" id="oferta-${grupo.id}" step="0.01" placeholder="0,00">
                 </div>
             </div>`;
@@ -1764,10 +1774,12 @@
         let faltas = mat - pres;
         if(faltas < 0) faltas = 0;
         
-        const perc = mat > 0 ? (pres / mat) * 100 : 0;
+        const percPres = mat > 0 ? (pres / mat) * 100 : 0;
+        const percFalta = mat > 0 ? (faltas / mat) * 100 : 0;
         
         document.getElementById(`falta-${id}`).innerText = faltas;
-        document.getElementById(`perc-${id}`).innerText = perc.toFixed(1) + '% presença';
+        document.getElementById(`perc-pres-${id}`).innerText = percPres.toFixed(1) + '%';
+        document.getElementById(`perc-falta-${id}`).innerText = percFalta.toFixed(1) + '%';
     }
 
     // Gerar Relatório
@@ -1775,6 +1787,7 @@
         const dataEbd = document.getElementById('data-ebd').value;
         const numeroLicao = document.getElementById('numero-licao').value;
         const temaLicao = document.getElementById('tema-licao').value;
+        const professorPrincipal = document.getElementById('professor-principal').value;
         
         const data = new Date(dataEbd + 'T12:00:00');
         const dataFormatada = data.toLocaleDateString('pt-BR', { 
@@ -1788,6 +1801,9 @@
         let zapText = `*📖 RELATÓRIO EBD*\n\n📅 ${dataFormatada}\n`;
         if(numeroLicao || temaLicao) {
             zapText += `📚 Lição ${numeroLicao || ''}${temaLicao ? ': ' + temaLicao : ''}\n`;
+        }
+        if(professorPrincipal) {
+            zapText += `👨‍🏫 Professor: ${professorPrincipal}\n`;
         }
         zapText += '\n';
 
@@ -1862,6 +1878,9 @@
             textoData += '\n📖 Lição ' + (numeroLicao || '');
             if(temaLicao) textoData += ': ' + temaLicao;
         }
+        if(professorPrincipal) {
+            textoData += '\n👨‍🏫 Professor: ' + professorPrincipal;
+        }
         document.getElementById('res-data').innerText = textoData;
         document.getElementById('res-igreja').innerText = nomeIgreja ? '🏛️ ' + nomeIgreja : '';
         
@@ -1913,6 +1932,7 @@
             dataFormatada: dataFormatada,
             numeroLicao: numeroLicao,
             temaLicao: temaLicao,
+            professorPrincipal: professorPrincipal,
             totais: { tMat, tPres, tVis, tFalta, tBib, tRev, tOferta, tPerc },
             dados: dadosRelatorio
         };
@@ -2505,18 +2525,20 @@
                 if (errGrupos) throw errGrupos;
             }
             
-            // Inserir ofertas
-            const t = relatorioAtual.totais;
+            // Inserir ofertas (individuais por grupo)
             const ofertasData = [];
             
-            if (t.tOferta > 0) {
-                ofertasData.push({
-                    lancamento_id: lancamentoId,
-                    tipo: 'geral',
-                    valor: t.tOferta,
-                    observacao: null
-                });
-            }
+            grupos.forEach(grupo => {
+                const d = relatorioAtual.dados[grupo.id];
+                if (d && d.oferta > 0) {
+                    ofertasData.push({
+                        lancamento_id: lancamentoId,
+                        tipo: grupo.id,
+                        valor: d.oferta,
+                        observacao: grupo.nome
+                    });
+                }
+            });
             
             if (ofertasData.length > 0) {
                 const { error: errOfertas } = await sb
@@ -2657,6 +2679,10 @@
                 const mat = pres + aus;
                 const perc = mat > 0 ? (pres / mat) * 100 : 0;
                 
+                // Buscar oferta deste grupo
+                const ofertaGrupo = lanc.ofertas?.find(o => o.tipo === g.grupo_id);
+                const oferta = ofertaGrupo ? parseFloat(ofertaGrupo.valor || 0) : 0;
+                
                 relatorioAtual.dados[g.grupo_id] = {
                     mat,
                     pres,
@@ -2665,7 +2691,7 @@
                     perc,
                     bib: 0, // Não estamos salvando ainda
                     rev: 0, // Não estamos salvando ainda
-                    oferta: 0
+                    oferta: oferta
                 };
                 
                 relatorioAtual.totais.tMat += mat;
@@ -2674,7 +2700,7 @@
                 relatorioAtual.totais.tVis += vis;
             });
             
-            // Processar ofertas
+            // Processar ofertas (soma total)
             lanc.ofertas?.forEach(o => {
                 relatorioAtual.totais.tOferta += parseFloat(o.valor || 0);
             });
