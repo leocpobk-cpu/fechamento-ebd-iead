@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.3.4';
-        const BUILD_TIMESTAMP = '20251221140000';
+        const VERSAO_SISTEMA = '3.3.5';
+        const BUILD_TIMESTAMP = '20251221143000';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -33,9 +33,9 @@
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20251221140000"></script>
-    <script src="licoes.js?v=20251221140000"></script>
-    <script src="auth.js?v=20251221140000"></script>
+    <script src="supabase-config.js?v=20251221143000"></script>
+    <script src="licoes.js?v=20251221143000"></script>
+    <script src="auth.js?v=20251221143000"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -2581,7 +2581,7 @@
         try {
             const sb = getSupabase();
             
-            // Buscar lançamentos com grupos e ofertas
+            // Buscar lançamentos com grupos e ofertas (APENAS NÃO EXCLUÍDOS)
             const { data: lancamentos, error } = await sb
                 .from('lancamentos')
                 .select(`
@@ -2589,10 +2589,10 @@
                     data,
                     licao,
                     grupos_presenca(grupo_id, presente, ausente, visita),
-                    ofertas(valor)
+                    ofertas(valor, observacao)
                 `)
                 .eq('igreja_id', igrejaId)
-                // .is('deleted_at', null)  // TODO: Descomentar após executar add-soft-delete.sql
+                .is('deleted_at', null)
                 .order('data', { ascending: false });
             
             if (error) throw error;
@@ -2615,6 +2615,7 @@
                 });
                 
                 const tPerc = tMat > 0 ? (tPres / tMat) * 100 : 0;
+                // Somar todas as ofertas (cada grupo tem sua oferta na observacao)
                 const tOferta = lanc.ofertas?.reduce((sum, o) => sum + parseFloat(o.valor || 0), 0) || 0;
                 
                 html += `
@@ -2649,7 +2650,7 @@
                     data,
                     licao,
                     grupos_presenca(grupo_id, presente, ausente, visita),
-                    ofertas(tipo, valor)
+                    ofertas(tipo, valor, observacao)
                 `)
                 .eq('id', lancamentoId)
                 .limit(1);
@@ -2828,7 +2829,7 @@
                     deleted_at,
                     deleted_by,
                     grupos_presenca(grupo_id, presente, ausente, visita),
-                    ofertas(valor)
+                    ofertas(valor, observacao)
                 `)
                 .not('deleted_at', 'is', null)
                 .order('deleted_at', { ascending: false });
