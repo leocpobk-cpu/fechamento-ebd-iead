@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.3.3';
-        const BUILD_TIMESTAMP = '20251221133000';
+        const VERSAO_SISTEMA = '3.3.4';
+        const BUILD_TIMESTAMP = '20251221140000';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -33,9 +33,9 @@
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20251221133000"></script>
-    <script src="licoes.js?v=20251221133000"></script>
-    <script src="auth.js?v=20251221133000"></script>
+    <script src="supabase-config.js?v=20251221140000"></script>
+    <script src="licoes.js?v=20251221140000"></script>
+    <script src="auth.js?v=20251221140000"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -2581,7 +2581,7 @@
         try {
             const sb = getSupabase();
             
-            // Buscar lançamentos com grupos e ofertas (APENAS NÃO EXCLUÍDOS)
+            // Buscar lançamentos com grupos e ofertas
             const { data: lancamentos, error } = await sb
                 .from('lancamentos')
                 .select(`
@@ -2592,7 +2592,7 @@
                     ofertas(valor)
                 `)
                 .eq('igreja_id', igrejaId)
-                .is('deleted_at', null)  // Apenas não excluídos
+                // .is('deleted_at', null)  // TODO: Descomentar após executar add-soft-delete.sql
                 .order('data', { ascending: false });
             
             if (error) throw error;
