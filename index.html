@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.3.6';
-        const BUILD_TIMESTAMP = '20251221144500';
+        const VERSAO_SISTEMA = '3.3.7';
+        const BUILD_TIMESTAMP = '20251221145500';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -33,9 +33,9 @@
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20251221144500"></script>
-    <script src="licoes.js?v=20251221144500"></script>
-    <script src="auth.js?v=20251221144500"></script>
+    <script src="supabase-config.js?v=20251221145500"></script>
+    <script src="licoes.js?v=20251221145500"></script>
+    <script src="auth.js?v=20251221145500"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -1853,7 +1853,7 @@
                 if(oferta > 0) dadosOfertas.push({ nome: grupo.nome, oferta: oferta });
 
                 zapText += `*${grupo.nome}*\n`;
-                zapText += `👥 Mat: ${mat} | Pres: ${pres} (${perc.toFixed(0)}%) | Falta: ${faltas}\n`;
+                zapText += `👥 Mat: ${mat} | Pres: ${pres} (${percPres.toFixed(0)}%) | Falta: ${faltas}\n`;
                 zapText += `🆕 Vis: ${vis} | 📖 Bíb: ${bib} | 📘 Rev: ${rev}\n`;
                 zapText += `💰 Oferta: ${formatarMoeda(oferta)}\n\n`;
             }
