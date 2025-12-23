@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.3.7';
-        const BUILD_TIMESTAMP = '20251221145500';
+        const VERSAO_SISTEMA = '3.3.8';
+        const BUILD_TIMESTAMP = '20251223150000';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -33,9 +33,9 @@
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20251221145500"></script>
-    <script src="licoes.js?v=20251221145500"></script>
-    <script src="auth.js?v=20251221145500"></script>
+    <script src="supabase-config.js?v=20251223150000"></script>
+    <script src="licoes.js?v=20251223150000"></script>
+    <script src="auth.js?v=20251223150000"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -1312,6 +1312,7 @@
                             <th>% Pres</th>
                             <th>Falta</th>
                             <th>% Falta</th>
+                            <th>Visit</th>
                             <th>Bíb</th>
                             <th>Rev</th>
                             <th>Oferta</th>
@@ -1844,6 +1845,9 @@
 
             if (grupo.isSeparate) {
                 htmlProf += tr;
+                // Somar também nos totais gerais
+                tBib += bib; 
+                tRev += rev;
             } else {
                 tMat += mat; tPres += pres; tVis += vis; tFalta += faltas; 
                 tBib += bib; tRev += rev; tOferta += oferta;
@@ -2648,6 +2652,8 @@
                     id,
                     data,
                     licao,
+                    tema,
+                    professor,
                     grupos_presenca(grupo_id, presente, ausente, visita),
                     ofertas(tipo, valor, observacao)
                 `)
@@ -2667,6 +2673,8 @@
                 data: lanc.data,
                 dataFormatada: new Date(lanc.data + 'T00:00:00').toLocaleDateString('pt-BR'),
                 numeroLicao: lanc.licao,
+                temaLicao: lanc.tema,
+                professorPrincipal: lanc.professor,
                 dados: {},
                 totais: {
                     tMat: 0,
@@ -2726,8 +2734,12 @@
             // Renderizar relatório
             const t = relatorioAtual.totais;
             let textoData = '📅 ' + relatorioAtual.dataFormatada;
-            if(relatorioAtual.numeroLicao) {
-                textoData += '\\n📖 Lição ' + relatorioAtual.numeroLicao;
+            if(relatorioAtual.numeroLicao || relatorioAtual.temaLicao) {
+                textoData += '\n📖 Lição ' + (relatorioAtual.numeroLicao || '');
+                if(relatorioAtual.temaLicao) textoData += ': ' + relatorioAtual.temaLicao;
+            }
+            if(relatorioAtual.professorPrincipal) {
+                textoData += '\n👨‍🏫 Professor: ' + relatorioAtual.professorPrincipal;
             }
             document.getElementById('res-data').innerText = textoData;
             document.getElementById('res-oferta-total').innerText = formatarMoeda(t.tOferta);
