@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.4.0';
-        const BUILD_TIMESTAMP = '20251224120000';
+        const VERSAO_SISTEMA = '3.4.1';
+        const BUILD_TIMESTAMP = '20251224123000';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -33,9 +33,9 @@
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20251224120000"></script>
-    <script src="licoes.js?v=20251224120000"></script>
-    <script src="auth.js?v=20251224120000"></script>
+    <script src="supabase-config.js?v=20251224123000"></script>
+    <script src="licoes.js?v=20251224123000"></script>
+    <script src="auth.js?v=20251224123000"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -2545,7 +2545,9 @@
                         grupo_id: grupo.id,
                         presente: d.pres || 0,
                         ausente: d.faltas || 0,
-                        visita: d.vis || 0
+                        visita: d.vis || 0,
+                        biblias: d.bib || 0,
+                        revistas: d.rev || 0
                     });
                 }
             });
@@ -2672,7 +2674,7 @@
                     licao,
                     tema,
                     professor,
-                    grupos_presenca(grupo_id, presente, ausente, visita),
+                    grupos_presenca(grupo_id, presente, ausente, visita, biblias, revistas),
                     ofertas(tipo, valor, observacao)
                 `)
                 .eq('id', lancamentoId)
@@ -2714,6 +2716,8 @@
                 const pres = g.presente || 0;
                 const aus = g.ausente || 0;
                 const vis = g.visita || 0;
+                const bib = g.biblias || 0;
+                const rev = g.revistas || 0;
                 const mat = pres + aus;
                 const perc = mat > 0 ? (pres / mat) * 100 : 0;
                 
@@ -2729,15 +2733,20 @@
                     faltas: aus,
                     vis,
                     perc,
-                    bib: 0, // Não estamos salvando ainda
-                    rev: 0, // Não estamos salvando ainda
+                    bib: bib,
+                    rev: rev,
                     oferta: oferta
                 };
                 
-                relatorioAtual.totais.tMat += mat;
-                relatorioAtual.totais.tPres += pres;
-                relatorioAtual.totais.tFalta += aus;
-                relatorioAtual.totais.tVis += vis;
+                // Somar nos totais apenas se NÃO for grupo de professores
+                if (!grupo.isSeparate) {
+                    relatorioAtual.totais.tMat += mat;
+                    relatorioAtual.totais.tPres += pres;
+                    relatorioAtual.totais.tFalta += aus;
+                    relatorioAtual.totais.tVis += vis;
+                    relatorioAtual.totais.tBib += bib;
+                    relatorioAtual.totais.tRev += rev;
+                }
             });
             
             // Processar ofertas (soma total)
