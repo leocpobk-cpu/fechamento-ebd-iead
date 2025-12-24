@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.3.8';
-        const BUILD_TIMESTAMP = '20251223150000';
+        const VERSAO_SISTEMA = '3.4.0';
+        const BUILD_TIMESTAMP = '20251224120000';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -33,9 +33,9 @@
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20251223150000"></script>
-    <script src="licoes.js?v=20251223150000"></script>
-    <script src="auth.js?v=20251223150000"></script>
+    <script src="supabase-config.js?v=20251224120000"></script>
+    <script src="licoes.js?v=20251224120000"></script>
+    <script src="auth.js?v=20251224120000"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -1277,6 +1277,17 @@
             </div>
         </div>
 
+        <div class="rankings-container">
+            <div class="ranking-box">
+                <div class="ranking-title">🏆 Ranking de Presença</div>
+                <div id="ranking-presenca"></div>
+            </div>
+            <div class="ranking-box">
+                <div class="ranking-title">💰 Ranking de Ofertas</div>
+                <div id="ranking-ofertas"></div>
+            </div>
+        </div>
+
         <div class="card">
             <h3 style="margin-bottom: 15px; font-size: 1rem;">Detalhamento por Classe</h3>
             <div class="table-wrapper">
@@ -1288,7 +1299,6 @@
                             <th>Pres</th>
                             <th>% Pres</th>
                             <th>Falta</th>
-                            <th>% Falta</th>
                             <th>Visit</th>
                             <th>Bíb</th>
                             <th>Rev</th>
@@ -1296,6 +1306,19 @@
                         </tr>
                     </thead>
                     <tbody id="tabela-corpo"></tbody>
+                    <tfoot>
+                        <tr style="background: #f3f4f6; font-weight: bold;">
+                            <td>TOTAL</td>
+                            <td id="total-mat">0</td>
+                            <td id="total-pres">0</td>
+                            <td id="total-perc" style="color:blue;">0%</td>
+                            <td id="total-falta">0</td>
+                            <td id="total-vis">0</td>
+                            <td id="total-bib">0</td>
+                            <td id="total-rev">0</td>
+                            <td id="total-oferta">R$ 0,00</td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         </div>
@@ -1311,7 +1334,6 @@
                             <th>Pres</th>
                             <th>% Pres</th>
                             <th>Falta</th>
-                            <th>% Falta</th>
                             <th>Visit</th>
                             <th>Bíb</th>
                             <th>Rev</th>
@@ -1323,17 +1345,6 @@
             </div>
             <div style="font-size: 0.7rem; margin-top: 8px; text-align: center; color: #666;">
                 * Não contabilizado nos totais gerais acima.
-            </div>
-        </div>
-
-        <div class="rankings-container">
-            <div class="ranking-box">
-                <div class="ranking-title">🏆 Ranking de Presença</div>
-                <div id="ranking-presenca"></div>
-            </div>
-            <div class="ranking-box">
-                <div class="ranking-title">💰 Ranking de Ofertas</div>
-                <div id="ranking-ofertas"></div>
             </div>
         </div>
 
@@ -1836,7 +1847,6 @@
                 <td>${pres}</td>
                 <td style="color:blue;font-weight:bold">${percPres.toFixed(1)}%</td>
                 <td style="color:red;font-weight:bold">${faltas}</td>
-                <td style="color:red;font-weight:bold">${percFalta.toFixed(1)}%</td>
                 <td>${vis || '-'}</td>
                 <td>${bib}</td>
                 <td>${rev}</td>
@@ -1845,9 +1855,7 @@
 
             if (grupo.isSeparate) {
                 htmlProf += tr;
-                // Somar também nos totais gerais
-                tBib += bib; 
-                tRev += rev;
+                // Professores NÃO somam nos totais gerais (KPIs)
             } else {
                 tMat += mat; tPres += pres; tVis += vis; tFalta += faltas; 
                 tBib += bib; tRev += rev; tOferta += oferta;
@@ -1906,6 +1914,16 @@
         
         document.getElementById('tabela-corpo').innerHTML = htmlGeral;
         document.getElementById('tabela-professores').innerHTML = htmlProf;
+
+        // Preencher linha de totais na tabela
+        document.getElementById('total-mat').innerText = tMat;
+        document.getElementById('total-pres').innerText = tPres;
+        document.getElementById('total-perc').innerText = tPerc.toFixed(1) + '%';
+        document.getElementById('total-falta').innerText = tFalta;
+        document.getElementById('total-vis').innerText = tVis;
+        document.getElementById('total-bib').innerText = tBib;
+        document.getElementById('total-rev').innerText = tRev;
+        document.getElementById('total-oferta').innerText = formatarMoeda(tOferta);
 
         gerarRankings(dadosPresenca, dadosOfertas);
 
@@ -2768,7 +2786,6 @@
                     <td>${d.pres}</td>
                     <td style=\"color:blue;font-weight:bold\">${d.perc.toFixed(1)}%</td>
                     <td style=\"color:red;font-weight:bold\">${d.faltas}</td>
-                    <td style=\"color:red;font-weight:bold\">${percFalta.toFixed(1)}%</td>
                     <td>${d.vis || '-'}</td>
                     <td>${d.bib}</td>
                     <td>${d.rev}</td>
@@ -2786,6 +2803,17 @@
             
             document.getElementById('tabela-corpo').innerHTML = htmlGeral;
             document.getElementById('tabela-professores').innerHTML = htmlProf;
+            
+            // Preencher linha de totais na tabela
+            document.getElementById('total-mat').innerText = t.tMat;
+            document.getElementById('total-pres').innerText = t.tPres;
+            document.getElementById('total-perc').innerText = t.tPerc.toFixed(1) + '%';
+            document.getElementById('total-falta').innerText = t.tFalta;
+            document.getElementById('total-vis').innerText = t.tVis;
+            document.getElementById('total-bib').innerText = t.tBib;
+            document.getElementById('total-rev').innerText = t.tRev;
+            document.getElementById('total-oferta').innerText = formatarMoeda(t.tOferta);
+            
             gerarRankings(dadosPresenca, dadosOfertas);
             
             mudarTela('relatorio');
