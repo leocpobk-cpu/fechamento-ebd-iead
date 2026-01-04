@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.4.1';
-        const BUILD_TIMESTAMP = '20251224123000';
+        const VERSAO_SISTEMA = '3.4.2';
+        const BUILD_TIMESTAMP = '20260104120000';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -33,9 +33,9 @@
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=20251224123000"></script>
-    <script src="licoes.js?v=20251224123000"></script>
-    <script src="auth.js?v=20251224123000"></script>
+    <script src="supabase-config.js?v=20260104120000"></script>
+    <script src="licoes.js?v=20260104120000"></script>
+    <script src="auth.js?v=20260104120000"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -2612,7 +2612,7 @@
                     id,
                     data,
                     licao,
-                    grupos_presenca(grupo_id, presente, ausente, visita),
+                    grupos_presenca(grupo_id, presente, ausente, visita, biblias, revistas),
                     ofertas(valor, observacao)
                 `)
                 .eq('igreja_id', igrejaId)
