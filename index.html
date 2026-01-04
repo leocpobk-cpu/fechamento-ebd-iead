@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.4.5';
-        const BUILD_TIMESTAMP = '20260104132000';
+        const VERSAO_SISTEMA = '3.4.6';
+        const BUILD_TIMESTAMP = '20260104133000';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -2613,7 +2613,7 @@
                     licao,
                     igreja_id,
                     deleted_at,
-                    grupos_presenca(grupo_id, presente, ausente, visita, biblias, revistas),
+                    grupos_presenca(grupo_id, presente, ausente, visita),
                     ofertas(valor, observacao)
                 `)
                 .is('deleted_at', null);
