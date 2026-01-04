@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.4.2';
-        const BUILD_TIMESTAMP = '20260104120000';
+        const VERSAO_SISTEMA = '3.4.5';
+        const BUILD_TIMESTAMP = '20260104132000';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -2596,33 +2596,59 @@
     async function carregarHistorico() {
         const container = document.getElementById('lista-historico');
         const igrejaId = getIgrejaUsuarioLogado();
+        const usuarioLogado = getUsuarioLogado();
         
-        if (!igrejaId) {
-            container.innerHTML = '<p style="text-align:center;color:#999;margin-top:50px;">Igreja não identificada.</p>';
-            return;
-        }
+        console.log('🔍 Carregando histórico - Igreja ID:', igrejaId);
+        console.log('👤 Usuário:', usuarioLogado?.nome, '| Nível:', usuarioLogado?.nivel);
         
         try {
             const sb = getSupabase();
             
-            // Buscar lançamentos com grupos e ofertas
-            const { data: lancamentos, error } = await sb
+            // Construir query base
+            let query = sb
                 .from('lancamentos')
                 .select(`
                     id,
                     data,
                     licao,
+                    igreja_id,
+                    deleted_at,
                     grupos_presenca(grupo_id, presente, ausente, visita, biblias, revistas),
                     ofertas(valor, observacao)
                 `)
-                .eq('igreja_id', igrejaId)
-                .order('data', { ascending: false });
+                .is('deleted_at', null);
             
+            // Se não é admin OU se admin selecionou uma igreja específica
+            if (igrejaId) {
+                query = query.eq('igreja_id', igrejaId);
+                console.log('🔍 Filtrando por igreja:', igrejaId);
+            } else if (usuarioLogado?.nivel !== 1) {
+                // Usuário comum sem igreja - não deveria acontecer
+                container.innerHTML = '<p style="text-align:center;color:#999;margin-top:50px;">Igreja não identificada.</p>';
+                return;
+            } else {
+                console.log('👑 Admin visualizando TODAS as igrejas');
+            }
+            
+            // Buscar lançamentos
+            const { data: lancamentos, error } = await query.order('data', { ascending: false });
+            
+            console.log('📊 Lançamentos encontrados:', lancamentos?.length || 0);
+            if (error) console.error('❌ Erro na query:', error);
             if (error) throw error;
             
             if (!lancamentos || lancamentos.length === 0) {
                 container.innerHTML = '<p style="text-align:center;color:#999;margin-top:50px;">Nenhum relatório salvo ainda.</p>';
                 return;
+            }
+
+            // Se admin vendo todas, buscar nomes das igrejas
+            let igrejas = {};
+            if (!igrejaId && usuarioLogado?.nivel === 1) {
+                const { data: igrejasData } = await sb.from('igrejas').select('id, nome');
+                if (igrejasData) {
+                    igrejasData.forEach(i => igrejas[i.id] = i.nome);
+                }
             }
 
             let html = '';
@@ -2641,9 +2667,13 @@
                 // Somar todas as ofertas (cada grupo tem sua oferta na observacao)
                 const tOferta = lanc.ofertas?.reduce((sum, o) => sum + parseFloat(o.valor || 0), 0) || 0;
                 
+                // Nome da igreja (se admin vendo todas)
+                const nomeIgreja = igrejas[lanc.igreja_id] || '';
+                
                 html += `
                 <div class="history-item">
                     <div class="history-date">${dataFormatada}</div>
+                    ${nomeIgreja ? `<div class="history-stats" style="color: #3b82f6;">⛪ ${nomeIgreja}</div>` : ''}
                     ${lanc.licao ? `<div class="history-stats">📖 Lição ${lanc.licao}</div>` : ''}
                     <div class="history-stats">
                         💰 ${formatarMoeda(tOferta)} | 📊 ${tPerc.toFixed(1)}% presença | 👥 ${tPres}/${tMat}
@@ -2657,7 +2687,14 @@
             container.innerHTML = html;
         } catch (error) {
             console.error('❌ Erro ao carregar histórico:', error);
-            container.innerHTML = '<p style="text-align:center;color:#f44;margin-top:50px;">Erro ao carregar histórico.</p>';
+            console.error('❌ Detalhes do erro:', error.message, error.details);
+            container.innerHTML = `
+                <p style="text-align:center;color:#f44;margin-top:30px;font-weight:bold;">Erro ao carregar histórico.</p>
+                <p style="text-align:center;color:#666;margin-top:10px;font-size:0.9rem;">${error.message || 'Erro desconhecido'}</p>
+                <p style="text-align:center;margin-top:15px;">
+                    <button class="btn btn-primary" onclick="carregarHistorico()" style="padding:10px 20px;">🔄 Tentar Novamente</button>
+                </p>
+            `;
         }
     }
 
