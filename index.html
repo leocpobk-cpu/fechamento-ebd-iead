@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.4.7';
-        const BUILD_TIMESTAMP = '20260104134000';
+        const VERSAO_SISTEMA = '3.4.8';
+        const BUILD_TIMESTAMP = '20260110140000';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -1651,7 +1651,12 @@
                 .is('igreja_id', null)  // Buscar apenas lições globais
                 .order('data', { ascending: true });
             
-            if (error) throw error;
+            if (error) {
+                console.error('❌ Erro ao buscar lições:', error);
+                throw error;
+            }
+            
+            console.log('📚 Lições carregadas do Supabase:', data?.length || 0);
             return data || [];
         } catch (error) {
             console.error('❌ Erro ao buscar lições:', error);
@@ -1662,16 +1667,21 @@
     // Buscar lição por data selecionada
     async function buscarLicaoPorData() {
         const dataSelecionada = document.getElementById('data-ebd').value;
+        console.log('🔍 Buscando lição para data:', dataSelecionada);
+        
         const licoes = await getLicoes();
+        console.log('📖 Lições disponíveis:', licoes.map(l => `${l.data} - Lição ${l.licao}`));
         
         const licaoEncontrada = licoes.find(l => l.data === dataSelecionada);
         
         if(licaoEncontrada) {
+            console.log('✅ Lição encontrada:', licaoEncontrada);
             document.getElementById('numero-licao').value = licaoEncontrada.licao;
             document.getElementById('tema-licao').value = licaoEncontrada.tema;
             document.getElementById('licao-hint').innerHTML = `✅ Lição ${licaoEncontrada.licao} encontrada automaticamente!`;
             document.getElementById('licao-hint').style.color = '#10b981';
         } else {
+            console.log('⚠️ Nenhuma lição encontrada para a data:', dataSelecionada);
             document.getElementById('licao-hint').innerHTML = 'Nenhuma lição cadastrada para este domingo';
             document.getElementById('licao-hint').style.color = '#f59e0b';
         }
