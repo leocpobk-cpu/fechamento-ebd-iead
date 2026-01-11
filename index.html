@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.4.9';
-        const BUILD_TIMESTAMP = '20260110141000';
+        const VERSAO_SISTEMA = '3.5.0';
+        const BUILD_TIMESTAMP = '20260110142000';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -1561,7 +1561,7 @@
     }
 
     // Gerar lista de domingos
-    function gerarDomingos() {
+    async function gerarDomingos() {
         const select = document.getElementById('data-ebd');
         if (!select) {
             console.error('❌ Select data-ebd não encontrado');
@@ -1573,31 +1573,70 @@
         
         const hoje = new Date();
         
-        let dataRef = new Date(hoje);
+        // Buscar lições para definir o range de datas
+        const licoes = await getLicoes();
+        
+        let dataInicio, dataFim;
+        
+        if (licoes && licoes.length > 0) {
+            // Se há lições, usar a data mais antiga e mais recente
+            const datas = licoes.map(l => new Date(l.data + 'T00:00:00'));
+            dataInicio = new Date(Math.min(...datas));
+            dataFim = new Date(Math.max(...datas));
+            
+            // Adicionar 4 semanas antes da primeira lição e 4 semanas depois da última
+            dataInicio.setDate(dataInicio.getDate() - 28);
+            dataFim.setDate(dataFim.getDate() + 28);
+        } else {
+            // Se não há lições, gerar 12 semanas (3 meses) a partir de hoje
+            dataInicio = new Date(hoje);
+            dataInicio.setDate(dataInicio.getDate() - 28); // 4 semanas atrás
+            dataFim = new Date(hoje);
+            dataFim.setDate(dataFim.getDate() + 84); // 12 semanas à frente
+        }
+        
+        // Encontrar o primeiro domingo antes ou igual a dataInicio
+        let dataRef = new Date(dataInicio);
         while(dataRef.getDay() !== 0) {
             dataRef.setDate(dataRef.getDate() - 1);
         }
         
         console.log('📅 Gerando lista de domingos...');
         
-        for(let i = -4; i <= 3; i++) {
-            const domingo = new Date(dataRef);
-            domingo.setDate(dataRef.getDate() + (i * 7));
-            
-            const dataFormatada = domingo.toLocaleDateString('pt-BR', { 
+        let domingoAtual = new Date(dataRef);
+        let domingoMaisProximo = null;
+        let menorDiferenca = Infinity;
+        
+        // Gerar todos os domingos entre dataInicio e dataFim
+        while (domingoAtual <= dataFim) {
+            const dataFormatada = domingoAtual.toLocaleDateString('pt-BR', { 
                 day: '2-digit', month: '2-digit', year: 'numeric'
             });
             
             const option = document.createElement('option');
-            option.value = domingo.toISOString().split('T')[0];
+            option.value = domingoAtual.toISOString().split('T')[0];
             option.textContent = dataFormatada;
             
-            if(i === 0) option.selected = true;
+            // Encontrar o domingo mais próximo de hoje
+            const diferenca = Math.abs(domingoAtual - hoje);
+            if (diferenca < menorDiferenca) {
+                menorDiferenca = diferenca;
+                domingoMaisProximo = option;
+            }
             
             select.appendChild(option);
+            
+            // Avançar para o próximo domingo
+            domingoAtual.setDate(domingoAtual.getDate() + 7);
+        }
+        
+        // Selecionar o domingo mais próximo de hoje
+        if (domingoMaisProximo) {
+            domingoMaisProximo.selected = true;
         }
         
         console.log('✅ Domingos gerados:', select.options.length, 'opções');
+    }
         
         // Adicionar evento de mudança para buscar lição automaticamente
         select.addEventListener('change', buscarLicaoPorData);

@@ -1773,8 +1773,7 @@ function inicializarSistemaAposLogin() {
     try {
         // 1. Gerar lista de domingos
         if (typeof gerarDomingos === 'function') {
-            gerarDomingos();
-            console.log('✅ Domingos gerados');
+            gerarDomingos().then(() => console.log('✅ Domingos gerados'));
         }
         
         // 2. Gerar formulário de grupos
