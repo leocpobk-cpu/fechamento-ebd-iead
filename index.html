@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.5.1';
-        const BUILD_TIMESTAMP = '20260110143000';
+        const VERSAO_SISTEMA = '3.5.2';
+        const BUILD_TIMESTAMP = '20260110144000';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -2610,9 +2610,7 @@
                         grupo_id: grupo.id,
                         presente: d.pres || 0,
                         ausente: d.faltas || 0,
-                        visita: d.vis || 0,
-                        biblias: d.bib || 0,
-                        revistas: d.rev || 0
+                        visita: d.vis || 0
                     });
                 }
             });
