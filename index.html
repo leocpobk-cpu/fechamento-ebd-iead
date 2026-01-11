@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.5.0';
-        const BUILD_TIMESTAMP = '20260110142000';
+        const VERSAO_SISTEMA = '3.5.1';
+        const BUILD_TIMESTAMP = '20260110143000';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -1636,7 +1636,6 @@
         }
         
         console.log('✅ Domingos gerados:', select.options.length, 'opções');
-    }
         
         // Adicionar evento de mudança para buscar lição automaticamente
         select.addEventListener('change', buscarLicaoPorData);
