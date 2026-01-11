@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.4.8';
-        const BUILD_TIMESTAMP = '20260110140000';
+        const VERSAO_SISTEMA = '3.4.9';
+        const BUILD_TIMESTAMP = '20260110141000';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -1672,7 +1672,24 @@
         const licoes = await getLicoes();
         console.log('📖 Lições disponíveis:', licoes.map(l => `${l.data} - Lição ${l.licao}`));
         
-        const licaoEncontrada = licoes.find(l => l.data === dataSelecionada);
+        // Buscar exatamente pela data
+        let licaoEncontrada = licoes.find(l => l.data === dataSelecionada);
+        
+        // Se não encontrar, buscar pela data mais próxima (até 3 dias de diferença)
+        if (!licaoEncontrada) {
+            const dataSel = new Date(dataSelecionada + 'T00:00:00');
+            let menorDiferenca = Infinity;
+            
+            licoes.forEach(licao => {
+                const dataLicao = new Date(licao.data + 'T00:00:00');
+                const diferenca = Math.abs(dataSel - dataLicao) / (1000 * 60 * 60 * 24); // dias
+                
+                if (diferenca <= 3 && diferenca < menorDiferenca) {
+                    menorDiferenca = diferenca;
+                    licaoEncontrada = licao;
+                }
+            });
+        }
         
         if(licaoEncontrada) {
             console.log('✅ Lição encontrada:', licaoEncontrada);
