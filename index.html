@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.6.0';
-        const BUILD_TIMESTAMP = '20260112150000';
+        const VERSAO_SISTEMA = '3.6.1';
+        const BUILD_TIMESTAMP = '20260112151000';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -1792,15 +1792,15 @@
                 <thead>
                     <tr style="background: var(--primary); color: white; position: sticky; top: 0;">
                         <th style="padding: 12px 8px; text-align: left; min-width: 150px;">Classe</th>
-                        <th style="padding: 12px 8px; text-align: center; width: 80px;">Mat</th>
-                        <th style="padding: 12px 8px; text-align: center; width: 80px;">Pres</th>
-                        <th style="padding: 12px 8px; text-align: center; width: 70px;">% Pres</th>
-                        <th style="padding: 12px 8px; text-align: center; width: 70px;">Falta</th>
-                        <th style="padding: 12px 8px; text-align: center; width: 70px;">% Falta</th>
-                        <th style="padding: 12px 8px; text-align: center; width: 70px;">Visit</th>
-                        <th style="padding: 12px 8px; text-align: center; width: 70px;">Bíblias</th>
-                        <th style="padding: 12px 8px; text-align: center; width: 70px;">Revistas</th>
-                        <th style="padding: 12px 8px; text-align: center; width: 100px;">Oferta (R$)</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 90px;">Mat</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 90px;">Pres</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 80px;">% Pres</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 80px;">Falta</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 80px;">% Falta</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 90px;">Visit</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 90px;">Bíblias</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 90px;">Revistas</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 120px;">Oferta (R$)</th>
                     </tr>
                 </thead>
                 <tbody>`;
@@ -1817,38 +1817,38 @@
                         </td>
                         <td style="padding: 4px; background: ${bgColor};">
                             <input type="number" id="mat-${grupo.id}" placeholder="0" 
-                                   style="width: 100%; padding: 6px; text-align: center; border: 1px solid var(--border); border-radius: 4px;"
+                                   style="width: 100%; padding: 8px; text-align: center; border: 1px solid var(--border); border-radius: 4px; font-size: 1rem; min-width: 60px;"
                                    oninput="calcularAutomatico('${grupo.id}')">
                         </td>
                         <td style="padding: 4px; background: ${bgColor};">
                             <input type="number" id="pres-${grupo.id}" placeholder="0" 
-                                   style="width: 100%; padding: 6px; text-align: center; border: 1px solid var(--border); border-radius: 4px;"
+                                   style="width: 100%; padding: 8px; text-align: center; border: 1px solid var(--border); border-radius: 4px; font-size: 1rem; min-width: 60px;"
                                    oninput="calcularAutomatico('${grupo.id}')">
                         </td>
                         <td style="padding: 4px; text-align: center; background: ${bgColor};">
-                            <div id="perc-pres-${grupo.id}" style="font-weight: 600; color: var(--primary);">0%</div>
+                            <div id="perc-pres-${grupo.id}" style="font-weight: 600; color: var(--primary); font-size: 0.95rem;">0%</div>
                         </td>
                         <td style="padding: 4px; text-align: center; background: ${bgColor};">
-                            <div id="falta-${grupo.id}" style="font-weight: 600; color: var(--danger);">0</div>
+                            <div id="falta-${grupo.id}" style="font-weight: 600; color: var(--danger); font-size: 0.95rem;">0</div>
                         </td>
                         <td style="padding: 4px; text-align: center; background: ${bgColor};">
-                            <div id="perc-falta-${grupo.id}" style="font-weight: 600; color: var(--danger);">0%</div>
+                            <div id="perc-falta-${grupo.id}" style="font-weight: 600; color: var(--danger); font-size: 0.95rem;">0%</div>
                         </td>
                         <td style="padding: 4px; background: ${bgColor};">
                             <input type="number" id="vis-${grupo.id}" placeholder="0" 
-                                   style="width: 100%; padding: 6px; text-align: center; border: 1px solid var(--border); border-radius: 4px;">
+                                   style="width: 100%; padding: 8px; text-align: center; border: 1px solid var(--border); border-radius: 4px; font-size: 1rem; min-width: 60px;">
                         </td>
                         <td style="padding: 4px; background: ${bgColor};">
                             <input type="number" id="bib-${grupo.id}" placeholder="0" 
-                                   style="width: 100%; padding: 6px; text-align: center; border: 1px solid var(--border); border-radius: 4px;">
+                                   style="width: 100%; padding: 8px; text-align: center; border: 1px solid var(--border); border-radius: 4px; font-size: 1rem; min-width: 60px;">
                         </td>
                         <td style="padding: 4px; background: ${bgColor};">
                             <input type="number" id="rev-${grupo.id}" placeholder="0" 
-                                   style="width: 100%; padding: 6px; text-align: center; border: 1px solid var(--border); border-radius: 4px;">
+                                   style="width: 100%; padding: 8px; text-align: center; border: 1px solid var(--border); border-radius: 4px; font-size: 1rem; min-width: 60px;">
                         </td>
                         <td style="padding: 4px; background: ${bgColor};">
                             <input type="number" id="oferta-${grupo.id}" step="0.01" placeholder="0,00" 
-                                   style="width: 100%; padding: 6px; text-align: center; border: 1px solid var(--border); border-radius: 4px;">
+                                   style="width: 100%; padding: 8px; text-align: center; border: 1px solid var(--border); border-radius: 4px; font-size: 1rem; min-width: 80px;">
                         </td>
                     </tr>`;
         });
