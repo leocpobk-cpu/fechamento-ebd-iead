@@ -2625,7 +2625,9 @@
                         grupo_id: grupo.id,
                         presente: d.pres || 0,
                         ausente: d.faltas || 0,
-                        visita: d.vis || 0
+                        visita: d.vis || 0,
+                        biblias: d.bib || 0,
+                        revistas: d.rev || 0
                     });
                 }
             });
@@ -2691,7 +2693,7 @@
                     licao,
                     igreja_id,
                     deleted_at,
-                    grupos_presenca(grupo_id, presente, ausente, visita),
+                    grupos_presenca(grupo_id, presente, ausente, visita, biblias, revistas),
                     ofertas(valor, observacao)
                 `)
                 .is('deleted_at', null);
@@ -2789,7 +2791,7 @@
                     licao,
                     tema,
                     professor,
-                    grupos_presenca(grupo_id, presente, ausente, visita),
+                    grupos_presenca(grupo_id, presente, ausente, visita, biblias, revistas),
                     ofertas(tipo, valor, observacao)
                 `)
                 .eq('id', lancamentoId)
