@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.6.1';
-        const BUILD_TIMESTAMP = '20260112151000';
+        const VERSAO_SISTEMA = '3.6.2';
+        const BUILD_TIMESTAMP = '20260112152000';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -616,7 +616,7 @@
             display: none;
         }
 
-        .container { max-width: 700px; margin: 0 auto; padding: 15px; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 15px; }
 
         /* Cards */
         .card {
@@ -1787,19 +1787,19 @@
         
         // Layout tipo tabela/planilha
         let html = `
-        <div class="card" style="overflow-x: auto;">
+        <div class="card">
             <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
                 <thead>
-                    <tr style="background: var(--primary); color: white; position: sticky; top: 0;">
-                        <th style="padding: 12px 8px; text-align: left; min-width: 150px;">Classe</th>
-                        <th style="padding: 12px 8px; text-align: center; width: 90px;">Mat</th>
-                        <th style="padding: 12px 8px; text-align: center; width: 90px;">Pres</th>
-                        <th style="padding: 12px 8px; text-align: center; width: 80px;">% Pres</th>
-                        <th style="padding: 12px 8px; text-align: center; width: 80px;">Falta</th>
-                        <th style="padding: 12px 8px; text-align: center; width: 80px;">% Falta</th>
-                        <th style="padding: 12px 8px; text-align: center; width: 90px;">Visit</th>
-                        <th style="padding: 12px 8px; text-align: center; width: 90px;">Bíblias</th>
-                        <th style="padding: 12px 8px; text-align: center; width: 90px;">Revistas</th>
+                    <tr style="background: var(--primary); color: white;">
+                        <th style="padding: 12px 8px; text-align: left;">Classe</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 100px;">Mat</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 100px;">Pres</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 90px;">% Pres</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 90px;">Falta</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 90px;">% Falta</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 100px;">Visit</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 100px;">Bíblias</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 100px;">Revistas</th>
                         <th style="padding: 12px 8px; text-align: center; width: 120px;">Oferta (R$)</th>
                     </tr>
                 </thead>
