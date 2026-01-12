@@ -15,8 +15,8 @@
     <title>Gestão EBD - IEAD</title>
     
     <script>
-        const VERSAO_SISTEMA = '3.5.2';
-        const BUILD_TIMESTAMP = '20260110144000';
+        const VERSAO_SISTEMA = '3.6.0';
+        const BUILD_TIMESTAMP = '20260112150000';
         const versaoArmazenada = sessionStorage.getItem('versaoSistema');
         
         if (versaoArmazenada !== VERSAO_SISTEMA) {
@@ -1785,65 +1785,80 @@
         
         console.log('📝 Gerando formulário para', grupos.length, 'grupos');
         
-        grupos.forEach(grupo => {
-            const specialClass = grupo.isSeparate ? 'special-group' : '';
-            const titleNote = grupo.isSeparate ? '(Controle Separado)' : '';
+        // Layout tipo tabela/planilha
+        let html = `
+        <div class="card" style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                <thead>
+                    <tr style="background: var(--primary); color: white; position: sticky; top: 0;">
+                        <th style="padding: 12px 8px; text-align: left; min-width: 150px;">Classe</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 80px;">Mat</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 80px;">Pres</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 70px;">% Pres</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 70px;">Falta</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 70px;">% Falta</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 70px;">Visit</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 70px;">Bíblias</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 70px;">Revistas</th>
+                        <th style="padding: 12px 8px; text-align: center; width: 100px;">Oferta (R$)</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+        
+        grupos.forEach((grupo, index) => {
+            const bgColor = index % 2 === 0 ? 'var(--card-bg)' : 'var(--bg)';
+            const specialStyle = grupo.isSeparate ? 'background: #fff3cd; font-weight: 600;' : '';
             
-            const html = `
-            <div class="card ${specialClass}">
-                <div class="card-header">
-                    <div>
-                        <div class="card-title">${grupo.nome} <span style="font-size:0.7em; font-weight:normal">${titleNote}</span></div>
-                        <div class="card-subtitle">${grupo.sub}</div>
-                    </div>
-                </div>
-                
-                <div class="input-grid">
-                    <div class="form-group">
-                        <label>Matriculados</label>
-                        <input type="number" id="mat-${grupo.id}" placeholder="0" oninput="calcularAutomatico('${grupo.id}')">
-                    </div>
-                    <div class="form-group">
-                        <label>Presentes</label>
-                        <input type="number" id="pres-${grupo.id}" placeholder="0" oninput="calcularAutomatico('${grupo.id}')">
-                    </div>
-                    <div class="form-group">
-                        <label>% Pres</label>
-                        <div id="perc-pres-${grupo.id}" class="auto-calc">0%</div>
-                    </div>
-                    <div class="form-group">
-                        <label>Faltantes</label>
-                        <div id="falta-${grupo.id}" class="auto-calc">0</div>
-                    </div>
-                    <div class="form-group">
-                        <label>% Falta</label>
-                        <div id="perc-falta-${grupo.id}" class="auto-calc">0%</div>
-                    </div>
-                </div>
-
-                <div class="input-grid" style="margin-top: 10px;">
-                    <div class="form-group">
-                        <label>Visitantes</label>
-                        <input type="number" id="vis-${grupo.id}" placeholder="0">
-                    </div>
-                    <div class="form-group">
-                        <label>Bíblias</label>
-                        <input type="number" id="bib-${grupo.id}" placeholder="0">
-                    </div>
-                    <div class="form-group">
-                        <label>Revistas</label>
-                        <input type="number" id="rev-${grupo.id}" placeholder="0">
-                    </div>
-                </div>
-
-                <div class="form-group" style="margin-top: 10px;">
-                    <label>Oferta (R$)</label>
-                    <input type="number" id="oferta-${grupo.id}" step="0.01" placeholder="0,00">
-                </div>
-            </div>`;
-            container.innerHTML += html;
+            html += `
+                    <tr style="border-bottom: 1px solid var(--border); ${specialStyle}">
+                        <td style="padding: 8px; background: ${bgColor};">
+                            <div style="font-weight: 600; font-size: 0.95rem;">${grupo.nome}</div>
+                            <div style="font-size: 0.75rem; color: var(--secondary); margin-top: 2px;">${grupo.sub}</div>
+                        </td>
+                        <td style="padding: 4px; background: ${bgColor};">
+                            <input type="number" id="mat-${grupo.id}" placeholder="0" 
+                                   style="width: 100%; padding: 6px; text-align: center; border: 1px solid var(--border); border-radius: 4px;"
+                                   oninput="calcularAutomatico('${grupo.id}')">
+                        </td>
+                        <td style="padding: 4px; background: ${bgColor};">
+                            <input type="number" id="pres-${grupo.id}" placeholder="0" 
+                                   style="width: 100%; padding: 6px; text-align: center; border: 1px solid var(--border); border-radius: 4px;"
+                                   oninput="calcularAutomatico('${grupo.id}')">
+                        </td>
+                        <td style="padding: 4px; text-align: center; background: ${bgColor};">
+                            <div id="perc-pres-${grupo.id}" style="font-weight: 600; color: var(--primary);">0%</div>
+                        </td>
+                        <td style="padding: 4px; text-align: center; background: ${bgColor};">
+                            <div id="falta-${grupo.id}" style="font-weight: 600; color: var(--danger);">0</div>
+                        </td>
+                        <td style="padding: 4px; text-align: center; background: ${bgColor};">
+                            <div id="perc-falta-${grupo.id}" style="font-weight: 600; color: var(--danger);">0%</div>
+                        </td>
+                        <td style="padding: 4px; background: ${bgColor};">
+                            <input type="number" id="vis-${grupo.id}" placeholder="0" 
+                                   style="width: 100%; padding: 6px; text-align: center; border: 1px solid var(--border); border-radius: 4px;">
+                        </td>
+                        <td style="padding: 4px; background: ${bgColor};">
+                            <input type="number" id="bib-${grupo.id}" placeholder="0" 
+                                   style="width: 100%; padding: 6px; text-align: center; border: 1px solid var(--border); border-radius: 4px;">
+                        </td>
+                        <td style="padding: 4px; background: ${bgColor};">
+                            <input type="number" id="rev-${grupo.id}" placeholder="0" 
+                                   style="width: 100%; padding: 6px; text-align: center; border: 1px solid var(--border); border-radius: 4px;">
+                        </td>
+                        <td style="padding: 4px; background: ${bgColor};">
+                            <input type="number" id="oferta-${grupo.id}" step="0.01" placeholder="0,00" 
+                                   style="width: 100%; padding: 6px; text-align: center; border: 1px solid var(--border); border-radius: 4px;">
+                        </td>
+                    </tr>`;
         });
         
+        html += `
+                </tbody>
+            </table>
+        </div>`;
+        
+        container.innerHTML = html;
         console.log('✅ Formulário gerado com sucesso');
     }
 
