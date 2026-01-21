@@ -61,21 +61,53 @@ Cada push para `main` atualiza o site automaticamente em 1-2 minutos.
 └── README.md                  # Este arquivo
 ```
 
-## 💾 Dados
+## 💾 Backup e Restauração
 
-Os dados são salvos localmente no navegador (localStorage). Para fazer backup:
+### Backup Completo
 
-1. Acesse o histórico
-2. Copie os dados do console: `localStorage.getItem('historicoEBD')`
-3. Guarde em local seguro
+O sistema agora possui funcionalidade de **backup completo** de todos os dados:
+
+**Como fazer backup:**
+
+1. Faça login como administrador (Nível 1)
+2. Clique no ícone de exportar (💾) no cabeçalho
+3. Escolha a opção de backup JSON
+4. Um arquivo será baixado com todos os dados:
+   - Dados da igreja
+   - Usuários (sem senhas por segurança)
+   - Lançamentos com grupos de presença e ofertas
+   - Lições
+   - Convites
+
+**Formato do backup:** `EBD_Backup_Completo_[Nome_Igreja]_[Data].json`
+
+### Restauração de Backup
+
+**⚠️ APENAS ADMINISTRADORES podem restaurar backups**
+
+**Como restaurar:**
+
+1. Faça login como administrador (Nível 1)
+2. Clique no ícone de restaurar (📥) no cabeçalho
+3. Selecione o arquivo de backup (.json)
+4. Confirme a restauração
+5. Os dados serão adicionados ao sistema (dados existentes não são apagados)
+
+**Segurança:**
+- Dados duplicados são automaticamente ignorados
+- Senhas de usuários não são restauradas (por segurança)
+- Sistema detecta e pula registros já existentes
+
+**Recomendação:** Faça backup regularmente antes de operações importantes!
 
 ## 🔄 Atualizações
 
-**Versão Atual:** 2.0  
-**Última Atualização:** 01/12/2025
+**Versão Atual:** 3.6.2  
+**Última Atualização:** 21/01/2026
 
 ### Histórico de Versões
 
+- **v3.6.2** - Backup completo e restauração de dados
 - **v2.0** - Sistema completo com histórico e resumo mensal
 - **v1.5** - Rankings e otimização mobile
 - **v1.0** - Versão inicial com lançamento básico
