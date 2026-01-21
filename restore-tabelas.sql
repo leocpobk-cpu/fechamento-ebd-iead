@@ -27,7 +27,8 @@ ALTER TABLE convites DISABLE TRIGGER ALL;
 ALTER TABLE usuarios DISABLE TRIGGER ALL;
 ALTER TABLE igrejas DISABLE TRIGGER ALL;
 
--- Limpar dados das tabelas (ordem inversa das dependências)
+-- Limpar dados das tabelas (ordem: filhos primeiro, pais depois)
+-- Ordem correta: tabelas sem dependências primeiro, depois as que referenciam
 TRUNCATE TABLE convites CASCADE;
 TRUNCATE TABLE ofertas CASCADE;
 TRUNCATE TABLE grupos_presenca CASCADE;
@@ -71,13 +72,13 @@ SET session_replication_role = 'origin';
 -- ATUALIZAÇÃO DE SEQUÊNCIAS
 -- ============================================
 
--- Atualizar sequências para o próximo valor correto
-SELECT setval('igrejas_id_seq', (SELECT MAX(id) FROM igrejas));
-SELECT setval('usuarios_id_seq', (SELECT MAX(id) FROM usuarios));
-SELECT setval('lancamentos_id_seq', (SELECT MAX(id) FROM lancamentos));
-SELECT setval('grupos_presenca_id_seq', (SELECT MAX(id) FROM grupos_presenca));
-SELECT setval('ofertas_id_seq', (SELECT MAX(id) FROM ofertas));
-SELECT setval('licoes_id_seq', (SELECT MAX(id) FROM licoes));
+-- Atualizar sequências para o próximo valor correto (com proteção para tabelas vazias)
+SELECT setval('igrejas_id_seq', COALESCE((SELECT MAX(id) FROM igrejas), 1));
+SELECT setval('usuarios_id_seq', COALESCE((SELECT MAX(id) FROM usuarios), 1));
+SELECT setval('lancamentos_id_seq', COALESCE((SELECT MAX(id) FROM lancamentos), 1));
+SELECT setval('grupos_presenca_id_seq', COALESCE((SELECT MAX(id) FROM grupos_presenca), 1));
+SELECT setval('ofertas_id_seq', COALESCE((SELECT MAX(id) FROM ofertas), 1));
+SELECT setval('licoes_id_seq', COALESCE((SELECT MAX(id) FROM licoes), 1));
 
 -- ============================================
 -- VERIFICAÇÃO PÓS-RESTAURAÇÃO

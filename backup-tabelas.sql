@@ -72,15 +72,26 @@ FROM convites;
 -- ============================================
 
 -- Para fazer backup dos dados, use os comandos abaixo:
--- NOTA: Substitua /caminho/backup/ pelo caminho desejado
+-- 
+-- INSTRUÇÕES:
+-- 1. Crie um diretório para o backup: mkdir -p /tmp/backup_ebd
+-- 2. Substitua /tmp/backup_ebd pelo caminho desejado nos comandos abaixo
+-- 3. Execute cada comando no psql ou salve como script separado
+-- 
+-- EXEMPLO de uso no Linux/Mac:
+-- DATA=$(date +%Y%m%d_%H%M%S)
+-- mkdir -p /tmp/backup_ebd_$DATA
+-- cd /tmp/backup_ebd_$DATA
+-- 
+-- Então execute os comandos COPY abaixo:
 
--- \COPY igrejas TO '/caminho/backup/igrejas.csv' WITH (FORMAT CSV, HEADER true);
--- \COPY usuarios TO '/caminho/backup/usuarios.csv' WITH (FORMAT CSV, HEADER true);
--- \COPY lancamentos TO '/caminho/backup/lancamentos.csv' WITH (FORMAT CSV, HEADER true);
--- \COPY grupos_presenca TO '/caminho/backup/grupos_presenca.csv' WITH (FORMAT CSV, HEADER true);
--- \COPY ofertas TO '/caminho/backup/ofertas.csv' WITH (FORMAT CSV, HEADER true);
--- \COPY licoes TO '/caminho/backup/licoes.csv' WITH (FORMAT CSV, HEADER true);
--- \COPY convites TO '/caminho/backup/convites.csv' WITH (FORMAT CSV, HEADER true);
+-- \COPY igrejas TO '/tmp/backup_ebd/igrejas.csv' WITH (FORMAT CSV, HEADER true);
+-- \COPY usuarios TO '/tmp/backup_ebd/usuarios.csv' WITH (FORMAT CSV, HEADER true);
+-- \COPY lancamentos TO '/tmp/backup_ebd/lancamentos.csv' WITH (FORMAT CSV, HEADER true);
+-- \COPY grupos_presenca TO '/tmp/backup_ebd/grupos_presenca.csv' WITH (FORMAT CSV, HEADER true);
+-- \COPY ofertas TO '/tmp/backup_ebd/ofertas.csv' WITH (FORMAT CSV, HEADER true);
+-- \COPY licoes TO '/tmp/backup_ebd/licoes.csv' WITH (FORMAT CSV, HEADER true);
+-- \COPY convites TO '/tmp/backup_ebd/convites.csv' WITH (FORMAT CSV, HEADER true);
 
 -- ============================================
 -- BACKUP COMPLETO (pg_dump)

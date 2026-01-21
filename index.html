@@ -3557,6 +3557,7 @@
             }
             
             // Buscar usuários da igreja (apenas admin)
+            // NOTA DE SEGURANÇA: Campo 'senha' é propositalmente excluído do backup
             let usuarios = [];
             if (usuarioLogado?.nivel === 1) {
                 const { data: usuariosData, error: errUsers } = await sb
@@ -3579,6 +3580,10 @@
                 if (!errConvites) convites = convitesData || [];
             }
             
+            // Extrair grupos e ofertas dos lançamentos (evita duplicação de lógica)
+            const gruposPresenca = lancamentos?.flatMap(l => l.grupos_presenca || []) || [];
+            const ofertas = lancamentos?.flatMap(l => l.ofertas || []) || [];
+            
             const dados = {
                 versao: '3.6.2-Backup-Completo',
                 dataBackup: new Date().toISOString(),
@@ -3586,16 +3591,16 @@
                 igreja: igreja,
                 tabelas: {
                     lancamentos: lancamentos || [],
-                    grupos_presenca: lancamentos?.flatMap(l => l.grupos_presenca || []) || [],
-                    ofertas: lancamentos?.flatMap(l => l.ofertas || []) || [],
+                    grupos_presenca: gruposPresenca,
+                    ofertas: ofertas,
                     licoes: licoes || [],
                     usuarios: usuarios,
                     convites: convites
                 },
                 estatisticas: {
                     total_lancamentos: lancamentos?.length || 0,
-                    total_grupos_presenca: lancamentos?.flatMap(l => l.grupos_presenca || []).length || 0,
-                    total_ofertas: lancamentos?.flatMap(l => l.ofertas || []).length || 0,
+                    total_grupos_presenca: gruposPresenca.length,
+                    total_ofertas: ofertas.length,
                     total_licoes: licoes?.length || 0,
                     total_usuarios: usuarios.length,
                     total_convites: convites.length
