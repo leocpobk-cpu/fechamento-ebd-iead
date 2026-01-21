@@ -3515,6 +3515,8 @@
 
     async function backupJSON() {
         const igrejaId = getIgrejaUsuarioLogado();
+        const usuarioLogado = getUsuarioLogado();
+        
         if (!igrejaId) {
             alert('Igreja não identificada!');
             return;
@@ -3523,7 +3525,7 @@
         try {
             const sb = getSupabase();
             
-            // Buscar histórico
+            // Buscar lançamentos completos (com grupos e ofertas)
             const { data: lancamentos, error: errLanc } = await sb
                 .from('lancamentos')
                 .select('*, grupos_presenca(*), ofertas(*)')
@@ -3533,7 +3535,7 @@
             
             if (errLanc) throw errLanc;
             
-            // Buscar lições
+            // Buscar lições globais
             const { data: licoes, error: errLic } = await sb
                 .from('licoes')
                 .select('*')
@@ -3542,27 +3544,84 @@
             
             if (errLic) throw errLic;
             
+            // Buscar dados da igreja (apenas admin)
+            let igreja = null;
+            if (usuarioLogado?.nivel === 1) {
+                const { data: igrejaData, error: errIgreja } = await sb
+                    .from('igrejas')
+                    .select('*')
+                    .eq('id', igrejaId)
+                    .single();
+                
+                if (!errIgreja) igreja = igrejaData;
+            }
+            
+            // Buscar usuários da igreja (apenas admin)
+            // NOTA DE SEGURANÇA: Campo 'senha' é propositalmente excluído do backup
+            let usuarios = [];
+            if (usuarioLogado?.nivel === 1) {
+                const { data: usuariosData, error: errUsers } = await sb
+                    .from('usuarios')
+                    .select('id, usuario, nome, email, celular, nivel, igreja_id, ativo, primeiro_acesso, created_at')
+                    .eq('igreja_id', igrejaId);
+                
+                if (!errUsers) usuarios = usuariosData || [];
+            }
+            
+            // Buscar convites ativos (apenas admin)
+            let convites = [];
+            if (usuarioLogado?.nivel === 1) {
+                const { data: convitesData, error: errConvites } = await sb
+                    .from('convites')
+                    .select('*')
+                    .eq('igreja_id', igrejaId)
+                    .eq('usado', false);
+                
+                if (!errConvites) convites = convitesData || [];
+            }
+            
+            // Extrair grupos e ofertas dos lançamentos (evita duplicação de lógica)
+            const gruposPresenca = lancamentos?.flatMap(l => l.grupos_presenca || []) || [];
+            const ofertas = lancamentos?.flatMap(l => l.ofertas || []) || [];
+            
             const dados = {
-                historico: lancamentos || [],
-                licoes: licoes || [],
-                versao: '3.0-Supabase',
-                dataBackup: new Date().toISOString()
+                versao: '3.6.2-Backup-Completo',
+                dataBackup: new Date().toISOString(),
+                igreja_id: igrejaId,
+                igreja: igreja,
+                tabelas: {
+                    lancamentos: lancamentos || [],
+                    grupos_presenca: gruposPresenca,
+                    ofertas: ofertas,
+                    licoes: licoes || [],
+                    usuarios: usuarios,
+                    convites: convites
+                },
+                estatisticas: {
+                    total_lancamentos: lancamentos?.length || 0,
+                    total_grupos_presenca: gruposPresenca.length,
+                    total_ofertas: ofertas.length,
+                    total_licoes: licoes?.length || 0,
+                    total_usuarios: usuarios.length,
+                    total_convites: convites.length
+                }
             };
+            
+            const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `EBD_Backup_Completo_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            alert(`✅ Backup completo salvo!\n\n📊 Estatísticas:\n• Lançamentos: ${dados.estatisticas.total_lancamentos}\n• Grupos presença: ${dados.estatisticas.total_grupos_presenca}\n• Ofertas: ${dados.estatisticas.total_ofertas}\n• Lições: ${dados.estatisticas.total_licoes}\n• Usuários: ${dados.estatisticas.total_usuarios}\n• Convites: ${dados.estatisticas.total_convites}`);
+            
         } catch (error) {
             console.error('Erro ao gerar backup:', error);
             alert('Erro ao gerar backup. Verifique o console.');
             return;
         }
-        
-        const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `EBD_Backup_${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        
-        alert('✅ Backup JSON salvo!');
     }
 
     // Configurações
