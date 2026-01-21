@@ -1052,7 +1052,7 @@
                     <option value="">Todas as Igrejas</option>
                 </select>
                 <button class="icon-btn" id="btn-usuarios" onclick="mudarTela('usuarios')" title="Gerenciar Usuários" style="display:none;">👥</button>
-                <button class="icon-btn" id="btn-restaurar" onclick="restaurarBackup()" title="Restaurar Backup (Admin)" style="display:none;">📥</button>
+                <button class="icon-btn" id="btn-restaurar" onclick="restaurarBackup()" title="Restaurar Backup (Admin)" aria-label="Restaurar backup de dados - Acesso apenas para administradores" role="button" style="display:none;">📥</button>
                 <button class="icon-btn" onclick="exportarDados()" title="Exportar dados">💾</button>
                 <button class="icon-btn" onclick="mostrarConfig()" title="Configurações">⚙️</button>
             </div>
@@ -3706,21 +3706,10 @@
                     }
                 }
                 
-                // Restaurar usuários (sem senhas por segurança)
+                // Nota sobre usuários: não são restaurados automaticamente por segurança
+                // (senhas não estão no backup)
                 if (dados.usuarios && dados.usuarios.length > 0) {
-                    for (const usuario of dados.usuarios) {
-                        const { data: existe } = await sb
-                            .from('usuarios')
-                            .select('id')
-                            .eq('usuario', usuario.usuario)
-                            .single();
-                        
-                        if (!existe) {
-                            // Nota: senhas não são restauradas por segurança
-                            // Usuários restaurados precisarão redefinir senha
-                            stats.usuarios++;
-                        }
-                    }
+                    stats.usuarios = dados.usuarios.length;
                 }
                 
                 // Restaurar convites
@@ -3741,7 +3730,7 @@
                     }
                 }
                 
-                alert(`✅ Restauração concluída!\n\n📊 Dados restaurados:\n• ${stats.lancamentos} lançamento(s)\n• ${stats.licoes} lição(ões)\n• ${stats.usuarios} usuário(s) identificado(s)\n• ${stats.convites} convite(s)\n\nℹ️ Dados duplicados foram ignorados.\n\n🔄 Atualize a página para ver as alterações.`);
+                alert(`✅ Restauração concluída!\n\n📊 Dados restaurados:\n• ${stats.lancamentos} lançamento(s)\n• ${stats.licoes} lição(ões)\n• ${stats.convites} convite(s)\n\n👥 Usuários no backup: ${stats.usuarios}\n⚠️ Usuários não são restaurados automaticamente por segurança (sem senhas no backup).\n\nℹ️ Dados duplicados foram ignorados.\n\n🔄 Atualize a página para ver as alterações.`);
                 
                 // Recarregar dados
                 setTimeout(() => {
