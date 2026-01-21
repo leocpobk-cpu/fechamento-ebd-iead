@@ -458,6 +458,13 @@ function aplicarPermissoes(nivel) {
             console.log('🔍 Elementos disponíveis:', document.querySelectorAll('.nav-tab'));
         }
         
+        // Mostrar botão de restaurar backup (Admin apenas)
+        const btnRestaurar = document.getElementById('btn-restaurar');
+        if (btnRestaurar) {
+            btnRestaurar.style.display = 'inline-block';
+            console.log('✅ Botão restaurar backup exibido');
+        }
+        
         // Carregar lições iniciais se houver
         if (typeof carregarLicoes === 'function') {
             carregarLicoes();
