@@ -61,21 +61,36 @@ Cada push para `main` atualiza o site automaticamente em 1-2 minutos.
 └── README.md                  # Este arquivo
 ```
 
-## 💾 Dados
+## 💾 Backup de Dados
 
-Os dados são salvos localmente no navegador (localStorage). Para fazer backup:
+O sistema oferece múltiplas opções de backup para garantir a segurança dos seus dados:
 
-1. Acesse o histórico
-2. Copie os dados do console: `localStorage.getItem('historicoEBD')`
-3. Guarde em local seguro
+### Backup via Interface Web (Recomendado)
+1. Clique no ícone 💾 (Exportar dados) no topo da tela
+2. Escolha:
+   - **OK** = Exportar Excel completo (relatórios)
+   - **Cancelar** = Download JSON backup completo (todas as tabelas)
+3. O backup JSON inclui:
+   - ✅ Todos os lançamentos
+   - ✅ Grupos de presença
+   - ✅ Ofertas
+   - ✅ Lições
+   - ✅ Usuários (apenas admin)
+   - ✅ Convites (apenas admin)
+
+### Backup SQL (Administradores)
+- Use os scripts `backup-tabelas.sql` e `restore-tabelas.sql`
+- Consulte o [GUIA-BACKUP.md](GUIA-BACKUP.md) para instruções detalhadas
+- Recomendado para backups agendados e recuperação de desastres
 
 ## 🔄 Atualizações
 
-**Versão Atual:** 2.0  
-**Última Atualização:** 01/12/2025
+**Versão Atual:** 3.6.2  
+**Última Atualização:** 21/01/2026
 
 ### Histórico de Versões
 
+- **v3.6.2** - Backup completo de todas as tabelas do banco de dados
 - **v2.0** - Sistema completo com histórico e resumo mensal
 - **v1.5** - Rankings e otimização mobile
 - **v1.0** - Versão inicial com lançamento básico
