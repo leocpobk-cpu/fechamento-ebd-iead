@@ -1052,6 +1052,7 @@
                     <option value="">Todas as Igrejas</option>
                 </select>
                 <button class="icon-btn" id="btn-usuarios" onclick="mudarTela('usuarios')" title="Gerenciar Usuários" style="display:none;">👥</button>
+                <button class="icon-btn" id="btn-restaurar" onclick="restaurarBackup()" title="Restaurar Backup (Admin)" style="display:none;">📥</button>
                 <button class="icon-btn" onclick="exportarDados()" title="Exportar dados">💾</button>
                 <button class="icon-btn" onclick="mostrarConfig()" title="Configurações">⚙️</button>
             </div>
@@ -3520,10 +3521,11 @@
             return;
         }
         
+        let dados;
         try {
             const sb = getSupabase();
             
-            // Buscar histórico
+            // Buscar lançamentos com grupos e ofertas
             const { data: lancamentos, error: errLanc } = await sb
                 .from('lancamentos')
                 .select('*, grupos_presenca(*), ofertas(*)')
@@ -3533,7 +3535,7 @@
             
             if (errLanc) throw errLanc;
             
-            // Buscar lições
+            // Buscar lições (globais - sem igreja_id)
             const { data: licoes, error: errLic } = await sb
                 .from('licoes')
                 .select('*')
@@ -3542,11 +3544,40 @@
             
             if (errLic) throw errLic;
             
-            const dados = {
-                historico: lancamentos || [],
+            // Buscar dados da igreja
+            const { data: igreja, error: errIgreja } = await sb
+                .from('igrejas')
+                .select('*')
+                .eq('id', igrejaId)
+                .single();
+            
+            if (errIgreja) throw errIgreja;
+            
+            // Buscar usuários da igreja
+            const { data: usuarios, error: errUsuarios } = await sb
+                .from('usuarios')
+                .select('id, usuario, nome, email, celular, nivel, igreja_id, ativo, primeiro_acesso, created_at')
+                .eq('igreja_id', igrejaId);
+            
+            if (errUsuarios) throw errUsuarios;
+            
+            // Buscar convites da igreja
+            const { data: convites, error: errConvites } = await sb
+                .from('convites')
+                .select('*')
+                .eq('igreja_id', igrejaId);
+            
+            if (errConvites) throw errConvites;
+            
+            dados = {
+                igreja: igreja || null,
+                usuarios: usuarios || [],
+                lancamentos: lancamentos || [],
                 licoes: licoes || [],
-                versao: '3.0-Supabase',
-                dataBackup: new Date().toISOString()
+                convites: convites || [],
+                versao: '3.6.2-Completo',
+                dataBackup: new Date().toISOString(),
+                igrejaId: igrejaId
             };
         } catch (error) {
             console.error('Erro ao gerar backup:', error);
@@ -3558,11 +3589,171 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `EBD_Backup_${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `EBD_Backup_Completo_${dados.igreja?.nome?.replace(/\s+/g, '_') || 'Igreja'}_${new Date().toISOString().split('T')[0]}.json`;
         a.click();
         URL.revokeObjectURL(url);
         
-        alert('✅ Backup JSON salvo!');
+        alert(`✅ Backup completo salvo!\n\n📊 Dados incluídos:\n• Igreja\n• ${dados.usuarios.length} usuário(s)\n• ${dados.lancamentos.length} lançamento(s)\n• ${dados.licoes.length} lição(ões)\n• ${dados.convites.length} convite(s)`);
+    }
+
+    // Restaurar backup
+    async function restaurarBackup() {
+        const usuarioLogado = JSON.parse(sessionStorage.getItem('usuarioLogado'));
+        if (!usuarioLogado || usuarioLogado.nivel !== 1) {
+            alert('❌ Acesso negado!\n\nApenas administradores (Nível 1) podem restaurar backups.');
+            return;
+        }
+        
+        if (!confirm('⚠️ ATENÇÃO!\n\nA restauração irá ADICIONAR os dados do backup ao sistema.\n\nDados existentes NÃO serão apagados.\n\nDeseja continuar?')) {
+            return;
+        }
+        
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            try {
+                const text = await file.text();
+                const dados = JSON.parse(text);
+                
+                // Validar formato do backup
+                if (!dados.versao || !dados.dataBackup) {
+                    throw new Error('Formato de backup inválido');
+                }
+                
+                const sb = getSupabase();
+                let stats = {
+                    lancamentos: 0,
+                    licoes: 0,
+                    usuarios: 0,
+                    convites: 0
+                };
+                
+                // Restaurar lançamentos (com grupos_presenca e ofertas)
+                if (dados.lancamentos && dados.lancamentos.length > 0) {
+                    for (const lanc of dados.lancamentos) {
+                        // Verificar se já existe
+                        const { data: existe } = await sb
+                            .from('lancamentos')
+                            .select('id')
+                            .eq('data', lanc.data)
+                            .eq('igreja_id', lanc.igreja_id)
+                            .single();
+                        
+                        if (!existe) {
+                            const { data: novoLanc, error: errLanc } = await sb
+                                .from('lancamentos')
+                                .insert({
+                                    data: lanc.data,
+                                    licao: lanc.licao,
+                                    igreja_id: lanc.igreja_id
+                                })
+                                .select()
+                                .single();
+                            
+                            if (errLanc) throw errLanc;
+                            
+                            // Restaurar grupos_presenca
+                            if (lanc.grupos_presenca && lanc.grupos_presenca.length > 0) {
+                                const grupos = lanc.grupos_presenca.map(g => ({
+                                    lancamento_id: novoLanc.id,
+                                    grupo_id: g.grupo_id,
+                                    presente: g.presente,
+                                    ausente: g.ausente,
+                                    visita: g.visita
+                                }));
+                                await sb.from('grupos_presenca').insert(grupos);
+                            }
+                            
+                            // Restaurar ofertas
+                            if (lanc.ofertas && lanc.ofertas.length > 0) {
+                                const ofertas = lanc.ofertas.map(o => ({
+                                    lancamento_id: novoLanc.id,
+                                    tipo: o.tipo,
+                                    valor: o.valor,
+                                    observacao: o.observacao
+                                }));
+                                await sb.from('ofertas').insert(ofertas);
+                            }
+                            
+                            stats.lancamentos++;
+                        }
+                    }
+                }
+                
+                // Restaurar lições
+                if (dados.licoes && dados.licoes.length > 0) {
+                    for (const licao of dados.licoes) {
+                        const { data: existe } = await sb
+                            .from('licoes')
+                            .select('id')
+                            .eq('data', licao.data)
+                            .is('igreja_id', null)
+                            .single();
+                        
+                        if (!existe) {
+                            await sb.from('licoes').insert({
+                                data: licao.data,
+                                licao: licao.licao,
+                                tema: licao.tema,
+                                igreja_id: null
+                            });
+                            stats.licoes++;
+                        }
+                    }
+                }
+                
+                // Restaurar usuários (sem senhas por segurança)
+                if (dados.usuarios && dados.usuarios.length > 0) {
+                    for (const usuario of dados.usuarios) {
+                        const { data: existe } = await sb
+                            .from('usuarios')
+                            .select('id')
+                            .eq('usuario', usuario.usuario)
+                            .single();
+                        
+                        if (!existe) {
+                            // Nota: senhas não são restauradas por segurança
+                            // Usuários restaurados precisarão redefinir senha
+                            stats.usuarios++;
+                        }
+                    }
+                }
+                
+                // Restaurar convites
+                if (dados.convites && dados.convites.length > 0) {
+                    for (const convite of dados.convites) {
+                        if (!convite.usado && new Date(convite.expira_em) > new Date()) {
+                            const { data: existe } = await sb
+                                .from('convites')
+                                .select('id')
+                                .eq('id', convite.id)
+                                .single();
+                            
+                            if (!existe) {
+                                await sb.from('convites').insert(convite);
+                                stats.convites++;
+                            }
+                        }
+                    }
+                }
+                
+                alert(`✅ Restauração concluída!\n\n📊 Dados restaurados:\n• ${stats.lancamentos} lançamento(s)\n• ${stats.licoes} lição(ões)\n• ${stats.usuarios} usuário(s) identificado(s)\n• ${stats.convites} convite(s)\n\nℹ️ Dados duplicados foram ignorados.\n\n🔄 Atualize a página para ver as alterações.`);
+                
+                // Recarregar dados
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Erro ao restaurar backup:', error);
+                alert(`❌ Erro ao restaurar backup!\n\n${error.message}\n\nVerifique o console para mais detalhes.`);
+            }
+        };
+        input.click();
     }
 
     // Configurações
@@ -3710,6 +3901,7 @@
     window.exportarParaExcel = exportarParaExcel;
     window.exportarHistoricoCompleto = exportarHistoricoCompleto;
     window.backupJSON = backupJSON;
+    window.restaurarBackup = restaurarBackup;
     window.gerarResumoMensal = gerarResumoMensal;
     window.toggleTodosFechamentos = toggleTodosFechamentos;
     window.calcularTotaisSelecionados = calcularTotaisSelecionados;
